@@ -1,11 +1,20 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Menu, User, ChevronDown, X } from "lucide-react"
+import { Menu, User, ChevronDown, X, LayoutDashboard, LogOut } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 const safariStyles = `
   @supports (-webkit-touch-callout: none) {
@@ -26,7 +35,10 @@ const safariStyles = `
 `
 
 export function Navigation() {
+  const { user, userProfile, signOut } = useAuth()
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+
   const [browseStylistsOpen, setBrowseStylistsOpen] = useState(false)
   const [londonOpen, setLondonOpen] = useState(false)
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
@@ -94,6 +106,30 @@ export function Navigation() {
   ]
 
   const londonAreas = ["North London", "East London", "South London", "West London"]
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.push("/")
+      setIsOpen(false)
+    } catch (error) {
+      console.error('Error during sign out:', error)
+      // Still redirect and close menu even if there's an error
+      router.push("/")
+      setIsOpen(false)
+    }
+  }
+
+  const handleDashboard = () => {
+    if (userProfile?.role === 'stylist') {
+      router.push('/dashboard/stylist')
+    } else if (userProfile?.role === 'client') {
+      router.push('/dashboard/client')
+    } else {
+      router.push('/dashboard/client') // Default fallback
+    }
+    setIsOpen(false)
+  }
 
   useEffect(() => {
     const style = document.createElement("style")
@@ -269,25 +305,62 @@ export function Navigation() {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center justify-end space-x-4">
-              <Link href="/login">
-                <Button variant="outline" size="sm">
-                  <User className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="/for-business">
-                <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem]">
-                  List Your Business
-                </Button>
-              </Link>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                      <User className="w-4 h-4" />
+                      {userProfile?.full_name && (
+                        <span className="text-sm max-w-[100px] truncate">
+                          {userProfile.full_name.split(' ')[0]}
+                        </span>
+                      )}
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <div className="px-3 py-2 text-sm">
+                      <div className="font-medium">{userProfile?.full_name || "User"}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                      <div className="text-xs text-blue-600 capitalize">{userProfile?.role || "client"}</div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDashboard} className="cursor-pointer">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/login">
+                  <Button variant="outline" size="sm">
+                    <User className="w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
+              {(!user || userProfile?.role !== 'stylist') && (
+                <Link href="/for-business">
+                  <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem]">
+                    List Your Business
+                  </Button>
+                </Link>
+              )}
             </div>
 
             {/* Mobile Actions */}
             <div className="md:hidden flex items-center justify-end space-x-3 col-span-2">
-              <Link href="/for-business">
-                <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem] px-3">
-                  List Your Business
-                </Button>
-              </Link>
+              {(!user || userProfile?.role !== 'stylist') && (
+                <Link href="/for-business">
+                  <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem] px-3">
+                    List Your Business
+                  </Button>
+                </Link>
+              )}
 
               {/* Mobile Menu Button */}
               <Button
@@ -340,6 +413,21 @@ export function Navigation() {
                         WebkitOverflowScrolling: "touch",
                       }}
                     >
+                      {/* User Profile Section (Mobile) */}
+                      {user && userProfile && (
+                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                              <User className="w-5 h-5 text-red-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">{userProfile.full_name || "User"}</div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                              <div className="text-sm text-blue-600 capitalize">{userProfile.role}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {/* Browse Stylists Collapsible */}
                       <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen}>
                         <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-medium text-gray-900 hover:text-red-600 transition-colors py-2">
@@ -409,25 +497,48 @@ export function Navigation() {
                     </div>
 
                     {/* Bottom CTA Section - Fixed at bottom */}
-                    <div className="border-t p-6 space-y-3 bg-white flex-shrink-0">
-                      <Link href="/login">
-                        <Button
-                          variant="outline"
-                          className="w-full justify-center bg-transparent mb-2 text-[0.85rem]"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <User className="w-4 h-4" />
-                          Sign In
-                        </Button>
-                      </Link>
-                      <Link href="/for-business">
-                        <Button
-                          className="w-full bg-red-600 hover:bg-red-700 text-[0.825rem]"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          List Your Business
-                        </Button>
-                      </Link>
+                    <div className="border-t p-6 bg-white flex-shrink-0">
+                      {user ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-center bg-transparent text-[0.85rem] mb-3"
+                            onClick={handleDashboard}
+                          >
+                            <LayoutDashboard className="w-4 h-4 mr-1" />
+                            Dashboard
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-center bg-transparent text-[0.85rem] mb-4"
+                            onClick={handleSignOut}
+                          >
+                            <LogOut className="w-4 h-4 mr-1" />
+                            Sign Out
+                          </Button>
+                        </>
+                      ) : (
+                        <Link href="/login">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-center bg-transparent mb-3 text-[0.85rem]"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            <User className="w-4 h-4" />
+                            Sign In
+                          </Button>
+                        </Link>
+                      )}
+                      {(!user || userProfile?.role !== 'stylist') && (
+                        <Link href="/for-business">
+                          <Button
+                            className="w-full bg-red-600 hover:bg-red-700 text-[0.825rem]"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            List Your Business
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

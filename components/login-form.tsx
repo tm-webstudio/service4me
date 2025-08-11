@@ -3,6 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,12 +17,60 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  
+  const { signIn, userProfile } = useAuth()
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle login logic here - using mock authentication
-    console.log("Login attempt:", { email, password })
-    // In a real app, this would authenticate with your backend
+    setError("")
+    setLoading(true)
+    
+    try {
+      const result = await signIn(email, password)
+      console.log("Login successful", result)
+      
+      // Wait a moment for user profile to be loaded, then redirect directly
+      let attempts = 0
+      const maxAttempts = 10
+      
+      const checkProfileAndRedirect = () => {
+        attempts++
+        
+        // Get the current auth context to check if userProfile is loaded
+        const checkAuth = async () => {
+          const { data: { user } } = await import('@/lib/supabase').then(m => m.supabase.auth.getUser())
+          
+          if (user?.user_metadata?.role) {
+            const role = user.user_metadata.role
+            if (role === 'stylist') {
+              router.push('/dashboard/stylist')
+            } else if (role === 'client') {
+              router.push('/dashboard/client')
+            } else {
+              // Default to client dashboard for unknown roles
+              router.push('/dashboard/client')
+            }
+          } else if (attempts < maxAttempts) {
+            setTimeout(checkProfileAndRedirect, 200)
+          } else {
+            // Fallback after max attempts - default to client dashboard
+            router.push('/dashboard/client')
+          }
+        }
+        
+        checkAuth()
+      }
+      
+      setTimeout(checkProfileAndRedirect, 300)
+      
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -36,6 +86,11 @@ export function LoginForm() {
             <CardTitle className="text-center text-xl">Sign in</CardTitle>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <div>
@@ -100,8 +155,13 @@ export function LoginForm() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" size="lg">
-                Sign in
+              <Button 
+                type="submit" 
+                className="w-full bg-red-600 hover:bg-red-700" 
+                size="lg"
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
 
@@ -111,15 +171,6 @@ export function LoginForm() {
                 <span className="text-sm text-gray-600">Don't have an account? </span>
                 <Link href="/signup" className="text-sm text-red-600 hover:text-red-500 font-medium">
                   Sign up
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <div className="text-center">
-                <span className="text-sm text-gray-600">Are you a stylist? </span>
-                <Link href="/for-business" className="text-sm text-red-600 hover:text-red-500 font-medium">
-                  Join as a professional
                 </Link>
               </div>
             </div>

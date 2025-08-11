@@ -3,6 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,12 +12,19 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Scissors } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Scissors, CheckCircle } from "lucide-react"
 
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [userType, setUserType] = useState("stylist")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [signupSuccess, setSignupSuccess] = useState(false)
+  const [successEmail, setSuccessEmail] = useState("")
+  
+  const { signUp } = useAuth()
+  const router = useRouter()
 
   const [clientData, setClientData] = useState({
     firstName: "",
@@ -36,16 +45,79 @@ export function SignupForm() {
     confirmPassword: "",
   })
 
-  const handleClientSubmit = (e: React.FormEvent) => {
+  const handleClientSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Client signup:", clientData)
-    // In a real app, this would create a user account
+    setError("")
+    
+    if (clientData.password !== clientData.confirmPassword) {
+      setError("Passwords don't match")
+      return
+    }
+    
+    setLoading(true)
+    
+    try {
+      const result = await signUp(
+        clientData.email, 
+        clientData.password, 
+        "client",
+        {
+          full_name: `${clientData.firstName} ${clientData.lastName}`.trim()
+        }
+      )
+      
+      console.log("Client signup result:", result)
+      
+      if (result.user && !result.user.email_confirmed_at) {
+        setSuccessEmail(clientData.email)
+        setSignupSuccess(true)
+        return
+      }
+      
+      router.push("/dashboard/client")
+    } catch (err: any) {
+      setError(err.message || "Failed to create account")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleStylistSubmit = (e: React.FormEvent) => {
+  const handleStylistSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Stylist signup:", stylistData)
-    // In a real app, this would create a stylist account
+    setError("")
+    
+    if (stylistData.password !== stylistData.confirmPassword) {
+      setError("Passwords don't match")
+      return
+    }
+    
+    setLoading(true)
+    
+    try {
+      const result = await signUp(
+        stylistData.email, 
+        stylistData.password, 
+        "stylist",
+        {
+          full_name: `${stylistData.firstName} ${stylistData.lastName}`.trim(),
+          phone: stylistData.phone
+        }
+      )
+      
+      console.log("Stylist signup result:", result)
+      
+      if (result.user && !result.user.email_confirmed_at) {
+        setSuccessEmail(stylistData.email)
+        setSignupSuccess(true)
+        return
+      }
+      
+      router.push("/dashboard/stylist")
+    } catch (err: any) {
+      setError(err.message || "Failed to create account")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -57,11 +129,42 @@ export function SignupForm() {
         </div>
 
         <Card className="border-0 shadow-lg">
-          <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-center text-xl">Sign up</CardTitle>
-          </CardHeader>
+          {!signupSuccess && (
+            <CardHeader className="space-y-1 pb-6">
+              <CardTitle className="text-center text-xl">Sign up</CardTitle>
+            </CardHeader>
+          )}
           <CardContent>
-            <Tabs value={userType} onValueChange={setUserType} className="w-full">
+            {signupSuccess ? (
+              <div className="text-center pt-6">
+                <div className="mx-auto mb-6 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  Thanks for signing up!
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  We've sent a confirmation email to <strong>{successEmail}</strong>
+                </p>
+                <p className="text-sm text-gray-500 mb-8">
+                  Please check your inbox and click the confirmation link to complete your registration.
+                </p>
+                <div>
+                  <Link href="/login">
+                    <Button className="w-full bg-red-600 hover:bg-red-700">
+                      Go to Sign In
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                  </div>
+                )}
+                <Tabs value={userType} onValueChange={setUserType} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="stylist" className="flex items-center gap-2">
                   <Scissors className="w-4 h-4" />
@@ -192,8 +295,13 @@ export function SignupForm() {
                     </label>
                   </div>
 
-                  <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" size="lg">
-                    Create Client Account
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-red-600 hover:bg-red-700" 
+                    size="lg"
+                    disabled={loading}
+                  >
+                    {loading ? "Creating Account..." : "Create Client Account"}
                   </Button>
                 </form>
               </TabsContent>
@@ -367,22 +475,29 @@ export function SignupForm() {
                     </label>
                   </div>
 
-                  <Button type="submit" className="w-full bg-red-600 hover:bg-red-700" size="lg">
-                    Create Stylist Account
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-red-600 hover:bg-red-700" 
+                    size="lg"
+                    disabled={loading}
+                  >
+                    {loading ? "Creating Account..." : "Create Stylist Account"}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6">
-              <Separator className="my-4" />
-              <div className="text-center">
-                <span className="text-sm text-gray-600">Already have an account? </span>
-                <Link href="/login" className="text-sm text-red-600 hover:text-red-500 font-medium">
-                  Sign in
-                </Link>
-              </div>
-            </div>
+                <div className="mt-6">
+                  <Separator className="my-4" />
+                  <div className="text-center">
+                    <span className="text-sm text-gray-600">Already have an account? </span>
+                    <Link href="/login" className="text-sm text-red-600 hover:text-red-500 font-medium">
+                      Sign in
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
