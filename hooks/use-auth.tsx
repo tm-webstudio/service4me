@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
 interface UserProfile {
@@ -102,34 +102,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user.id)
-      } else {
-        setUserProfile(null)
-      }
-      
+    // Check if Supabase is properly configured
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured with valid environment variables')
       setLoading(false)
+      return
     }
 
-    getInitialSession()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          setSession(null)
-          setUser(null)
-          setUserProfile(null)
-          setLoading(false)
-          return
-        }
-        
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
         setSession(session)
         setUser(session?.user ?? null)
         
@@ -140,6 +123,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         setLoading(false)
+      } catch (error) {
+        console.error('Error getting session:', error)
+        setLoading(false)
+      }
+    }
+
+    getInitialSession()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        try {
+          if (event === 'SIGNED_OUT') {
+            setSession(null)
+            setUser(null)
+            setUserProfile(null)
+            setLoading(false)
+            return
+          }
+          
+          setSession(session)
+          setUser(session?.user ?? null)
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user.id)
+          } else {
+            setUserProfile(null)
+          }
+          
+          setLoading(false)
+        } catch (error) {
+          console.error('Error in auth state change:', error)
+          setLoading(false)
+        }
       }
     )
 
@@ -147,6 +164,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signUp = async (email: string, password: string, role: 'client' | 'stylist', additionalData?: any) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Authentication not available - missing configuration')
+    }
+    
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -187,6 +208,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Authentication not available - missing configuration')
+    }
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -202,6 +227,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    if (!isSupabaseConfigured()) {
+      // Even if not configured, clear local state
+      setUser(null)
+      setUserProfile(null)
+      setSession(null)
+      return
+    }
+    
     try {
       // Sign out from Supabase - this will trigger the auth state change listener
       const { error } = await supabase.auth.signOut()
