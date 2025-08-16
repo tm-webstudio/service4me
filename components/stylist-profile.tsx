@@ -3,6 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useStylist } from "@/hooks/use-stylist"
+import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -135,7 +137,12 @@ const reviews = [
   },
 ]
 
-export function StylistProfile() {
+interface StylistProfileProps {
+  stylistId: string
+}
+
+export function StylistProfile({ stylistId }: StylistProfileProps) {
+  const { stylist, loading, error } = useStylist(stylistId)
   const [isFavorite, setIsFavorite] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
@@ -167,16 +174,135 @@ export function StylistProfile() {
   }
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % stylistData.portfolio.length)
+    setCurrentSlide((prev) => (prev + 1) % displayData.portfolio.length)
   }
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + stylistData.portfolio.length) % stylistData.portfolio.length)
+    setCurrentSlide((prev) => (prev - 1 + displayData.portfolio.length) % displayData.portfolio.length)
   }
 
   const openGallery = (index: number) => {
     setSelectedImage(index)
     setIsGalleryOpen(true)
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+          <span className="ml-2 text-gray-600">Loading stylist profile...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error && !stylist) {
+    return (
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        <div className="text-center py-20">
+          <p className="text-red-600 mb-4">Error loading stylist profile: {error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // No stylist found
+  if (!stylist) {
+    return (
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        <div className="text-center py-20">
+          <p className="text-gray-600 mb-4">Stylist not found.</p>
+          <p className="text-sm text-gray-500">The stylist profile you're looking for doesn't exist.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Helper functions for real data with fallbacks
+  const getBusinessName = () => stylist.business_name || "Hair Studio"
+  const getBio = () => stylist.bio || "Professional hairstylist dedicated to helping you look and feel your best."
+  const getLocation = () => stylist.location || "London, UK"
+  const getExpertise = () => {
+    if (stylist.specialties && stylist.specialties.length > 0) {
+      return `${stylist.specialties[0]} Specialist`
+    }
+    return "Hair Specialist"
+  }
+  const getExperience = () => {
+    const years = stylist.years_experience || 0
+    return years > 0 ? `${years} years` : "Experienced"
+  }
+  const getRating = () => stylist.rating || 0
+  const getReviewCount = () => stylist.total_reviews || 0
+  const getHourlyRate = () => stylist.hourly_rate || 50
+
+  // Placeholder services based on specialties
+  const getServices = () => {
+    if (stylist.specialties && stylist.specialties.length > 0) {
+      return stylist.specialties.map((specialty, index) => ({
+        name: specialty,
+        price: getHourlyRate() + (index * 20),
+        duration: "2-3 hours",
+        image: "/placeholder.svg?height=200&width=300",
+      }))
+    }
+    return [
+      {
+        name: "Hair Styling",
+        price: getHourlyRate(),
+        duration: "1-2 hours",
+        image: "/placeholder.svg?height=200&width=300",
+      },
+      {
+        name: "Hair Care",
+        price: getHourlyRate() + 20,
+        duration: "2-3 hours",
+        image: "/placeholder.svg?height=200&width=300",
+      }
+    ]
+  }
+
+  // Placeholder portfolio images
+  const getPortfolio = () => {
+    const businessName = getBusinessName()
+    return Array(8).fill(0).map((_, i) => 
+      `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(businessName)}`
+    )
+  }
+
+  // Use real data with fallbacks
+  const displayData = {
+    businessName: getBusinessName(),
+    image: `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(getBusinessName())}`,
+    rating: getRating(),
+    reviewCount: getReviewCount(),
+    location: getLocation(),
+    expertise: getExpertise(),
+    experience: getExperience(),
+    bio: getBio(),
+    contact: {
+      phone: "020 7946 0892",
+      email: stylist.email || "info@salon.co.uk",
+      instagram: "@salon_instagram",
+      tiktok: "@salon_tiktok",
+    },
+    services: getServices(),
+    portfolio: getPortfolio(),
+    hours: {
+      monday: "9:00 AM - 6:00 PM",
+      tuesday: "9:00 AM - 6:00 PM",
+      wednesday: "9:00 AM - 6:00 PM",
+      thursday: "9:00 AM - 8:00 PM",
+      friday: "9:00 AM - 8:00 PM",
+      saturday: "8:00 AM - 5:00 PM",
+      sunday: "Closed",
+    },
   }
 
   return (
@@ -186,14 +312,16 @@ export function StylistProfile() {
         <div className="lg:col-span-2 space-y-5">
           {/* Gallery */}
           <div className="relative">
-            <Badge className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 z-10">Featured Stylist</Badge>
+            <Badge className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 z-10">
+              {stylist.is_verified ? "Verified Stylist" : "Featured Stylist"}
+            </Badge>
 
             {/* Desktop Gallery Grid */}
             <div className="hidden md:block">
               <div className="grid grid-cols-4 gap-2">
                 <div className="col-span-2 row-span-2">
                   <img
-                    src={stylistData.portfolio[0] || "/placeholder.svg"}
+                    src={displayData.portfolio[0] || "/placeholder.svg"}
                     alt="Portfolio 1"
                     className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => openGallery(0)}
@@ -201,7 +329,7 @@ export function StylistProfile() {
                 </div>
                 <div className="col-span-1">
                   <img
-                    src={stylistData.portfolio[1] || "/placeholder.svg"}
+                    src={displayData.portfolio[1] || "/placeholder.svg"}
                     alt="Portfolio 2"
                     className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => openGallery(1)}
@@ -209,7 +337,7 @@ export function StylistProfile() {
                 </div>
                 <div className="col-span-1">
                   <img
-                    src={stylistData.portfolio[2] || "/placeholder.svg"}
+                    src={displayData.portfolio[2] || "/placeholder.svg"}
                     alt="Portfolio 3"
                     className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => openGallery(2)}
@@ -217,7 +345,7 @@ export function StylistProfile() {
                 </div>
                 <div className="col-span-1">
                   <img
-                    src={stylistData.portfolio[3] || "/placeholder.svg"}
+                    src={displayData.portfolio[3] || "/placeholder.svg"}
                     alt="Portfolio 4"
                     className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => openGallery(3)}
@@ -225,7 +353,7 @@ export function StylistProfile() {
                 </div>
                 <div className="col-span-1 relative">
                   <img
-                    src={stylistData.portfolio[4] || "/placeholder.svg"}
+                    src={displayData.portfolio[4] || "/placeholder.svg"}
                     alt="Portfolio 5"
                     className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => openGallery(4)}
@@ -250,12 +378,12 @@ export function StylistProfile() {
                 onTouchEnd={handleTouchEnd}
               >
                 <img
-                  src={stylistData.portfolio[currentSlide] || "/placeholder.svg"}
+                  src={displayData.portfolio[currentSlide] || "/placeholder.svg"}
                   alt={`Portfolio ${currentSlide + 1}`}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                  {stylistData.portfolio.map((_, index) => (
+                  {displayData.portfolio.map((_, index) => (
                     <div
                       key={index}
                       className={`w-2 h-2 rounded-full ${index === currentSlide ? "bg-white" : "bg-white/50"}`}
@@ -270,24 +398,24 @@ export function StylistProfile() {
           <div>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{stylistData.businessName}</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{displayData.businessName}</h1>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-gray-600 mb-2 text-[15px]">
                   <div className="flex items-center mb-2 sm:mb-0">
                     <Star className="w-5 h-5 fill-yellow-400 text-yellow-400 mr-1" />
-                    <span className="font-medium">{stylistData.rating}</span>
-                    <span className="ml-1">({stylistData.reviewCount} reviews)</span>
+                    <span className="font-medium">{displayData.rating > 0 ? displayData.rating.toFixed(1) : "New"}</span>
+                    <span className="ml-1">({displayData.reviewCount} reviews)</span>
                   </div>
                   <div className="flex items-center">
                     <MapPin className="w-4 h-4 mr-1" />
-                    <span>{stylistData.location}</span>
+                    <span>{displayData.location}</span>
                   </div>
                 </div>
                 <div className="flex items-center text-gray-600 mb-2 text-[15px]">
                   <Award className="w-4 h-4 mr-1" />
-                  <span>{stylistData.experience} experience</span>
+                  <span>{displayData.experience} experience</span>
                 </div>
                 <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[14px]">
-                  {stylistData.expertise}
+                  {displayData.expertise}
                 </div>
               </div>
 
@@ -304,7 +432,7 @@ export function StylistProfile() {
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-6 text-[15px]">{stylistData.bio}</p>
+            <p className="text-gray-700 leading-relaxed mb-6 text-[15px]">{displayData.bio}</p>
 
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-4">
@@ -326,7 +454,7 @@ export function StylistProfile() {
           <div className="space-y-6 max-w-lg">
             <h2 className="text-xl font-bold text-gray-900">Services & Pricing</h2>
             <div className="grid gap-4">
-              {stylistData.services.map((service, index) => (
+              {displayData.services.map((service, index) => (
                 <Card key={index}>
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-4">
@@ -363,7 +491,7 @@ export function StylistProfile() {
             <CardContent>
               <div className="flex items-center mb-3">
                 <MapPin className="w-4 h-4 mr-2 text-gray-600" />
-                <span className="text-sm">{stylistData.location}</span>
+                <span className="text-sm">{displayData.location}</span>
               </div>
               <div className="bg-gray-100 rounded-lg h-32 flex items-center justify-center">
                 <span className="text-gray-500">Map View</span>
@@ -378,7 +506,7 @@ export function StylistProfile() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {Object.entries(stylistData.hours).map(([day, hours]) => (
+                {Object.entries(displayData.hours).map(([day, hours]) => (
                   <div key={day} className="flex justify-between text-sm">
                     <span className="capitalize font-medium">{day}</span>
                     <span className="text-gray-600">{hours}</span>
@@ -396,11 +524,11 @@ export function StylistProfile() {
             <CardContent className="space-y-4">
               <div className="flex items-center">
                 <Phone className="w-4 h-4 mr-3 text-gray-600" />
-                <span>{stylistData.contact.phone}</span>
+                <span>{displayData.contact.phone}</span>
               </div>
               <div className="flex items-center">
                 <Mail className="w-4 h-4 mr-3 text-gray-600" />
-                <span>{stylistData.contact.email}</span>
+                <span>{displayData.contact.email}</span>
               </div>
               <div className="border-t pt-4">
                 <div className="flex items-center space-x-4">
@@ -470,7 +598,7 @@ export function StylistProfile() {
             </Button>
 
             <img
-              src={stylistData.portfolio[selectedImage] || "/placeholder.svg"}
+              src={displayData.portfolio[selectedImage] || "/placeholder.svg"}
               alt={`Portfolio ${selectedImage + 1}`}
               className="w-full h-full object-contain"
             />
@@ -480,7 +608,7 @@ export function StylistProfile() {
               size="icon"
               className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white"
               onClick={() =>
-                setSelectedImage((prev) => (prev - 1 + stylistData.portfolio.length) % stylistData.portfolio.length)
+                setSelectedImage((prev) => (prev - 1 + displayData.portfolio.length) % displayData.portfolio.length)
               }
             >
               <ChevronLeft className="w-6 h-6" />
@@ -490,13 +618,13 @@ export function StylistProfile() {
               variant="ghost"
               size="icon"
               className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white"
-              onClick={() => setSelectedImage((prev) => (prev + 1) % stylistData.portfolio.length)}
+              onClick={() => setSelectedImage((prev) => (prev + 1) % displayData.portfolio.length)}
             >
               <ChevronRight className="w-6 h-6" />
             </Button>
 
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {stylistData.portfolio.map((_, index) => (
+              {displayData.portfolio.map((_, index) => (
                 <button
                   key={index}
                   className={`w-3 h-3 rounded-full ${index === selectedImage ? "bg-white" : "bg-white/50"}`}

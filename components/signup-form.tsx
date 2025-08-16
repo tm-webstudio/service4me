@@ -100,7 +100,9 @@ export function SignupForm() {
         "stylist",
         {
           full_name: `${stylistData.firstName} ${stylistData.lastName}`.trim(),
-          phone: stylistData.phone
+          phone: stylistData.phone,
+          businessName: stylistData.businessName,
+          location: stylistData.location
         }
       )
       

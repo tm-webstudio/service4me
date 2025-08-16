@@ -197,6 +197,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profileError) {
           console.error('Error creating user profile:', profileError)
+        } else if (role === 'stylist' && additionalData) {
+          // Update the stylist profile with actual user data
+          const { error: stylistUpdateError } = await supabase
+            .from('stylist_profiles')
+            .update({
+              business_name: additionalData.businessName || 'My Hair Studio',
+              location: additionalData.location || 'Location not specified'
+            })
+            .eq('user_id', data.user.id)
+
+          if (stylistUpdateError) {
+            console.error('Error updating stylist profile:', stylistUpdateError)
+          }
         }
       }
 
