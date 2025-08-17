@@ -1,0 +1,97 @@
+# Page snapshot
+
+```yaml
+- button "Previous message":
+  - img
+- paragraph: Onboarding London Stylists. Apply Now
+- button "Next message":
+  - img
+- navigation:
+  - link "S4M":
+    - /url: /
+  - button "Browse Stylists":
+    - text: Browse Stylists
+    - img
+  - button "Locations":
+    - text: Locations
+    - img
+  - link:
+    - /url: /login
+    - button:
+      - img
+  - link "List Your Business":
+    - /url: /for-business
+    - button "List Your Business"
+- heading "Welcome back" [level=2]
+- paragraph: Sign in to your Service4Me account
+- heading "Sign in" [level=3]
+- text: Email address
+- img
+- textbox "Email address"
+- text: Password
+- img
+- textbox "Password"
+- button:
+  - img
+- checkbox "Remember me"
+- text: Remember me
+- link "Forgot password?":
+  - /url: /forgot-password
+- button "Sign in"
+- text: Don't have an account?
+- link "Sign up":
+  - /url: /signup
+- contentinfo:
+  - text: Service4Me
+  - paragraph: Connecting clients with talented hairstylists. Discover, book, and review the best hair services in your area.
+  - link:
+    - /url: "#"
+    - img
+  - link:
+    - /url: "#"
+    - img
+  - link:
+    - /url: "#"
+    - img
+  - heading "Locations" [level=3]
+  - list:
+    - listitem:
+      - link "North London":
+        - /url: /browse?location=North London
+    - listitem:
+      - link "East London":
+        - /url: /browse?location=East London
+    - listitem:
+      - link "South London":
+        - /url: /browse?location=South London
+    - listitem:
+      - link "West London":
+        - /url: /browse?location=West London
+    - listitem:
+      - link "Central London":
+        - /url: /browse?location=Central London
+  - heading "Company" [level=3]
+  - list:
+    - listitem:
+      - link "List Your Business":
+        - /url: /for-business
+    - listitem:
+      - link "Contact Us":
+        - /url: /contact
+    - listitem:
+      - link "Client Dashboard":
+        - /url: /dashboard/client
+    - listitem:
+      - link "Stylist Dashboard":
+        - /url: /dashboard/stylist
+    - listitem:
+      - link "Admin Dashboard":
+        - /url: /admin
+  - paragraph: © 2025 Service4Me. All rights reserved.
+  - link "Privacy Policy":
+    - /url: "#"
+  - link "Terms of Service":
+    - /url: "#"
+  - link "Support":
+    - /url: "#"
+```

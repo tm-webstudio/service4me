@@ -73,6 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('🔍 [AUTH] Fetching user profile for ID:', userId)
+      
+      // Check if we have a valid session first
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('🔍 [AUTH] Current session exists:', !!session)
+      console.log('🔍 [AUTH] Session user ID:', session?.user?.id)
+      
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -80,23 +87,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single()
 
       if (error) {
+        console.error('❌ [AUTH] Error fetching user profile:', error)
+        console.error('❌ [AUTH] Error code:', error.code)
+        console.error('❌ [AUTH] Error details:', JSON.stringify(error, null, 2))
+        
         if (error.code === 'PGRST116') {
           // No profile found - try to create one from auth user data
-          console.log('No user profile found, creating from auth data for user:', userId)
+          console.log('🔧 [AUTH] No user profile found, creating from auth data for user:', userId)
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             await createUserProfileFromAuth(user)
           }
         } else {
-          console.error('Error fetching user profile:', error)
           setUserProfile(null)
         }
         return
       }
       
+      console.log('✅ [AUTH] User profile fetched successfully:', JSON.stringify(data, null, 2))
       setUserProfile(data)
     } catch (error) {
-      console.error('Error fetching user profile:', error)
+      console.error('❌ [AUTH] Exception fetching user profile:', error)
       setUserProfile(null)
     }
   }
