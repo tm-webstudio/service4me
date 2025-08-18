@@ -16,6 +16,11 @@ export interface StylistProfile {
   is_verified: boolean
   full_name: string
   email: string
+  booking_link?: string
+  phone?: string
+  contact_email?: string
+  instagram_handle?: string
+  tiktok_handle?: string
 }
 
 export function useStylists() {
@@ -52,7 +57,12 @@ export function useStylists() {
               total_reviews: stylist.total_reviews,
               is_verified: stylist.is_verified,
               full_name: 'Professional Stylist',
-              email: 'stylist@example.com'
+              email: 'stylist@example.com',
+              booking_link: stylist.booking_link,
+              phone: stylist.phone,
+              contact_email: stylist.contact_email,
+              instagram_handle: stylist.instagram_handle,
+              tiktok_handle: stylist.tiktok_handle
             }))
             
             setStylists(transformedData)
@@ -100,7 +110,12 @@ export function useStylists() {
             total_reviews: stylist.total_reviews,
             is_verified: stylist.is_verified,
             full_name: 'Professional Stylist',
-            email: 'stylist@example.com'
+            email: 'stylist@example.com',
+            booking_link: stylist.booking_link,
+            phone: stylist.phone,
+            contact_email: stylist.contact_email,
+            instagram_handle: stylist.instagram_handle,
+            tiktok_handle: stylist.tiktok_handle
           }))
 
           setStylists(transformedData)

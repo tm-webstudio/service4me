@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const lastFetchedUserId = useRef<string | null>(null)
 
   const createUserProfileFromAuth = async (user: User) => {
     // Extract role from user metadata or default to client
@@ -73,6 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      // Prevent duplicate fetches for the same user within a short timeframe
+      const lastFetchKey = `lastUserFetch_${userId}`
+      const lastFetchTime = sessionStorage.getItem(lastFetchKey)
+      const now = Date.now()
+      
+      if (lastFetchTime && (now - parseInt(lastFetchTime)) < 5000) { // 5 second cooldown
+        console.log('🔍 [AUTH] Skipping recent fetch for user:', userId)
+        return
+      }
+
+      sessionStorage.setItem(lastFetchKey, now.toString())
       console.log('🔍 [AUTH] Fetching user profile for ID:', userId)
       
       // Check if we have a valid session first
@@ -146,24 +158,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         try {
+          console.log('🔍 [AUTH] Auth state change event:', event)
+          
           if (event === 'SIGNED_OUT') {
             setSession(null)
             setUser(null)
             setUserProfile(null)
             setLoading(false)
+            lastFetchedUserId.current = null
             return
           }
           
-          setSession(session)
-          setUser(session?.user ?? null)
-          
-          if (session?.user) {
-            await fetchUserProfile(session.user.id)
-          } else {
-            setUserProfile(null)
+          // Only fetch profile for actual sign-in events, not initial session
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            setSession(session)
+            setUser(session?.user ?? null)
+            
+            if (session?.user) {
+              await fetchUserProfile(session.user.id)
+            } else {
+              setUserProfile(null)
+            }
+            
+            setLoading(false)
           }
-          
-          setLoading(false)
         } catch (error) {
           console.error('Error in auth state change:', error)
           setLoading(false)

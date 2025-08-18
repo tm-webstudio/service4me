@@ -45,7 +45,12 @@ export function useStylist(id: string) {
               total_reviews: apiData.data.total_reviews,
               is_verified: apiData.data.is_verified,
               full_name: apiData.data.full_name || 'Professional Stylist',
-              email: apiData.data.email || 'stylist@example.com'
+              email: apiData.data.email || 'stylist@example.com',
+              booking_link: apiData.data.booking_link,
+              phone: apiData.data.phone,
+              contact_email: apiData.data.contact_email,
+              instagram_handle: apiData.data.instagram_handle,
+              tiktok_handle: apiData.data.tiktok_handle
             }
             
             setStylist(transformedData)
@@ -94,7 +99,12 @@ export function useStylist(id: string) {
             total_reviews: data.total_reviews,
             is_verified: data.is_verified,
             full_name: data.full_name || 'Professional Stylist',
-            email: data.email || 'stylist@example.com'
+            email: data.email || 'stylist@example.com',
+            booking_link: data.booking_link,
+            phone: data.phone,
+            contact_email: data.contact_email,
+            instagram_handle: data.instagram_handle,
+            tiktok_handle: data.tiktok_handle
           }
 
           setStylist(transformedData)

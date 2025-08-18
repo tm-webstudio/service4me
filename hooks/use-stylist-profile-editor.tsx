@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useAuth } from './use-auth'
 import type { StylistProfile } from './use-stylists'
@@ -13,6 +13,11 @@ interface ProfileUpdateData {
   years_experience?: number
   hourly_rate?: number
   availability_schedule?: any
+  booking_link?: string
+  phone?: string
+  contact_email?: string
+  instagram_handle?: string
+  tiktok_handle?: string
 }
 
 export function useStylistProfileEditor() {
@@ -21,14 +26,28 @@ export function useStylistProfileEditor() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const lastFetchedUserId = useRef<string | null>(null)
 
   // Fetch the current user's stylist profile
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user?.id) {
         setLoading(false)
+        lastFetchedUserId.current = null
         return
       }
+
+      // Prevent duplicate fetches for the same user within a short timeframe
+      const lastFetchKey = `lastProfileFetch_${user.id}`
+      const lastFetchTime = sessionStorage.getItem(lastFetchKey)
+      const now = Date.now()
+      
+      if (lastFetchTime && (now - parseInt(lastFetchTime)) < 5000) { // 5 second cooldown
+        console.log('🔍 [PROFILE-EDITOR] Skipping recent fetch for user:', user.id)
+        return
+      }
+
+      sessionStorage.setItem(lastFetchKey, now.toString())
 
       try {
         setLoading(true)
@@ -56,6 +75,7 @@ export function useStylistProfileEditor() {
 
         if (data) {
           console.log('✅ [PROFILE-EDITOR] Direct client successful')
+          console.log('🔍 [PROFILE-EDITOR] Raw data from database:', JSON.stringify(data, null, 2))
           
           const transformedData: StylistProfile = {
             id: data.id,
@@ -69,7 +89,12 @@ export function useStylistProfileEditor() {
             total_reviews: data.total_reviews,
             is_verified: data.is_verified,
             full_name: data.full_name || user.user_metadata?.full_name || 'Professional Stylist',
-            email: data.email || user.email || 'stylist@example.com'
+            email: data.email || user.email || 'stylist@example.com',
+            booking_link: data.booking_link,
+            phone: data.phone,
+            contact_email: data.contact_email,
+            instagram_handle: data.instagram_handle,
+            tiktok_handle: data.tiktok_handle
           }
 
           setProfile(transformedData)
@@ -214,7 +239,12 @@ export function useStylistProfileEditor() {
           total_reviews: data.total_reviews,
           is_verified: data.is_verified,
           full_name: currentUser.user_metadata?.full_name || 'Professional Stylist',
-          email: data.email || currentUser.email || 'stylist@example.com'
+          email: data.email || currentUser.email || 'stylist@example.com',
+          booking_link: data.booking_link,
+          phone: data.phone,
+          contact_email: data.contact_email,
+          instagram_handle: data.instagram_handle,
+          tiktok_handle: data.tiktok_handle
         }
 
         setProfile(transformedData)

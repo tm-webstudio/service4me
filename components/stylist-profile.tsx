@@ -436,17 +436,40 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-4">
-              <Button className="bg-red-600 hover:bg-red-700 px-12 py-6 w-full sm:w-2/5" size="lg">
-                <Calendar className="w-4 h-4 mr-2" />
-                Book Now
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-full h-12 w-12 flex items-center justify-center flex-shrink-0 bg-transparent"
-              >
-                <Instagram className="w-5 h-5 text-gray-600" />
-              </Button>
+              {stylist.booking_link ? (
+                <Button 
+                  className="bg-red-600 hover:bg-red-700 px-12 py-6 w-full sm:w-2/5" 
+                  size="lg"
+                  onClick={() => {
+                    const url = stylist.booking_link.startsWith('http') 
+                      ? stylist.booking_link 
+                      : `https://${stylist.booking_link}`;
+                    window.location.href = url;
+                  }}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Book Now
+                </Button>
+              ) : (
+                <Button 
+                  className="bg-gray-400 cursor-not-allowed px-12 py-6 w-full sm:w-2/5" 
+                  size="lg"
+                  disabled
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Booking Unavailable
+                </Button>
+              )}
+              {stylist.instagram_handle && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full h-12 w-12 flex items-center justify-center flex-shrink-0 bg-transparent"
+                  onClick={() => window.open(`https://instagram.com/${stylist.instagram_handle.replace('@', '')}`, '_blank', 'noopener,noreferrer')}
+                >
+                  <Instagram className="w-5 h-5 text-gray-600" />
+                </Button>
+              )}
             </div>
           </div>
 
@@ -499,47 +522,59 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             </CardContent>
           </Card>
 
-          {/* Hours */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Hours</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {Object.entries(displayData.hours).map(([day, hours]) => (
-                  <div key={day} className="flex justify-between text-sm">
-                    <span className="capitalize font-medium">{day}</span>
-                    <span className="text-gray-600">{hours}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Contact */}
           <Card>
             <CardHeader>
               <CardTitle>Contact</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center">
-                <Phone className="w-4 h-4 mr-3 text-gray-600" />
-                <span>{displayData.contact.phone}</span>
-              </div>
-              <div className="flex items-center">
-                <Mail className="w-4 h-4 mr-3 text-gray-600" />
-                <span>{displayData.contact.email}</span>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex items-center space-x-4">
-                  <a href="#" className="text-gray-600 hover:text-gray-800">
-                    <Instagram className="w-5 h-5" />
-                  </a>
-                  <a href="#" className="text-gray-600 hover:text-gray-800">
-                    <TikTokIcon className="w-5 h-5" />
+              {stylist.phone && (
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-3 text-gray-600" />
+                  <a href={`tel:${stylist.phone}`} className="text-gray-700 hover:text-gray-900">
+                    {stylist.phone}
                   </a>
                 </div>
-              </div>
+              )}
+              {stylist.contact_email && (
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 mr-3 text-gray-600" />
+                  <a href={`mailto:${stylist.contact_email}`} className="text-gray-700 hover:text-gray-900">
+                    {stylist.contact_email}
+                  </a>
+                </div>
+              )}
+              {(stylist.instagram_handle || stylist.tiktok_handle) && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center space-x-4">
+                    {stylist.instagram_handle && (
+                      <a 
+                        href={`https://instagram.com/${stylist.instagram_handle.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 hover:text-gray-800"
+                        title={`Follow on Instagram: ${stylist.instagram_handle}`}
+                      >
+                        <Instagram className="w-5 h-5" />
+                      </a>
+                    )}
+                    {stylist.tiktok_handle && (
+                      <a 
+                        href={`https://tiktok.com/@${stylist.tiktok_handle.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 hover:text-gray-800"
+                        title={`Follow on TikTok: ${stylist.tiktok_handle}`}
+                      >
+                        <TikTokIcon className="w-5 h-5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+              {!stylist.phone && !stylist.contact_email && !stylist.instagram_handle && !stylist.tiktok_handle && (
+                <p className="text-gray-500 text-sm">No contact information available.</p>
+              )}
             </CardContent>
           </Card>
         </div>

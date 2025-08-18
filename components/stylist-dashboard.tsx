@@ -8,10 +8,25 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
+
+const SPECIALTY_CATEGORIES = [
+  "Wigs & Weaves",
+  "Braids", 
+  "Locs",
+  "Natural Hair",
+  "Bridal Hair",
+  "Silk Press",
+  "Protective Styles",
+  "Twists",
+  "Blowouts",
+  "Hair Styling",
+  "Maintenance"
+]
 
 export function StylistDashboard() {
   const { user } = useAuth()
@@ -23,21 +38,33 @@ export function StylistDashboard() {
     business_name: '',
     bio: '',
     location: '',
-    specialties: [] as string[],
+    specialties: '',
     years_experience: 0,
-    hourly_rate: 0
+    hourly_rate: 0,
+    booking_link: '',
+    phone: '',
+    contact_email: '',
+    instagram_handle: '',
+    tiktok_handle: ''
   })
   
   // Update form data when profile loads
   useEffect(() => {
     if (profile) {
+      console.log('🔍 [DASHBOARD] Profile data received:', JSON.stringify(profile, null, 2))
+      console.log('🔍 [DASHBOARD] Booking link value:', profile.booking_link)
       setFormData({
         business_name: profile.business_name || '',
         bio: profile.bio || '',
         location: profile.location || '',
-        specialties: profile.specialties || [],
+        specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
         years_experience: profile.years_experience || 0,
-        hourly_rate: profile.hourly_rate || 0
+        hourly_rate: profile.hourly_rate || 0,
+        booking_link: profile.booking_link || '',
+        phone: profile.phone || '',
+        contact_email: profile.contact_email || '',
+        instagram_handle: profile.instagram_handle || '',
+        tiktok_handle: profile.tiktok_handle || ''
       })
     }
   }, [profile])
@@ -46,7 +73,12 @@ export function StylistDashboard() {
     if (!profile) return
     
     try {
-      await updateProfile(formData)
+      // Convert single specialty to array for backend
+      const updateData = {
+        ...formData,
+        specialties: formData.specialties ? [formData.specialties] : []
+      }
+      await updateProfile(updateData)
       setIsEditing(false)
     } catch (err) {
       console.error('Failed to save profile:', err)
@@ -59,27 +91,23 @@ export function StylistDashboard() {
         business_name: profile.business_name || '',
         bio: profile.bio || '',
         location: profile.location || '',
-        specialties: profile.specialties || [],
+        specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
         years_experience: profile.years_experience || 0,
-        hourly_rate: profile.hourly_rate || 0
+        hourly_rate: profile.hourly_rate || 0,
+        booking_link: profile.booking_link || '',
+        phone: profile.phone || '',
+        contact_email: profile.contact_email || '',
+        instagram_handle: profile.instagram_handle || '',
+        tiktok_handle: profile.tiktok_handle || ''
       })
     }
     setIsEditing(false)
   }
   
-  const addSpecialty = (specialty: string) => {
-    if (specialty && !formData.specialties.includes(specialty)) {
-      setFormData(prev => ({
-        ...prev,
-        specialties: [...prev.specialties, specialty]
-      }))
-    }
-  }
-  
-  const removeSpecialty = (specialty: string) => {
+  const setSpecialty = (specialty: string) => {
     setFormData(prev => ({
       ...prev,
-      specialties: prev.specialties.filter(s => s !== specialty)
+      specialties: specialty
     }))
   }
   
@@ -145,16 +173,6 @@ export function StylistDashboard() {
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   {profile.is_verified ? "Verified Profile" : "Active Profile"}
                 </Badge>
-                {getSpecialties().slice(0, 2).map((specialty) => (
-                  <Badge key={specialty} variant="secondary" className="bg-blue-100 text-blue-800">
-                    {specialty} Specialist
-                  </Badge>
-                ))}
-                {getSpecialties().length > 2 && (
-                  <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                    +{getSpecialties().length - 2} more
-                  </Badge>
-                )}
               </div>
             </div>
             <div className="mt-4">
@@ -190,121 +208,196 @@ export function StylistDashboard() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Profile Photo */}
-            <div className="flex items-center justify-between">
+          <CardContent className="space-y-8">
+            {/* 1. LOGO SECTION */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Logo</h3>
               <div className="flex items-center space-x-4">
                 <Avatar className="w-16 h-16">
                   <AvatarImage src={`/placeholder.svg?height=100&width=100&text=${encodeURIComponent(getBusinessName())}`} />
                   <AvatarFallback>{getBusinessName().split(" ").map((n) => n[0]).join("")}</AvatarFallback>
                 </Avatar>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{getBusinessName()}</h3>
-                  <p className="text-gray-600">{getLocation()}</p>
-                  <p className="text-sm text-gray-500">Professional Stylist</p>
+                <div className="flex flex-col">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-sm mb-2"
+                    onClick={() => {
+                      // Placeholder function - will be implemented when connected to file upload
+                      console.log('Change photo clicked');
+                    }}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Change Photo
+                  </Button>
+                  <p className="text-xs text-gray-400">JPG, PNG or GIF. Max 5MB.</p>
                 </div>
               </div>
             </div>
 
-            {/* Business Name */}
+            {/* 2. BASIC INFORMATION SECTION */}
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Business Name</h4>
-              {isEditing ? (
-                <Input
-                  value={formData.business_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
-                  placeholder="Your business name"
-                />
-              ) : (
-                <p className="text-gray-700">{getBusinessName()}</p>
-              )}
-            </div>
-
-            {/* Location */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Location</h4>
-              {isEditing ? (
-                <Input
-                  value={formData.location}
-                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Your location"
-                />
-              ) : (
-                <p className="text-gray-700">{getLocation()}</p>
-              )}
-            </div>
-
-            {/* Bio */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Bio</h4>
-              {isEditing ? (
-                <Textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder="Tell clients about yourself and your services..."
-                  rows={4}
-                />
-              ) : (
-                <p className="text-gray-700">{getBio()}</p>
-              )}
-            </div>
-
-            {/* Specialties */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Specialties</h4>
-              {isEditing ? (
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {formData.specialties.map((specialty) => (
-                      <Badge key={specialty} variant="secondary" className="flex items-center gap-1">
-                        {specialty}
-                        <button 
-                          onClick={() => removeSpecialty(specialty)}
-                          className="ml-1 text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Basic Information</h3>
+              <div className="space-y-5">
+                {/* Business Name */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Business Name</label>
+                  {isEditing ? (
                     <Input
-                      placeholder="Add specialty (e.g., Braids, Locs, etc.)"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          addSpecialty(e.currentTarget.value)
-                          e.currentTarget.value = ''
-                        }
-                      }}
+                      value={formData.business_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
+                      placeholder="Your business name"
                     />
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={(e) => {
-                        const input = e.currentTarget.previousElementSibling as HTMLInputElement
-                        if (input.value) {
-                          addSpecialty(input.value)
-                          input.value = ''
-                        }
-                      }}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {getSpecialties().length > 0 ? (
-                    getSpecialties().map((specialty) => (
-                      <Badge key={specialty} variant="secondary">
-                        {specialty}
-                      </Badge>
-                    ))
                   ) : (
-                    <p className="text-gray-500 text-sm">No specialties added yet. Click "Edit Profile" to add some!</p>
+                    <p className="text-gray-900 font-medium">{getBusinessName()}</p>
                   )}
                 </div>
-              )}
+
+                {/* Location */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Location</label>
+                  {isEditing ? (
+                    <Input
+                      value={formData.location}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      placeholder="Your location"
+                    />
+                  ) : (
+                    <p className="text-gray-900 font-medium">{getLocation()}</p>
+                  )}
+                </div>
+
+                {/* Specialties */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Specialty</label>
+                  {isEditing ? (
+                    <Select
+                      value={formData.specialties}
+                      onValueChange={setSpecialty}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your specialty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SPECIALTY_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-gray-900 font-medium">
+                      {formData.specialties || 'No specialty selected'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Bio</label>
+                  {isEditing ? (
+                    <Textarea
+                      value={formData.bio}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                      placeholder="Tell clients about yourself and your services..."
+                      rows={4}
+                      className="resize-none"
+                    />
+                  ) : (
+                    <p className="text-gray-700 leading-relaxed">{getBio()}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. CONTACT DETAILS SECTION */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Contact Details</h3>
+              <div className="space-y-5">
+                {/* Booking Link */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Booking Link</label>
+                  {isEditing ? (
+                    <Input
+                      value={formData.booking_link}
+                      onChange={(e) => setFormData(prev => ({ ...prev, booking_link: e.target.value }))}
+                      placeholder="https://your-booking-site.com"
+                      type="url"
+                    />
+                  ) : (
+                    <p className="text-gray-700">
+                      {profile.booking_link || 'No booking link added'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Phone Number</label>
+                  {isEditing ? (
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="Your phone number"
+                      type="tel"
+                    />
+                  ) : (
+                    <p className="text-gray-700">
+                      {profile.phone || 'No phone number added'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Contact Email */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Contact Email</label>
+                  {isEditing ? (
+                    <Input
+                      value={formData.contact_email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
+                      placeholder="contact@yourbusiness.com"
+                      type="email"
+                    />
+                  ) : (
+                    <p className="text-gray-700">
+                      {profile.contact_email || 'No contact email added'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Instagram Handle */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Instagram</label>
+                  {isEditing ? (
+                    <Input
+                      value={formData.instagram_handle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, instagram_handle: e.target.value }))}
+                      placeholder="@yourusername"
+                    />
+                  ) : (
+                    <p className="text-gray-700">
+                      {profile.instagram_handle || 'No Instagram handle added'}
+                    </p>
+                  )}
+                </div>
+
+                {/* TikTok Handle */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">TikTok</label>
+                  {isEditing ? (
+                    <Input
+                      value={formData.tiktok_handle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tiktok_handle: e.target.value }))}
+                      placeholder="@yourusername"
+                    />
+                  ) : (
+                    <p className="text-gray-700">
+                      {profile.tiktok_handle || 'No TikTok handle added'}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Experience and Rate */}
