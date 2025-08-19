@@ -18,6 +18,7 @@ interface ProfileUpdateData {
   contact_email?: string
   instagram_handle?: string
   tiktok_handle?: string
+  portfolio_images?: string[]
 }
 
 export function useStylistProfileEditor() {
@@ -94,7 +95,8 @@ export function useStylistProfileEditor() {
             phone: data.phone,
             contact_email: data.contact_email,
             instagram_handle: data.instagram_handle,
-            tiktok_handle: data.tiktok_handle
+            tiktok_handle: data.tiktok_handle,
+            portfolio_images: data.portfolio_images || []
           }
 
           setProfile(transformedData)
@@ -244,7 +246,8 @@ export function useStylistProfileEditor() {
           phone: data.phone,
           contact_email: data.contact_email,
           instagram_handle: data.instagram_handle,
-          tiktok_handle: data.tiktok_handle
+          tiktok_handle: data.tiktok_handle,
+          portfolio_images: data.portfolio_images || []
         }
 
         setProfile(transformedData)
@@ -257,12 +260,54 @@ export function useStylistProfileEditor() {
     }
   }
 
+  const updatePortfolioImages = async (portfolioImages: string[]) => {
+    console.log('🔍 [PROFILE-EDITOR] updatePortfolioImages called with:', portfolioImages.length, 'images')
+    console.log('🔍 [PROFILE-EDITOR] Current user for portfolio update:', user?.id)
+    
+    if (!user?.id) {
+      console.log('❌ [PROFILE-EDITOR] User not authenticated for portfolio update')
+      throw new Error('Cannot update portfolio images: user not authenticated')
+    }
+
+    try {
+      console.log('🔍 [PROFILE-EDITOR] Updating portfolio images directly...')
+      
+      const { data, error } = await supabase
+        .from('stylist_profiles')
+        .update({ portfolio_images: portfolioImages })
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.log('❌ [PROFILE-EDITOR] Portfolio images update failed:', error.message)
+        throw error
+      }
+
+      if (data) {
+        console.log('✅ [PROFILE-EDITOR] Portfolio images updated successfully!')
+        // Update local state immediately
+        setProfile(prev => prev ? { ...prev, portfolio_images: portfolioImages } : prev)
+        return data
+      }
+
+      throw new Error('Portfolio images update failed - no data returned')
+      
+    } catch (err) {
+      console.log('❌ [PROFILE-EDITOR] Portfolio images update failed:', err?.message)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update portfolio images'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    }
+  }
+
   return {
     profile,
     loading,
     saving,
     error,
     updateProfile,
+    updatePortfolioImages,
     refreshProfile
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save } from "lucide-react"
+import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
+import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 
 const SPECIALTY_CATEGORIES = [
   "Wigs & Weaves",
@@ -30,8 +31,11 @@ const SPECIALTY_CATEGORIES = [
 
 export function StylistDashboard() {
   const { user } = useAuth()
-  const { profile, loading, saving, error, updateProfile } = useStylistProfileEditor()
+  const { profile, loading, saving, error, updateProfile, updatePortfolioImages } = useStylistProfileEditor()
+  const { uploadFiles, deleteImage, uploadProgress, isUploading, error: uploadError } = usePortfolioUpload()
   const [isEditing, setIsEditing] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Form state for editing
   const [formData, setFormData] = useState({
@@ -110,6 +114,86 @@ export function StylistDashboard() {
       specialties: specialty
     }))
   }
+
+  // Image upload handlers
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files && files.length > 0) {
+      handleImageUpload(files)
+    }
+  }, [])
+
+  const handleImageUpload = useCallback(async (files: FileList | File[]) => {
+    try {
+      console.log('🔍 [DASHBOARD] handleImageUpload called with', files.length, 'files')
+      console.log('🔍 [DASHBOARD] Current user:', user?.id)
+      console.log('🔍 [DASHBOARD] Current profile loaded:', !!profile)
+      
+      const currentImages = profile?.portfolio_images || []
+      const totalImages = currentImages.length + files.length
+      
+      if (totalImages > 20) {
+        alert(`Cannot upload ${files.length} images. Maximum 20 images allowed. You currently have ${currentImages.length} images.`)
+        return
+      }
+
+      console.log('🔍 [DASHBOARD] Starting file upload...')
+      const uploadedUrls = await uploadFiles(files)
+      console.log('🔍 [DASHBOARD] Files uploaded successfully:', uploadedUrls.length, 'URLs')
+      
+      if (uploadedUrls.length > 0) {
+        const updatedImages = [...currentImages, ...uploadedUrls]
+        console.log('🔍 [DASHBOARD] Updating portfolio images in database...')
+        await updatePortfolioImages(updatedImages)
+        console.log('✅ [DASHBOARD] Portfolio images updated successfully!')
+      }
+    } catch (err) {
+      console.error('❌ [DASHBOARD] Upload failed:', err)
+    }
+  }, [profile?.portfolio_images, uploadFiles, updatePortfolioImages, user?.id, profile])
+
+  const handleImageDelete = useCallback(async (imageUrl: string, index: number) => {
+    if (!profile?.portfolio_images) return
+    
+    try {
+      console.log('🔍 [DASHBOARD] Deleting image:', imageUrl)
+      await deleteImage(imageUrl)
+      const updatedImages = profile.portfolio_images.filter((_, i) => i !== index)
+      console.log('🔍 [DASHBOARD] Updating portfolio after deletion...')
+      await updatePortfolioImages(updatedImages)
+      console.log('✅ [DASHBOARD] Image deleted successfully!')
+    } catch (err) {
+      console.error('❌ [DASHBOARD] Delete failed:', err)
+    }
+  }, [profile?.portfolio_images, deleteImage, updatePortfolioImages])
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = Array.from(e.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    )
+    
+    if (files.length > 0) {
+      handleImageUpload(files)
+    }
+  }, [handleImageUpload])
+
+  const triggerFileSelect = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
   
   if (loading) {
     return (
@@ -467,45 +551,133 @@ export function StylistDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Current Gallery */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Current Gallery</h4>
-              <div className="grid grid-cols-3 gap-3">
-                {/* Placeholder images - will be replaced with real images later */}
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="relative group aspect-square rounded-lg overflow-hidden">
-                    <img 
-                      src={`/placeholder.svg?height=200&width=200&text=Image+${index + 1}`}
-                      alt={`Gallery image ${index + 1}`}
-                      className="w-full h-full object-cover bg-gray-200"
-                    />
-                    {/* Delete button on hover */}
-                    <button 
-                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700"
-                      onClick={() => {
-                        // Placeholder function - will be implemented when connected to database
-                        console.log(`Delete image ${index + 1}`);
-                      }}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+            {/* Upload Progress */}
+            {uploadProgress.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-semibold text-gray-900">Upload Progress</h4>
+                {uploadProgress.map((progress, index) => (
+                  <div key={index} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium truncate max-w-48">{progress.file.name}</span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        progress.status === 'success' ? 'bg-green-100 text-green-800' :
+                        progress.status === 'error' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {progress.status === 'success' ? 'Complete' :
+                         progress.status === 'error' ? 'Failed' :
+                         'Uploading'}
+                      </span>
+                    </div>
+                    {progress.status === 'uploading' && (
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${progress.progress}%` }}
+                        />
+                      </div>
+                    )}
+                    {progress.status === 'error' && progress.error && (
+                      <p className="text-xs text-red-600 mt-1">{progress.error}</p>
+                    )}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Upload Errors */}
+            {uploadError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
+                <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-800">{uploadError}</p>
+              </div>
+            )}
+
+            {/* Current Gallery */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">
+                Current Gallery ({profile?.portfolio_images?.length || 0}/20)
+              </h4>
+              <div className="grid grid-cols-3 gap-3">
+                {profile?.portfolio_images?.length ? (
+                  profile.portfolio_images.map((imageUrl, index) => (
+                    <div key={index} className="relative group aspect-square rounded-lg overflow-hidden">
+                      <img 
+                        src={imageUrl}
+                        alt={`Gallery image ${index + 1}`}
+                        className="w-full h-full object-cover bg-gray-200"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = `/placeholder.svg?height=200&width=200&text=Error`
+                        }}
+                      />
+                      {/* Delete button on hover */}
+                      <button 
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700"
+                        onClick={() => handleImageDelete(imageUrl, index)}
+                        disabled={isUploading || saving}
+                        title="Delete image"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-8 text-gray-500">
+                    <Upload className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">No images uploaded yet</p>
+                    <p className="text-xs">Start building your portfolio by uploading images below</p>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Add New Images */}
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">Add New Images</h4>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <div 
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                  isDragOver 
+                    ? 'border-red-400 bg-red-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={triggerFileSelect}
+              >
+                <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragOver ? 'text-red-500' : 'text-gray-400'}`} />
                 <h5 className="text-sm font-medium text-gray-900 mb-1">Upload Gallery Images</h5>
-                <p className="text-xs text-gray-500 mb-3">Drag and drop your images here, or click to browse</p>
-                <Button variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
-                  Choose Files
+                <p className="text-xs text-gray-500 mb-3">
+                  {isDragOver ? 'Drop your images here' : 'Drag and drop your images here, or click to browse'}
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                  disabled={isUploading || saving || (profile?.portfolio_images?.length || 0) >= 20}
+                  type="button"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    'Choose Files'
+                  )}
                 </Button>
                 <p className="text-xs text-gray-400 mt-2">JPG, PNG or GIF. Max 5MB per image. Up to 20 images.</p>
               </div>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/jpeg,image/jpg,image/png,image/gif"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
 
             {/* Gallery Tips */}

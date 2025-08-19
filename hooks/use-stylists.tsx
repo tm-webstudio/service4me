@@ -21,6 +21,7 @@ export interface StylistProfile {
   contact_email?: string
   instagram_handle?: string
   tiktok_handle?: string
+  portfolio_images?: string[]
 }
 
 export function useStylists() {
@@ -62,7 +63,8 @@ export function useStylists() {
               phone: stylist.phone,
               contact_email: stylist.contact_email,
               instagram_handle: stylist.instagram_handle,
-              tiktok_handle: stylist.tiktok_handle
+              tiktok_handle: stylist.tiktok_handle,
+              portfolio_images: stylist.portfolio_images || []
             }))
             
             setStylists(transformedData)
@@ -115,7 +117,8 @@ export function useStylists() {
             phone: stylist.phone,
             contact_email: stylist.contact_email,
             instagram_handle: stylist.instagram_handle,
-            tiktok_handle: stylist.tiktok_handle
+            tiktok_handle: stylist.tiktok_handle,
+            portfolio_images: stylist.portfolio_images || []
           }))
 
           setStylists(transformedData)

@@ -27,9 +27,14 @@ export function FeaturedStylists() {
     return `${specialties[0]} Specialist`
   }
 
-  // Helper function to get placeholder image with business name
-  const getPlaceholderImage = (businessName: string) => {
-    const encodedName = encodeURIComponent(businessName)
+  // Helper function to get stylist image (portfolio or placeholder)
+  const getStylistImage = (stylist: StylistProfile) => {
+    // If portfolio images exist, use the first one
+    if (stylist.portfolio_images && stylist.portfolio_images.length > 0) {
+      return stylist.portfolio_images[0]
+    }
+    // Otherwise use placeholder with business name
+    const encodedName = encodeURIComponent(stylist.business_name || "Hair Studio")
     return `/placeholder.svg?height=300&width=300&text=${encodedName}`
   }
 
@@ -155,7 +160,7 @@ export function FeaturedStylists() {
                         <CardContent className="p-0 h-full">
                           <div className="relative aspect-square md:aspect-[4/3]">
                             <img
-                              src={getPlaceholderImage(businessName)}
+                              src={getStylistImage(stylist)}
                               alt={businessName}
                               className="w-full h-full object-cover rounded-t-lg"
                             />

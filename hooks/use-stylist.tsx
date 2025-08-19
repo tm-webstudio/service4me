@@ -50,7 +50,8 @@ export function useStylist(id: string) {
               phone: apiData.data.phone,
               contact_email: apiData.data.contact_email,
               instagram_handle: apiData.data.instagram_handle,
-              tiktok_handle: apiData.data.tiktok_handle
+              tiktok_handle: apiData.data.tiktok_handle,
+              portfolio_images: apiData.data.portfolio_images || []
             }
             
             setStylist(transformedData)
@@ -104,7 +105,8 @@ export function useStylist(id: string) {
             phone: data.phone,
             contact_email: data.contact_email,
             instagram_handle: data.instagram_handle,
-            tiktok_handle: data.tiktok_handle
+            tiktok_handle: data.tiktok_handle,
+            portfolio_images: data.portfolio_images || []
           }
 
           setStylist(transformedData)

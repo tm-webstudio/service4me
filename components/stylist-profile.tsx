@@ -268,8 +268,16 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
     ]
   }
 
-  // Placeholder portfolio images
+  // Portfolio images from database
   const getPortfolio = () => {
+    const portfolioImages = stylist.portfolio_images || []
+    
+    // If there are real portfolio images, use them
+    if (portfolioImages.length > 0) {
+      return portfolioImages
+    }
+    
+    // Fallback to placeholder images if no portfolio images
     const businessName = getBusinessName()
     return Array(8).fill(0).map((_, i) => 
       `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(businessName)}`
