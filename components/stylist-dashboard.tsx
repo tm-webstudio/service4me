@@ -35,6 +35,8 @@ export function StylistDashboard() {
   const { uploadFiles, deleteImage, uploadProgress, isUploading, error: uploadError } = usePortfolioUpload()
   const [isEditing, setIsEditing] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
+  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Form state for editing
@@ -120,6 +122,10 @@ export function StylistDashboard() {
     const files = event.target.files
     if (files && files.length > 0) {
       handleImageUpload(files)
+      // Reset the file input so users can select the same files again if needed
+      if (event.target) {
+        event.target.value = ''
+      }
     }
   }, [])
 
@@ -192,7 +198,68 @@ export function StylistDashboard() {
   }, [handleImageUpload])
 
   const triggerFileSelect = useCallback(() => {
-    fileInputRef.current?.click()
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    }
+  }, [])
+
+  // Ensure multiple attribute is properly set
+  useEffect(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute('multiple', 'true')
+    }
+  }, [profile])
+
+  // Gallery reorder handlers
+  const handleImageDragStart = useCallback((e: React.DragEvent, index: number) => {
+    setDraggedImageIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', index.toString())
+  }, [])
+
+  const handleImageDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverImageIndex(index)
+  }, [])
+
+  const handleImageDragLeave = useCallback(() => {
+    setDragOverImageIndex(null)
+  }, [])
+
+  const handleImageDrop = useCallback(async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    setDragOverImageIndex(null)
+    
+    if (draggedImageIndex === null || draggedImageIndex === dropIndex || !profile?.portfolio_images) {
+      setDraggedImageIndex(null)
+      return
+    }
+
+    try {
+      const images = [...profile.portfolio_images]
+      const draggedImage = images[draggedImageIndex]
+      
+      // Remove the dragged image from its original position
+      images.splice(draggedImageIndex, 1)
+      
+      // Insert at new position (adjust index if needed)
+      const adjustedDropIndex = draggedImageIndex < dropIndex ? dropIndex - 1 : dropIndex
+      images.splice(adjustedDropIndex, 0, draggedImage)
+      
+      console.log('🔄 [DASHBOARD] Reordering images:', { from: draggedImageIndex, to: dropIndex })
+      await updatePortfolioImages(images)
+      console.log('✅ [DASHBOARD] Gallery order updated successfully')
+    } catch (err) {
+      console.error('❌ [DASHBOARD] Failed to reorder images:', err)
+    } finally {
+      setDraggedImageIndex(null)
+    }
+  }, [draggedImageIndex, profile?.portfolio_images, updatePortfolioImages])
+
+  const handleImageDragEnd = useCallback(() => {
+    setDraggedImageIndex(null)
+    setDragOverImageIndex(null)
   }, [])
   
   if (loading) {
@@ -595,17 +662,36 @@ export function StylistDashboard() {
 
             {/* Current Gallery */}
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">
-                Current Gallery ({profile?.portfolio_images?.length || 0}/20)
-              </h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900">
+                  Current Gallery ({profile?.portfolio_images?.length || 0}/20)
+                </h4>
+                {profile?.portfolio_images?.length ? (
+                  <p className="text-xs text-gray-500">Drag images to reorder</p>
+                ) : null}
+              </div>
               <div className="grid grid-cols-3 gap-3">
                 {profile?.portfolio_images?.length ? (
                   profile.portfolio_images.map((imageUrl, index) => (
-                    <div key={index} className="relative group aspect-square rounded-lg overflow-hidden">
+                    <div 
+                      key={`${imageUrl}-${index}`} 
+                      className={`relative group aspect-square rounded-lg overflow-hidden cursor-move transition-all duration-200 ${
+                        draggedImageIndex === index ? 'opacity-50 scale-95' : ''
+                      } ${
+                        dragOverImageIndex === index ? 'ring-2 ring-red-400 scale-105' : ''
+                      }`}
+                      draggable
+                      onDragStart={(e) => handleImageDragStart(e, index)}
+                      onDragOver={(e) => handleImageDragOver(e, index)}
+                      onDragLeave={handleImageDragLeave}
+                      onDrop={(e) => handleImageDrop(e, index)}
+                      onDragEnd={handleImageDragEnd}
+                      title="Drag to reorder"
+                    >
                       <img 
                         src={imageUrl}
                         alt={`Gallery image ${index + 1}`}
-                        className="w-full h-full object-cover bg-gray-200"
+                        className="w-full h-full object-cover bg-gray-200 pointer-events-none"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.src = `/placeholder.svg?height=200&width=200&text=Error`
@@ -613,13 +699,20 @@ export function StylistDashboard() {
                       />
                       {/* Delete button on hover */}
                       <button 
-                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700"
-                        onClick={() => handleImageDelete(imageUrl, index)}
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700 z-10"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleImageDelete(imageUrl, index)
+                        }}
                         disabled={isUploading || saving}
                         title="Delete image"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
+                      {/* Drag handle indicator */}
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        #{index + 1}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -635,8 +728,10 @@ export function StylistDashboard() {
             {/* Add New Images */}
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">Add New Images</h4>
+              
+              {/* Drag and drop area - separate from button */}
               <div 
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                   isDragOver 
                     ? 'border-red-400 bg-red-50' 
                     : 'border-gray-300 hover:border-gray-400'
@@ -644,18 +739,23 @@ export function StylistDashboard() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={triggerFileSelect}
               >
                 <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragOver ? 'text-red-500' : 'text-gray-400'}`} />
                 <h5 className="text-sm font-medium text-gray-900 mb-1">Upload Gallery Images</h5>
                 <p className="text-xs text-gray-500 mb-3">
-                  {isDragOver ? 'Drop your images here' : 'Drag and drop your images here, or click to browse'}
+                  {isDragOver ? 'Drop your images here' : 'Drag and drop images here or use the button below'}
                 </p>
-                <Button 
-                  variant="outline" 
-                  className="text-red-600 border-red-600 hover:bg-red-50"
-                  disabled={isUploading || saving || (profile?.portfolio_images?.length || 0) >= 20}
-                  type="button"
+              </div>
+              
+              {/* Button outside the drag area to prevent conflicts */}
+              <div className="mt-4 text-center">
+                <label 
+                  htmlFor="portfolio-file-input"
+                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-red-600 border-red-600 hover:bg-red-50 cursor-pointer ${
+                    (isUploading || saving || (profile?.portfolio_images?.length || 0) >= 20) 
+                      ? 'opacity-50 cursor-not-allowed pointer-events-none' 
+                      : ''
+                  }`}
                 >
                   {isUploading ? (
                     <>
@@ -663,20 +763,24 @@ export function StylistDashboard() {
                       Uploading...
                     </>
                   ) : (
-                    'Choose Files'
+                    'Choose Multiple Files'
                   )}
-                </Button>
-                <p className="text-xs text-gray-400 mt-2">JPG, PNG or GIF. Max 5MB per image. Up to 20 images.</p>
+                </label>
+                <p className="text-xs text-gray-400 mt-2">
+                  <span className="font-medium text-gray-600">Tip:</span> Hold Ctrl (Windows) or Cmd (Mac) to select multiple files at once.<br/>
+                  JPG, PNG or GIF. Max 5MB per image. Up to 20 images total.
+                </p>
               </div>
               
               {/* Hidden file input */}
               <input
+                id="portfolio-file-input"
                 ref={fileInputRef}
                 type="file"
-                multiple
                 accept="image/jpeg,image/jpg,image/png,image/gif"
                 onChange={handleFileSelect}
-                className="hidden"
+                style={{ display: 'none' }}
+                multiple
               />
             </div>
 

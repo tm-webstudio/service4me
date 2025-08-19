@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import {
   Star,
   MapPin,
@@ -327,7 +327,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Desktop Gallery Grid */}
             <div className="hidden md:block">
               <div className="grid grid-cols-4 gap-2">
-                <div className="col-span-2 row-span-2">
+                <div className="col-span-2 row-span-2 aspect-square">
                   <img
                     src={displayData.portfolio[0] || "/placeholder.svg"}
                     alt="Portfolio 1"
@@ -335,7 +335,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     onClick={() => openGallery(0)}
                   />
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-1 aspect-square">
                   <img
                     src={displayData.portfolio[1] || "/placeholder.svg"}
                     alt="Portfolio 2"
@@ -343,7 +343,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     onClick={() => openGallery(1)}
                   />
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-1 aspect-square">
                   <img
                     src={displayData.portfolio[2] || "/placeholder.svg"}
                     alt="Portfolio 3"
@@ -351,7 +351,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     onClick={() => openGallery(2)}
                   />
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-1 aspect-square">
                   <img
                     src={displayData.portfolio[3] || "/placeholder.svg"}
                     alt="Portfolio 4"
@@ -359,7 +359,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     onClick={() => openGallery(3)}
                   />
                 </div>
-                <div className="col-span-1 relative">
+                <div className="col-span-1 aspect-square relative">
                   <img
                     src={displayData.portfolio[4] || "/placeholder.svg"}
                     alt="Portfolio 5"
@@ -380,7 +380,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Mobile Slideshow */}
             <div className="md:hidden relative">
               <div
-                className="relative h-64 rounded-lg overflow-hidden"
+                className="relative aspect-square rounded-lg overflow-hidden"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -630,6 +630,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
       {/* Gallery Modal */}
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <DialogTitle className="sr-only">Portfolio Gallery</DialogTitle>
           <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
             <Button
               variant="ghost"
