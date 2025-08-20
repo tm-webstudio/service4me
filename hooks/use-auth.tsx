@@ -135,7 +135,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        // Handle refresh token errors gracefully
+        if (error) {
+          console.warn('⚠️ [AUTH] Session error:', error.message)
+          if (error.message?.includes('Refresh Token Not Found') || 
+              error.message?.includes('Invalid Refresh Token')) {
+            // Clear any stored session data and proceed as unauthenticated
+            setSession(null)
+            setUser(null)
+            setUserProfile(null)
+            setLoading(false)
+            return
+          }
+          throw error
+        }
+        
         setSession(session)
         setUser(session?.user ?? null)
         
@@ -148,6 +164,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
       } catch (error) {
         console.error('Error getting session:', error)
+        // Clear all auth state on any error to prevent stuck loading states
+        setSession(null)
+        setUser(null)
+        setUserProfile(null)
         setLoading(false)
       }
     }
@@ -160,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           console.log('🔍 [AUTH] Auth state change event:', event)
           
-          if (event === 'SIGNED_OUT') {
+          if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED') {
             setSession(null)
             setUser(null)
             setUserProfile(null)
@@ -184,6 +204,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           console.error('Error in auth state change:', error)
+          // Clear auth state on any error during state change
+          setSession(null)
+          setUser(null)
+          setUserProfile(null)
           setLoading(false)
         }
       }
@@ -278,15 +302,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      // Sign out from Supabase - this will trigger the auth state change listener
-      const { error } = await supabase.auth.signOut()
+      // Check if there's an active session before attempting signOut
+      const { data: { session } } = await supabase.auth.getSession()
       
-      if (error) {
-        // If signOut fails, manually clear state
+      if (session) {
+        // Sign out from Supabase - this will trigger the auth state change listener
+        const { error } = await supabase.auth.signOut()
+        
+        if (error) {
+          console.warn('⚠️ [AUTH] SignOut error:', error.message)
+          // If signOut fails, manually clear state
+          setUser(null)
+          setUserProfile(null)
+          setSession(null)
+          return
+        }
+      } else {
+        // No active session, just clear local state
+        console.log('🔍 [AUTH] No active session, clearing local state only')
         setUser(null)
         setUserProfile(null)
         setSession(null)
-        throw error
+        return
       }
     } catch (error) {
       console.error('Signout error:', error)

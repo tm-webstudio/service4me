@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle, Clock, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
@@ -38,6 +39,37 @@ export function StylistDashboard() {
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
   const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Services state
+  const [services, setServices] = useState([
+    {
+      id: '1',
+      name: 'Box Braids',
+      description: 'Traditional box braids with high-quality synthetic or human hair',
+      price: 120,
+      duration: 180, // minutes
+      image: '/placeholder.svg?height=200&width=300&text=Box+Braids'
+    },
+    {
+      id: '2', 
+      name: 'Knotless Braids',
+      description: 'Protective knotless braids for natural hair health',
+      price: 150,
+      duration: 240,
+      image: '/placeholder.svg?height=200&width=300&text=Knotless+Braids'
+    }
+  ])
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+  const [editingService, setEditingService] = useState(null)
+  const [serviceForm, setServiceForm] = useState({
+    name: '',
+    price: 0,
+    duration: 60,
+    image: ''
+  })
+  const [serviceImageFile, setServiceImageFile] = useState<File | null>(null)
+  const [serviceImagePreview, setServiceImagePreview] = useState<string>('')
+  const serviceImageInputRef = useRef<HTMLInputElement>(null)
   
   // Form state for editing
   const [formData, setFormData] = useState({
@@ -131,10 +163,6 @@ export function StylistDashboard() {
 
   const handleImageUpload = useCallback(async (files: FileList | File[]) => {
     try {
-      console.log('🔍 [DASHBOARD] handleImageUpload called with', files.length, 'files')
-      console.log('🔍 [DASHBOARD] Current user:', user?.id)
-      console.log('🔍 [DASHBOARD] Current profile loaded:', !!profile)
-      
       const currentImages = profile?.portfolio_images || []
       const totalImages = currentImages.length + files.length
       
@@ -143,20 +171,16 @@ export function StylistDashboard() {
         return
       }
 
-      console.log('🔍 [DASHBOARD] Starting file upload...')
       const uploadedUrls = await uploadFiles(files)
-      console.log('🔍 [DASHBOARD] Files uploaded successfully:', uploadedUrls.length, 'URLs')
       
       if (uploadedUrls.length > 0) {
         const updatedImages = [...currentImages, ...uploadedUrls]
-        console.log('🔍 [DASHBOARD] Updating portfolio images in database...')
         await updatePortfolioImages(updatedImages)
-        console.log('✅ [DASHBOARD] Portfolio images updated successfully!')
       }
     } catch (err) {
-      console.error('❌ [DASHBOARD] Upload failed:', err)
+      console.error('Upload failed:', err)
     }
-  }, [profile?.portfolio_images, uploadFiles, updatePortfolioImages, user?.id, profile])
+  }, [profile?.portfolio_images, uploadFiles, updatePortfolioImages])
 
   const handleImageDelete = useCallback(async (imageUrl: string, index: number) => {
     if (!profile?.portfolio_images) return
@@ -203,10 +227,18 @@ export function StylistDashboard() {
     }
   }, [])
 
-  // Ensure multiple attribute is properly set
+  // Ensure file input is properly configured
   useEffect(() => {
     if (fileInputRef.current) {
-      fileInputRef.current.setAttribute('multiple', 'true')
+      const input = fileInputRef.current
+      // Force set attributes to ensure Chrome compatibility
+      input.setAttribute('multiple', 'true')
+      input.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/gif')
+      
+      // Add a small delay to ensure DOM is fully ready
+      setTimeout(() => {
+        console.log('🔍 [DASHBOARD] File input configured - multiple:', input.multiple, 'accept:', input.accept)
+      }, 100)
     }
   }, [profile])
 
@@ -261,6 +293,88 @@ export function StylistDashboard() {
     setDraggedImageIndex(null)
     setDragOverImageIndex(null)
   }, [])
+
+  // Service management functions
+  const openAddServiceModal = () => {
+    setEditingService(null)
+    setServiceForm({
+      name: '',
+      price: 0,
+      duration: 60,
+      image: ''
+    })
+    setServiceImageFile(null)
+    setServiceImagePreview('')
+    setIsServiceModalOpen(true)
+  }
+
+  const openEditServiceModal = (service) => {
+    setEditingService(service)
+    setServiceForm({
+      name: service.name,
+      price: service.price,
+      duration: service.duration,
+      image: service.image
+    })
+    setServiceImageFile(null)
+    setServiceImagePreview(service.image || '')
+    setIsServiceModalOpen(true)
+  }
+
+  const handleServiceImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setServiceImageFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setServiceImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const triggerServiceImageSelect = () => {
+    serviceImageInputRef.current?.click()
+  }
+
+  const handleSaveService = () => {
+    // Use preview image URL if available, otherwise keep existing image
+    const imageUrl = serviceImagePreview || serviceForm.image
+    
+    if (editingService) {
+      // Update existing service
+      setServices(prev => prev.map(service => 
+        service.id === editingService.id 
+          ? { ...editingService, ...serviceForm, image: imageUrl }
+          : service
+      ))
+    } else {
+      // Add new service
+      const newService = {
+        id: Date.now().toString(),
+        ...serviceForm,
+        image: imageUrl
+      }
+      setServices(prev => [...prev, newService])
+    }
+    setIsServiceModalOpen(false)
+  }
+
+  const handleDeleteService = (serviceId) => {
+    setServices(prev => prev.filter(service => service.id !== serviceId))
+  }
+
+  const formatDuration = (minutes) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (hours > 0 && mins > 0) {
+      return `${hours}h ${mins}m`
+    } else if (hours > 0) {
+      return `${hours}h`
+    } else {
+      return `${mins}m`
+    }
+  }
   
   if (loading) {
     return (
@@ -729,9 +843,9 @@ export function StylistDashboard() {
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">Add New Images</h4>
               
-              {/* Drag and drop area - separate from button */}
+              {/* Unified drag and drop area with button inside */}
               <div 
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   isDragOver 
                     ? 'border-red-400 bg-red-50' 
                     : 'border-gray-300 hover:border-gray-400'
@@ -740,18 +854,21 @@ export function StylistDashboard() {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragOver ? 'text-red-500' : 'text-gray-400'}`} />
-                <h5 className="text-sm font-medium text-gray-900 mb-1">Upload Gallery Images</h5>
-                <p className="text-xs text-gray-500 mb-3">
-                  {isDragOver ? 'Drop your images here' : 'Drag and drop images here or use the button below'}
+                <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragOver ? 'text-red-500' : 'text-gray-400'}`} />
+                <h5 className="text-lg font-medium text-gray-900 mb-2">
+                  {isDragOver ? 'Drop your images here' : 'Upload Gallery Images'}
+                </h5>
+                <p className="text-sm text-gray-500 mb-4">
+                  {isDragOver 
+                    ? 'Release to upload your images' 
+                    : 'Drag and drop images here, or click the button below'
+                  }
                 </p>
-              </div>
-              
-              {/* Button outside the drag area to prevent conflicts */}
-              <div className="mt-4 text-center">
+                
+                {/* Clean file upload button */}
                 <label 
                   htmlFor="portfolio-file-input"
-                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-red-600 border-red-600 hover:bg-red-50 cursor-pointer ${
+                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 py-2 text-red-600 border-red-600 hover:bg-red-50 cursor-pointer ${
                     (isUploading || saving || (profile?.portfolio_images?.length || 0) >= 20) 
                       ? 'opacity-50 cursor-not-allowed pointer-events-none' 
                       : ''
@@ -763,16 +880,20 @@ export function StylistDashboard() {
                       Uploading...
                     </>
                   ) : (
-                    'Choose Multiple Files'
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Choose Files
+                    </>
                   )}
                 </label>
-                <p className="text-xs text-gray-400 mt-2">
+                
+                <p className="text-xs text-gray-400 mt-3">
                   <span className="font-medium text-gray-600">Tip:</span> Hold Ctrl (Windows) or Cmd (Mac) to select multiple files at once.<br/>
                   JPG, PNG or GIF. Max 5MB per image. Up to 20 images total.
                 </p>
               </div>
               
-              {/* Hidden file input */}
+              {/* Clean hidden file input */}
               <input
                 id="portfolio-file-input"
                 ref={fileInputRef}
@@ -799,20 +920,203 @@ export function StylistDashboard() {
       </div>
 
 
-      {/* Services placeholder */}
+      {/* Services Management */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Scissors className="w-5 h-5 mr-2 text-red-600" />
-            Services & Pricing
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center">
+              <Scissors className="w-5 h-5 mr-2 text-red-600" />
+              Services & Pricing
+            </CardTitle>
+            <Dialog open={isServiceModalOpen} onOpenChange={setIsServiceModalOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={openAddServiceModal}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Service
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingService ? 'Edit Service' : 'Add New Service'}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {/* Service Image Upload */}
+                  <div>
+                    <Label>Service Image</Label>
+                    <div className="mt-2">
+                      {serviceImagePreview ? (
+                        <div className="relative">
+                          <img
+                            src={serviceImagePreview}
+                            alt="Service preview"
+                            className="w-full h-32 object-cover rounded-lg border"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={triggerServiceImageSelect}
+                            className="absolute bottom-2 right-2 bg-white/90 hover:bg-white"
+                          >
+                            <Upload className="w-3 h-3 mr-1" />
+                            Change
+                          </Button>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={triggerServiceImageSelect}
+                          className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                        >
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-500">Click to upload service image</p>
+                          <p className="text-xs text-gray-400 mt-1">JPG, PNG or GIF. Max 5MB.</p>
+                        </div>
+                      )}
+                      <input
+                        ref={serviceImageInputRef}
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/gif"
+                        onChange={handleServiceImageSelect}
+                        style={{ display: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Service Name */}
+                  <div>
+                    <Label htmlFor="service-name">Service Name</Label>
+                    <Input
+                      id="service-name"
+                      value={serviceForm.name}
+                      onChange={(e) => setServiceForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g. Box Braids, Silk Press"
+                    />
+                  </div>
+
+                  {/* Price and Duration */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="service-price">Price (£)</Label>
+                      <Input
+                        id="service-price"
+                        type="number"
+                        min="0"
+                        value={serviceForm.price}
+                        onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="service-duration">Duration (minutes)</Label>
+                      <Input
+                        id="service-duration"
+                        type="number"
+                        min="15"
+                        step="15"
+                        value={serviceForm.duration}
+                        onChange={(e) => setServiceForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+                        placeholder="60"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Modal Actions */}
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      onClick={handleSaveService}
+                      className="bg-red-600 hover:bg-red-700 flex-1"
+                      disabled={!serviceForm.name || serviceForm.price <= 0}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {editingService ? 'Update Service' : 'Add Service'}
+                    </Button>
+                    <Button 
+                      onClick={() => setIsServiceModalOpen(false)}
+                      variant="outline"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <Scissors className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Services Coming Soon</h3>
-            <p className="text-gray-500">Service management and pricing tools will be available soon.</p>
-          </div>
+          {services.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {services.map((service) => (
+                <div key={service.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    {/* Service Image - Full height */}
+                    <div className="w-16 h-full rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                      <img
+                        src={service.image || '/placeholder.svg?height=200&width=200&text=Service'}
+                        alt={service.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/placeholder.svg?height=200&width=200&text=Service'
+                        }}
+                      />
+                    </div>
+
+                    {/* Service Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <h4 className="font-semibold text-gray-900 text-base">{service.name}</h4>
+                        {/* Service Actions */}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditServiceModal(service)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteService(service.id)}
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-500">
+                        <span className="text-sm">{formatDuration(service.duration)}</span>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-500">
+                        <span className="font-medium text-gray-700 text-sm">£{service.price}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Scissors className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Services Added</h3>
+              <p className="text-gray-500 mb-4">Start by adding your first service to showcase what you offer.</p>
+              <Button 
+                onClick={openAddServiceModal}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Your First Service
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
