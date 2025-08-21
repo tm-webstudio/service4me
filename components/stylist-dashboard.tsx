@@ -15,6 +15,8 @@ import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
+import { useServices } from "@/hooks/use-services"
+import { useServiceImageUpload } from "@/hooks/use-service-image-upload"
 
 const SPECIALTY_CATEGORIES = [
   "Wigs & Weaves",
@@ -34,6 +36,8 @@ export function StylistDashboard() {
   const { user } = useAuth()
   const { profile, loading, saving, error, updateProfile, updatePortfolioImages } = useStylistProfileEditor()
   const { uploadFiles, deleteImage, uploadProgress, isUploading, error: uploadError } = usePortfolioUpload()
+  const { services, loading: servicesLoading, saving: servicesSaving, error: servicesError, addService, updateService, deleteService } = useServices()
+  const { uploadServiceImage, uploading: imageUploading } = useServiceImageUpload()
   const [isEditing, setIsEditing] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
@@ -41,34 +45,17 @@ export function StylistDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Services state
-  const [services, setServices] = useState([
-    {
-      id: '1',
-      name: 'Box Braids',
-      description: 'Traditional box braids with high-quality synthetic or human hair',
-      price: 120,
-      duration: 180, // minutes
-      image: '/placeholder.svg?height=200&width=300&text=Box+Braids'
-    },
-    {
-      id: '2', 
-      name: 'Knotless Braids',
-      description: 'Protective knotless braids for natural hair health',
-      price: 150,
-      duration: 240,
-      image: '/placeholder.svg?height=200&width=300&text=Knotless+Braids'
-    }
-  ])
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
-  const [editingService, setEditingService] = useState(null)
+  const [editingService, setEditingService] = useState<any>(null)
   const [serviceForm, setServiceForm] = useState({
     name: '',
     price: 0,
-    duration: 60,
-    image: ''
+    duration: 60
   })
   const [serviceImageFile, setServiceImageFile] = useState<File | null>(null)
   const [serviceImagePreview, setServiceImagePreview] = useState<string>('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+  const [isServiceDragOver, setIsServiceDragOver] = useState(false)
   const serviceImageInputRef = useRef<HTMLInputElement>(null)
   
   // Form state for editing
@@ -300,24 +287,24 @@ export function StylistDashboard() {
     setServiceForm({
       name: '',
       price: 0,
-      duration: 60,
-      image: ''
+      duration: 60
     })
     setServiceImageFile(null)
     setServiceImagePreview('')
+    setIsServiceDragOver(false)
     setIsServiceModalOpen(true)
   }
 
-  const openEditServiceModal = (service) => {
+  const openEditServiceModal = (service: any) => {
     setEditingService(service)
     setServiceForm({
       name: service.name,
       price: service.price,
-      duration: service.duration,
-      image: service.image
+      duration: service.duration
     })
     setServiceImageFile(null)
-    setServiceImagePreview(service.image || '')
+    setServiceImagePreview(service.image_url || '')
+    setIsServiceDragOver(false)
     setIsServiceModalOpen(true)
   }
 
@@ -337,31 +324,103 @@ export function StylistDashboard() {
     serviceImageInputRef.current?.click()
   }
 
-  const handleSaveService = () => {
-    // Use preview image URL if available, otherwise keep existing image
-    const imageUrl = serviceImagePreview || serviceForm.image
+  // Service image drag and drop handlers
+  const handleServiceDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsServiceDragOver(true)
+  }, [])
+
+  const handleServiceDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsServiceDragOver(false)
+  }, [])
+
+  const handleServiceDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsServiceDragOver(false)
     
-    if (editingService) {
-      // Update existing service
-      setServices(prev => prev.map(service => 
-        service.id === editingService.id 
-          ? { ...editingService, ...serviceForm, image: imageUrl }
-          : service
-      ))
-    } else {
-      // Add new service
-      const newService = {
-        id: Date.now().toString(),
-        ...serviceForm,
-        image: imageUrl
+    const files = Array.from(e.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    )
+    
+    if (files.length > 0) {
+      // Take only the first image file
+      const file = files[0]
+      setServiceImageFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setServiceImagePreview(e.target?.result as string)
       }
-      setServices(prev => [...prev, newService])
+      reader.readAsDataURL(file)
     }
-    setIsServiceModalOpen(false)
+  }, [])
+
+  const validateServiceForm = () => {
+    if (!serviceForm.name.trim()) {
+      alert('Service name is required')
+      return false
+    }
+    if (serviceForm.price <= 0) {
+      alert('Price must be greater than 0')
+      return false
+    }
+    if (serviceForm.duration <= 0) {
+      alert('Duration must be greater than 0')
+      return false
+    }
+    return true
   }
 
-  const handleDeleteService = (serviceId) => {
-    setServices(prev => prev.filter(service => service.id !== serviceId))
+  const handleSaveService = async () => {
+    if (!validateServiceForm()) {
+      return
+    }
+
+    try {
+      let imageUrl = serviceImagePreview
+
+      // Upload new image if a file is selected
+      if (serviceImageFile) {
+        imageUrl = await uploadServiceImage(serviceImageFile)
+      }
+
+      const serviceData = {
+        name: serviceForm.name,
+        price: serviceForm.price,
+        duration: serviceForm.duration,
+        image_url: imageUrl || undefined
+      }
+
+      if (editingService) {
+        // Update existing service
+        await updateService(editingService.id, serviceData)
+      } else {
+        // Add new service
+        await addService(serviceData)
+      }
+
+      setIsServiceModalOpen(false)
+      setServiceImageFile(null)
+      setServiceImagePreview('')
+      setIsServiceDragOver(false)
+    } catch (err) {
+      console.error('Error saving service:', err)
+      alert('Failed to save service. Please try again.')
+    }
+  }
+
+  const handleDeleteService = (serviceId: string) => {
+    setShowDeleteConfirm(serviceId)
+  }
+
+  const confirmDeleteService = async (serviceId: string) => {
+    try {
+      await deleteService(serviceId)
+      setShowDeleteConfirm(null)
+    } catch (err) {
+      console.error('Error deleting service:', err)
+      alert('Failed to delete service. Please try again.')
+    }
   }
 
   const formatDuration = (minutes) => {
@@ -928,7 +987,12 @@ export function StylistDashboard() {
               <Scissors className="w-5 h-5 mr-2 text-red-600" />
               Services & Pricing
             </CardTitle>
-            <Dialog open={isServiceModalOpen} onOpenChange={setIsServiceModalOpen}>
+            <Dialog open={isServiceModalOpen} onOpenChange={(open) => {
+              setIsServiceModalOpen(open)
+              if (!open) {
+                setIsServiceDragOver(false)
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button 
                   onClick={openAddServiceModal}
@@ -950,7 +1014,14 @@ export function StylistDashboard() {
                     <Label>Service Image</Label>
                     <div className="mt-2">
                       {serviceImagePreview ? (
-                        <div className="relative">
+                        <div 
+                          className={`relative rounded-lg border-2 border-dashed transition-colors ${
+                            isServiceDragOver ? 'border-red-400 bg-red-50' : 'border-transparent'
+                          }`}
+                          onDragOver={handleServiceDragOver}
+                          onDragLeave={handleServiceDragLeave}
+                          onDrop={handleServiceDrop}
+                        >
                           <img
                             src={serviceImagePreview}
                             alt="Service preview"
@@ -966,14 +1037,32 @@ export function StylistDashboard() {
                             <Upload className="w-3 h-3 mr-1" />
                             Change
                           </Button>
+                          {isServiceDragOver && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-red-50/90 rounded-lg">
+                              <p className="text-red-600 font-medium">Drop new image</p>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div 
                           onClick={triggerServiceImageSelect}
-                          className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                          onDragOver={handleServiceDragOver}
+                          onDragLeave={handleServiceDragLeave}
+                          onDrop={handleServiceDrop}
+                          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                            isServiceDragOver 
+                              ? 'border-red-400 bg-red-50' 
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
                         >
-                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm text-gray-500">Click to upload service image</p>
+                          <Upload className={`w-8 h-8 mx-auto mb-2 ${
+                            isServiceDragOver ? 'text-red-500' : 'text-gray-400'
+                          }`} />
+                          <p className={`text-sm ${
+                            isServiceDragOver ? 'text-red-600' : 'text-gray-500'
+                          }`}>
+                            {isServiceDragOver ? 'Drop image here' : 'Click or drag to upload service image'}
+                          </p>
                           <p className="text-xs text-gray-400 mt-1">JPG, PNG or GIF. Max 5MB.</p>
                         </div>
                       )}
@@ -1006,9 +1095,10 @@ export function StylistDashboard() {
                         id="service-price"
                         type="number"
                         min="0"
+                        step="0.01"
                         value={serviceForm.price}
-                        onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                        placeholder="0"
+                        onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0.00"
                       />
                     </div>
                     <div>
@@ -1048,7 +1138,19 @@ export function StylistDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          {services.length > 0 ? (
+          {servicesError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-800">{servicesError}</p>
+            </div>
+          )}
+          
+          {servicesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+              <span className="ml-2 text-gray-600">Loading services...</span>
+            </div>
+          ) : services.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {services.map((service) => (
                 <div key={service.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
@@ -1056,7 +1158,7 @@ export function StylistDashboard() {
                     {/* Service Image - Full height */}
                     <div className="w-16 h-full rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                       <img
-                        src={service.image || '/placeholder.svg?height=200&width=200&text=Service'}
+                        src={service.image_url || '/placeholder.svg?height=200&width=200&text=Service'}
                         alt={service.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -1077,6 +1179,7 @@ export function StylistDashboard() {
                             size="sm"
                             onClick={() => openEditServiceModal(service)}
                             className="h-6 w-6 p-0"
+                            disabled={servicesSaving}
                           >
                             <Edit className="w-3 h-3" />
                           </Button>
@@ -1085,6 +1188,7 @@ export function StylistDashboard() {
                             size="sm"
                             onClick={() => handleDeleteService(service.id)}
                             className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={servicesSaving}
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
@@ -1096,7 +1200,7 @@ export function StylistDashboard() {
                       </div>
                       
                       <div className="flex items-center text-gray-500">
-                        <span className="font-medium text-gray-700 text-sm">£{service.price}</span>
+                        <span className="font-medium text-gray-700 text-sm">£{Math.round(service.price)}</span>
                       </div>
                     </div>
                   </div>
@@ -1111,11 +1215,46 @@ export function StylistDashboard() {
               <Button 
                 onClick={openAddServiceModal}
                 className="bg-red-600 hover:bg-red-700"
+                disabled={servicesSaving}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Your First Service
               </Button>
             </div>
+          )}
+
+          {/* Delete Confirmation Dialog */}
+          {showDeleteConfirm && (
+            <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Delete Service</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">Are you sure you want to delete this service? This action cannot be undone.</p>
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={() => confirmDeleteService(showDeleteConfirm)}
+                      className="bg-red-600 hover:bg-red-700 flex-1"
+                      disabled={servicesSaving}
+                    >
+                      {servicesSaving ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>
+                      ) : (
+                        'Delete Service'
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={() => setShowDeleteConfirm(null)}
+                      variant="outline"
+                      disabled={servicesSaving}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </CardContent>
       </Card>

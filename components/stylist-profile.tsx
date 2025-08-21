@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useStylist } from "@/hooks/use-stylist"
+import { useStylistServices } from "@/hooks/use-stylist-services"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -143,6 +144,7 @@ interface StylistProfileProps {
 
 export function StylistProfile({ stylistId }: StylistProfileProps) {
   const { stylist, loading, error } = useStylist(stylistId)
+  const { services, loading: servicesLoading, error: servicesError, formatDuration } = useStylistServices(stylist?.id)
   const [isFavorite, setIsFavorite] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
@@ -242,8 +244,20 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   const getReviewCount = () => stylist.total_reviews || 0
   const getHourlyRate = () => stylist.hourly_rate || 50
 
-  // Placeholder services based on specialties
+  // Get real services from database with fallbacks
   const getServices = () => {
+    // If we have real services from database, use them
+    if (services && services.length > 0) {
+      return services.map(service => ({
+        name: service.name,
+        price: service.price, // Already converted to pounds in the hook
+        duration: formatDuration(service.duration),
+        image: service.image_url || "/placeholder.svg?height=200&width=300",
+        id: service.id
+      }))
+    }
+    
+    // Fallback to placeholder services based on specialties if no real services
     if (stylist.specialties && stylist.specialties.length > 0) {
       return stylist.specialties.map((specialty, index) => ({
         name: specialty,
@@ -252,6 +266,8 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         image: "/placeholder.svg?height=200&width=300",
       }))
     }
+    
+    // Final fallback
     return [
       {
         name: "Hair Styling",
@@ -484,15 +500,35 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           {/* Services & Pricing */}
           <div className="space-y-6 max-w-lg">
             <h2 className="text-xl font-bold text-gray-900">Services & Pricing</h2>
+            {servicesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
+                <span className="text-gray-500">Loading services...</span>
+              </div>
+            ) : servicesError ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-2">Unable to load services</p>
+                <p className="text-sm text-gray-400">Using placeholder services</p>
+              </div>
+            ) : displayData.services.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No services available</p>
+              </div>
+            ) : null}
+            
             <div className="grid gap-4">
               {displayData.services.map((service, index) => (
-                <Card key={index}>
+                <Card key={service.id || index}>
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-4">
                       <img
                         src={service.image || "/placeholder.svg"}
                         alt={service.name}
                         className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/placeholder.svg?height=200&width=200&text=Service'
+                        }}
                       />
                       <div className="flex-1">
                         <h3 className="font-semibold text-base">{service.name}</h3>
