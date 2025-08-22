@@ -13,7 +13,7 @@ export function Footer() {
                 Service<span className="text-red-600">4</span>Me
               </span>
             </div>
-            <p className="text-gray-600 mb-4 max-w-md">
+            <p className="text-gray-600 mb-4 max-w-md text-[15px] md:text-base">
               Connecting clients with talented hairstylists. Discover, book, and review the best hair services in your
               area.
             </p>
@@ -33,7 +33,7 @@ export function Footer() {
           {/* Locations */}
           <div>
             <h3 className="font-semibold mb-4">Locations</h3>
-            <ul className="space-y-2 text-gray-600 mb-8">
+            <ul className="space-y-2 text-gray-600 mb-8 text-[15px] md:text-base">
               <li>
                 <Link href="/browse?location=North London" className="hover:text-gray-900">
                   North London
@@ -65,7 +65,7 @@ export function Footer() {
           {/* Company */}
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
-            <ul className="space-y-2 text-gray-600 mb-8">
+            <ul className="space-y-2 text-gray-600 mb-8 text-[15px] md:text-base">
               <li>
                 <Link href="/for-business" className="hover:text-gray-900">
                   List Your Business
@@ -96,15 +96,15 @@ export function Footer() {
         </div>
 
         <div className="border-t border-gray-300 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-600 text-sm">© 2025 Service4Me. All rights reserved.</p>
+          <p className="text-gray-600 text-[15px] md:text-base">© 2025 Service4Me. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
+            <Link href="#" className="text-gray-600 hover:text-gray-900 text-[15px] md:text-base">
               Privacy Policy
             </Link>
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
+            <Link href="#" className="text-gray-600 hover:text-gray-900 text-[15px] md:text-base">
               Terms of Service
             </Link>
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
+            <Link href="#" className="text-gray-600 hover:text-gray-900 text-[15px] md:text-base">
               Support
             </Link>
           </div>

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Star, MapPin, Heart, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
+import { postcodeToAreaName } from "@/lib/postcode-utils"
+import { StylistCardSkeleton } from "@/components/ui/skeletons"
 
 interface StylistGridProps {
   category?: string
@@ -77,11 +79,12 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* Loading State with Skeletons */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-red-600" />
-          <span className="ml-2 text-gray-600">Loading stylists...</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <StylistCardSkeleton key={index} />
+          ))}
         </div>
       )}
 
@@ -119,7 +122,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
         {filteredStylists.map((stylist) => {
           const expertise = getExpertiseDisplay(stylist.specialties)
           const businessName = stylist.business_name || "Hair Studio"
-          const location = stylist.location || "London, UK"
+          const location = stylist.location ? postcodeToAreaName(stylist.location) : "London, UK"
           const rating = stylist.rating || 0
           const reviewCount = stylist.total_reviews || 0
           

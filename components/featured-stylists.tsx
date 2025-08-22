@@ -7,6 +7,8 @@ import { Star, MapPin, Heart, ChevronLeft, ChevronRight, Loader2 } from "lucide-
 import { useState, useRef } from "react"
 import Link from "next/link"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
+import { postcodeToAreaName } from "@/lib/postcode-utils"
+import { StylistCardSkeleton } from "@/components/ui/skeletons"
 
 export function FeaturedStylists() {
   const { stylists, loading, error } = useStylists()
@@ -75,11 +77,22 @@ export function FeaturedStylists() {
           </Link>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State with Skeletons */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-red-600" />
-            <span className="ml-2 text-gray-600">Loading stylists...</span>
+          <div className="flex overflow-x-auto gap-4 pb-4 scroll-smooth"
+            style={{
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            }}
+          >
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
+              >
+                <StylistCardSkeleton />
+              </div>
+            ))}
           </div>
         )}
 
@@ -145,7 +158,7 @@ export function FeaturedStylists() {
               {stylists.map((stylist) => {
                 const expertise = getExpertiseDisplay(stylist.specialties)
                 const businessName = stylist.business_name || "Hair Studio"
-                const location = stylist.location || "London, UK"
+                const location = stylist.location ? postcodeToAreaName(stylist.location) : "London, UK"
                 const rating = stylist.rating || 0
                 const reviewCount = stylist.total_reviews || 0
                 

@@ -5,6 +5,15 @@ import type React from "react"
 import { useState } from "react"
 import { useStylist } from "@/hooks/use-stylist"
 import { useStylistServices } from "@/hooks/use-stylist-services"
+import { postcodeToAreaName, postcodeToAreaNameWithCode } from "@/lib/postcode-utils"
+import { StylistLocationMap, MapStylesImport } from "@/components/stylist-location-map"
+import { 
+  StylistProfileSkeleton, 
+  ServicesSkeleton, 
+  LocationCardSkeleton, 
+  ContactCardSkeleton, 
+  ReviewsSkeleton 
+} from "@/components/ui/skeletons"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -125,14 +134,27 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
     setIsGalleryOpen(true)
   }
 
-  // Loading state
+  // Loading state with skeletons
   if (loading) {
     return (
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-red-600" />
-          <span className="ml-2 text-gray-600">Loading stylist profile...</span>
+        <MapStylesImport />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Skeleton */}
+          <div className="lg:col-span-2 space-y-5">
+            <StylistProfileSkeleton />
+            <ServicesSkeleton />
+          </div>
+
+          {/* Sidebar Skeleton */}
+          <div className="space-y-6">
+            <LocationCardSkeleton />
+            <ContactCardSkeleton />
+          </div>
         </div>
+
+        {/* Reviews Skeleton */}
+        <ReviewsSkeleton />
       </div>
     )
   }
@@ -166,7 +188,20 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   // Helper functions for real data with fallbacks
   const getBusinessName = () => stylist.business_name || "Hair Studio"
   const getBio = () => stylist.bio || "Professional hairstylist dedicated to helping you look and feel your best."
-  const getLocation = () => stylist.location || "London, UK"
+  const getLocation = () => {
+    if (stylist.location) {
+      // Convert postcode to area name
+      return postcodeToAreaName(stylist.location)
+    }
+    return "London, UK"
+  }
+  const getLocationWithCode = () => {
+    if (stylist.location) {
+      // Convert postcode to area name with outward code for location section only
+      return postcodeToAreaNameWithCode(stylist.location)
+    }
+    return "London, UK"
+  }
   const getExpertise = () => {
     if (stylist.specialties && stylist.specialties.length > 0) {
       return `${stylist.specialties[0]} Specialist`
@@ -268,6 +303,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+      <MapStylesImport />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-5">
@@ -438,10 +474,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div className="space-y-6 max-w-lg">
             <h2 className="text-xl font-bold text-gray-900">Services & Pricing</h2>
             {servicesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
-                <span className="text-gray-500">Loading services...</span>
-              </div>
+              <ServicesSkeleton />
             ) : servicesError ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-2">Unable to load services</p>
@@ -495,11 +528,13 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             <CardContent>
               <div className="flex items-center mb-3">
                 <MapPin className="w-4 h-4 mr-2 text-gray-600" />
-                <span className="text-sm">{displayData.location}</span>
+                <span className="text-sm">{getLocationWithCode()}</span>
               </div>
-              <div className="bg-gray-100 rounded-lg h-32 flex items-center justify-center">
-                <span className="text-gray-500">Map View</span>
-              </div>
+              <StylistLocationMap 
+                postcode={stylist.location || ''}
+                businessName={displayData.businessName}
+                className="h-48"
+              />
             </CardContent>
           </Card>
 

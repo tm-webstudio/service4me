@@ -17,6 +17,8 @@ import { useAuth } from "@/hooks/use-auth"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 import { useServices } from "@/hooks/use-services"
 import { useServiceImageUpload } from "@/hooks/use-service-image-upload"
+import { postcodeToAreaName } from "@/lib/postcode-utils"
+import { DashboardGallerySkeleton } from "@/components/ui/skeletons"
 
 const SPECIALTY_CATEGORIES = [
   "Wigs & Weaves",
@@ -468,7 +470,13 @@ export function StylistDashboard() {
   // Helper functions for real data with fallbacks
   const getBusinessName = () => profile.business_name || "My Hair Studio"
   const getBio = () => profile.bio || "Professional hairstylist dedicated to helping you look and feel your best."
-  const getLocation = () => profile.location || "London, UK"
+  const getLocation = () => {
+    if (profile.location) {
+      // Convert postcode to area name for display
+      return postcodeToAreaName(profile.location)
+    }
+    return "London, UK"
+  }
   const getRating = () => profile.rating || 0
   const getReviewCount = () => profile.total_reviews || 0
   const getSpecialties = () => profile.specialties || []
@@ -574,12 +582,17 @@ export function StylistDashboard() {
 
                 {/* Location */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Location</label>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {isEditing ? "Postcode" : "Location"}
+                  </label>
                   {isEditing ? (
                     <Input
                       value={formData.location}
-                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                      placeholder="Your location"
+                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value.toUpperCase() }))}
+                      placeholder="SW1A 1AA"
+                      maxLength={8}
+                      pattern="[A-Z]{1,2}[0-9]{1,2}[A-Z]?\s?[0-9][A-Z]{2}"
+                      title="Please enter a valid UK postcode (e.g., SW1A 1AA)"
                     />
                   ) : (
                     <p className="text-gray-900 font-medium">{getLocation()}</p>
@@ -839,7 +852,11 @@ export function StylistDashboard() {
                 ) : null}
               </div>
               <div className="grid grid-cols-3 gap-3">
-                {profile?.portfolio_images?.length ? (
+                {loading ? (
+                  <div className="col-span-3">
+                    <DashboardGallerySkeleton />
+                  </div>
+                ) : profile?.portfolio_images?.length ? (
                   profile.portfolio_images.map((imageUrl, index) => (
                     <div 
                       key={`${imageUrl}-${index}`} 

@@ -391,7 +391,7 @@ export function SignupForm() {
 
                   <div>
                     <Label htmlFor="stylist-location" className="text-sm font-medium">
-                      Location
+                      Postcode
                     </Label>
                     <div className="relative mt-1">
                       <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -399,9 +399,12 @@ export function SignupForm() {
                         id="stylist-location"
                         type="text"
                         value={stylistData.location}
-                        onChange={(e) => setStylistData({ ...stylistData, location: e.target.value })}
+                        onChange={(e) => setStylistData({ ...stylistData, location: e.target.value.toUpperCase() })}
                         className="pl-10"
-                        placeholder="London, UK"
+                        placeholder="SW1A 1AA"
+                        maxLength={8}
+                        pattern="[A-Z]{1,2}[0-9]{1,2}[A-Z]?\s?[0-9][A-Z]{2}"
+                        title="Please enter a valid UK postcode (e.g., SW1A 1AA)"
                         required
                       />
                     </div>
