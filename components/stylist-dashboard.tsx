@@ -1027,7 +1027,7 @@ export function StylistDashboard() {
                     <div className="mt-2">
                       {serviceImagePreview ? (
                         <div 
-                          className={`relative rounded-lg border-2 border-dashed transition-colors ${
+                          className={`flex items-center gap-4 rounded-lg border-2 border-dashed transition-colors ${
                             isServiceDragOver ? 'border-red-400 bg-red-50' : 'border-transparent'
                           }`}
                           onDragOver={handleServiceDragOver}
@@ -1037,14 +1037,14 @@ export function StylistDashboard() {
                           <img
                             src={serviceImagePreview}
                             alt="Service preview"
-                            className="w-full h-32 object-cover rounded-lg border"
+                            className="w-32 aspect-square object-cover rounded-lg border"
                           />
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={triggerServiceImageSelect}
-                            className="absolute bottom-2 right-2 bg-white/90 hover:bg-white"
+                            className="bg-white/90 hover:bg-white"
                           >
                             <Upload className="w-3 h-3 mr-1" />
                             Change
@@ -1107,10 +1107,10 @@ export function StylistDashboard() {
                         id="service-price"
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="1"
                         value={serviceForm.price}
-                        onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                        placeholder="0.00"
+                        onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                        placeholder="100"
                       />
                     </div>
                     <div>
@@ -1167,8 +1167,8 @@ export function StylistDashboard() {
               {services.map((service) => (
                 <div key={service.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start gap-3">
-                    {/* Service Image - Full height */}
-                    <div className="w-16 h-full rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                    {/* Service Image - 1:1 aspect ratio */}
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                       <img
                         src={service.image_url || '/placeholder.svg?height=200&width=200&text=Service'}
                         alt={service.name}
@@ -1212,7 +1212,7 @@ export function StylistDashboard() {
                       </div>
                       
                       <div className="flex items-center text-gray-500">
-                        <span className="font-medium text-gray-700 text-sm">£{Math.round(service.price)}</span>
+                        <span className="font-medium text-gray-700 text-sm">£{service.price}</span>
                       </div>
                     </div>
                   </div>

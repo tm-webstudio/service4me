@@ -76,7 +76,12 @@ export function useServices() {
         throw error
       }
 
-      setServices(data || [])
+      // Convert prices from pence to pounds
+      const servicesWithCorrectPrices = (data || []).map(service => ({
+        ...service,
+        price: service.price / 100
+      }))
+      setServices(servicesWithCorrectPrices)
     } catch (err) {
       console.error('Error fetching services:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch services')
@@ -105,7 +110,7 @@ export function useServices() {
         .insert({
           stylist_id: stylistId,
           name: serviceInput.name,
-          price: Math.round(serviceInput.price * 100), // convert to pence
+          price: serviceInput.price * 100, // convert to pence
           duration: serviceInput.duration,
           image_url: serviceInput.image_url
         })
@@ -146,7 +151,7 @@ export function useServices() {
         .from('services')
         .update({
           name: serviceInput.name,
-          price: Math.round(serviceInput.price * 100), // convert to pence
+          price: serviceInput.price * 100, // convert to pence
           duration: serviceInput.duration,
           image_url: serviceInput.image_url
         })

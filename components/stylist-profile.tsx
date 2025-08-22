@@ -395,7 +395,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{displayData.businessName}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{displayData.businessName}</h1>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-gray-600 mb-2 text-[15px]">
                   <div className="flex items-center mb-2 sm:mb-0">
                     <Star className="w-5 h-5 fill-yellow-400 text-yellow-400 mr-1" />
