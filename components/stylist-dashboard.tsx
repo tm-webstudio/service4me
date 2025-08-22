@@ -24,12 +24,7 @@ const SPECIALTY_CATEGORIES = [
   "Locs",
   "Natural Hair",
   "Bridal Hair",
-  "Silk Press",
-  "Protective Styles",
-  "Twists",
-  "Blowouts",
-  "Hair Styling",
-  "Maintenance"
+  "Silk Press"
 ]
 
 export function StylistDashboard() {

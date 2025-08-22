@@ -8,9 +8,31 @@ import { Star, MapPin, Heart, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
 
-export function StylistGrid() {
+interface StylistGridProps {
+  category?: string
+  location?: string
+}
+
+export function StylistGrid({ category, location }: StylistGridProps = {}) {
   const { stylists, loading, error } = useStylists()
   const [favorites, setFavorites] = useState<string[]>([])
+
+  // Filter stylists based on category and location
+  const filteredStylists = stylists.filter(stylist => {
+    let matchesCategory = true
+    let matchesLocation = true
+
+    if (category) {
+      matchesCategory = stylist.specialties.includes(category)
+    }
+
+    if (location) {
+      // Check if stylist location contains the filter location
+      matchesLocation = stylist.location?.toLowerCase().includes(location.toLowerCase()) || false
+    }
+
+    return matchesCategory && matchesLocation
+  })
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]))
@@ -40,7 +62,8 @@ export function StylistGrid() {
       {/* Browse Stylists Header with Sort */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-gray-900">
-          Browse Stylists
+          {category ? `${category} Stylists` : 'Browse Stylists'} 
+          {filteredStylists.length > 0 && ` (${filteredStylists.length})`}
         </h2>
         <div className="flex items-center space-x-3">
           <span className="text-sm font-medium text-gray-700 hidden md:inline">Sort by:</span>
@@ -73,17 +96,27 @@ export function StylistGrid() {
       )}
 
       {/* No Results State */}
-      {!loading && !error && stylists.length === 0 && (
+      {!loading && !error && filteredStylists.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-600 mb-4">No stylists found.</p>
-          <p className="text-sm text-gray-500">Check back soon as new stylists join regularly!</p>
+          <p className="text-gray-600 mb-4">
+            {category || location 
+              ? `No stylists found for ${category || location}.` 
+              : 'No stylists found.'
+            }
+          </p>
+          <p className="text-sm text-gray-500">
+            {category || location 
+              ? 'Try browsing all stylists or a different category.' 
+              : 'Check back soon as new stylists join regularly!'
+            }
+          </p>
         </div>
       )}
 
       {/* Stylist Grid - Real Data */}
-      {!loading && !error && stylists.length > 0 && (
+      {!loading && !error && filteredStylists.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {stylists.map((stylist) => {
+        {filteredStylists.map((stylist) => {
           const expertise = getExpertiseDisplay(stylist.specialties)
           const businessName = stylist.business_name || "Hair Studio"
           const location = stylist.location || "London, UK"
@@ -165,7 +198,7 @@ export function StylistGrid() {
       )}
 
       {/* Load More - Only show if we have stylists */}
-      {!loading && !error && stylists.length > 0 && (
+      {!loading && !error && filteredStylists.length > 0 && (
         <div className="text-center mt-12">
           <Button variant="outline" size="lg">
             Load More Stylists

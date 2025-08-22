@@ -34,78 +34,15 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
-const stylistData = {
-  businessName: "RS Hair",
-  image: "/placeholder.svg?height=400&width=400",
-  rating: 4.9,
-  reviewCount: 127,
-  location: "Barking, London",
-  expertise: "Braids Specialist",
-  experience: "8 years",
-  bio: "Passionate hair salon specializing in natural hair care and protective styling. We believe every client deserves to feel beautiful and confident. With 8 years of experience, we've helped hundreds of clients achieve their hair goals while maintaining healthy hair practices.",
-  contact: {
-    phone: "020 7946 0892",
-    email: "info@rshair.co.uk",
-    instagram: "@rs_hair_london",
-    tiktok: "@rshairlondon",
-  },
-  services: [
-    {
-      name: "Box Braids",
-      price: 120,
-      duration: "3-4 hours",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      name: "Knotless Braids",
-      price: 150,
-      duration: "4-5 hours",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      name: "Faux Locs",
-      price: 180,
-      duration: "5-6 hours",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      name: "Twist Out",
-      price: 85,
-      duration: "2 hours",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      name: "Wash & Style",
-      price: 65,
-      duration: "1.5 hours",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      name: "Deep Conditioning",
-      price: 45,
-      duration: "1 hour",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-  ],
-  portfolio: [
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-    "/placeholder.svg?height=400&width=400",
-  ],
-  hours: {
-    monday: "9:00 AM - 6:00 PM",
-    tuesday: "9:00 AM - 6:00 PM",
-    wednesday: "9:00 AM - 6:00 PM",
-    thursday: "9:00 AM - 8:00 PM",
-    friday: "9:00 AM - 8:00 PM",
-    saturday: "8:00 AM - 5:00 PM",
-    sunday: "Closed",
-  },
+// Default fallback data for missing information
+const defaultHours = {
+  monday: "9:00 AM - 6:00 PM",
+  tuesday: "9:00 AM - 6:00 PM", 
+  wednesday: "9:00 AM - 6:00 PM",
+  thursday: "9:00 AM - 8:00 PM",
+  friday: "9:00 AM - 8:00 PM",
+  saturday: "8:00 AM - 5:00 PM",
+  sunday: "Closed",
 }
 
 const reviews = [

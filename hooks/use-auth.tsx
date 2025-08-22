@@ -51,7 +51,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const phone = user.user_metadata?.phone || null
 
     try {
-      const { error } = await supabase
+      console.log('🔧 [AUTH] Creating user profile with data:', {
+        id: user.id,
+        email: user.email,
+        full_name: fullName,
+        role: role,
+        phone: phone
+      })
+
+      const { data, error } = await supabase
         .from('users')
         .insert({
           id: user.id,
@@ -60,15 +68,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: role,
           phone: phone
         })
+        .select()
+        .single()
 
       if (error && error.code !== '23505') { // Ignore duplicate key errors
-        console.error('Error creating user profile from auth:', error)
+        console.error('❌ [AUTH] Error creating user profile from auth:', error)
+        setUserProfile(null)
+      } else if (error?.code === '23505') {
+        // User already exists, just fetch it
+        console.log('✅ [AUTH] User profile already exists, fetching...')
+        await fetchUserProfile(user.id)
       } else {
-        console.log('User profile created successfully')
-        await fetchUserProfile(user.id) // Refresh profile
+        console.log('✅ [AUTH] User profile created successfully:', data)
+        setUserProfile(data)
+        
+        // If this is a stylist, create stylist profile with sign-up data
+        if (role === 'stylist' && user.user_metadata) {
+          const { error: stylistUpdateError } = await supabase
+            .from('stylist_profiles')
+            .update({
+              business_name: user.user_metadata.businessName || 'My Hair Studio',
+              location: user.user_metadata.location || 'Location not specified',
+              phone: phone,
+              contact_email: user.email
+            })
+            .eq('user_id', user.id)
+
+          if (stylistUpdateError) {
+            console.error('❌ [AUTH] Error updating stylist profile from auth:', stylistUpdateError)
+          } else {
+            console.log('✅ [AUTH] Stylist profile updated with sign-up data')
+          }
+        }
       }
     } catch (error) {
-      console.error('Error creating user profile from auth:', error)
+      console.error('❌ [AUTH] Exception creating user profile from auth:', error)
+      setUserProfile(null)
     }
   }
 
@@ -107,8 +142,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // No profile found - try to create one from auth user data
           console.log('🔧 [AUTH] No user profile found, creating from auth data for user:', userId)
           const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            await createUserProfileFromAuth(user)
+          if (user && user.id === userId) {
+            // Prevent recursive calls by checking if we've already tried creating this user
+            const attemptKey = `createAttempt_${userId}`
+            const lastAttempt = sessionStorage.getItem(attemptKey)
+            const now = Date.now()
+            
+            if (!lastAttempt || (now - parseInt(lastAttempt)) > 30000) { // 30 second cooldown
+              sessionStorage.setItem(attemptKey, now.toString())
+              await createUserProfileFromAuth(user)
+            } else {
+              console.log('⚠️ [AUTH] Recent creation attempt failed, skipping retry')
+              setUserProfile(null)
+            }
+          } else {
+            setUserProfile(null)
           }
         } else {
           setUserProfile(null)
@@ -256,7 +304,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('stylist_profiles')
             .update({
               business_name: additionalData.businessName || 'My Hair Studio',
-              location: additionalData.location || 'Location not specified'
+              location: additionalData.location || 'Location not specified',
+              phone: additionalData.phone || null,
+              contact_email: data.user.email || null
             })
             .eq('user_id', data.user.id)
 

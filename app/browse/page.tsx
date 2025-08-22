@@ -15,7 +15,7 @@ export default function BrowsePage() {
     <div className="min-h-screen bg-white">
       <Navigation />
       <BrowseHeader category={category || undefined} location={location || undefined} />
-      <StylistGrid />
+      <StylistGrid category={category || undefined} location={location || undefined} />
       <Footer />
     </div>
   )
