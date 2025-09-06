@@ -41,8 +41,8 @@ export function useStylist(id: string) {
               specialties: apiData.data.specialties || [],
               years_experience: apiData.data.years_experience,
               hourly_rate: apiData.data.hourly_rate,
-              rating: apiData.data.rating,
-              total_reviews: apiData.data.total_reviews,
+              average_rating: apiData.data.average_rating,
+              review_count: apiData.data.review_count,
               is_verified: apiData.data.is_verified,
               full_name: apiData.data.full_name || 'Professional Stylist',
               email: apiData.data.email || 'stylist@example.com',
@@ -96,8 +96,8 @@ export function useStylist(id: string) {
             specialties: data.specialties || [],
             years_experience: data.years_experience,
             hourly_rate: data.hourly_rate,
-            rating: data.rating,
-            total_reviews: data.total_reviews,
+            average_rating: data.average_rating,
+            review_count: data.review_count,
             is_verified: data.is_verified,
             full_name: data.full_name || 'Professional Stylist',
             email: data.email || 'stylist@example.com',
@@ -129,8 +129,8 @@ export function useStylist(id: string) {
           specialties: ["Hair Styling", "Braids"],
           years_experience: 5,
           hourly_rate: 50,
-          rating: 4.8,
-          total_reviews: 25,
+          average_rating: 4.8,
+          review_count: 25,
           is_verified: true,
           full_name: "Professional Stylist",
           email: "stylist@example.com"
@@ -145,7 +145,7 @@ export function useStylist(id: string) {
     }
 
     fetchStylist()
-  }, [id])
+  }, [id, retryCount])
 
   return { 
     stylist, 
@@ -156,6 +156,7 @@ export function useStylist(id: string) {
         setLoading(true)
         setError(null)
         setStylist(null)
+        setRetryCount(prev => prev + 1) // This will trigger useEffect to refetch
       }
     }
   }

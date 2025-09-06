@@ -11,8 +11,8 @@ export interface StylistProfile {
   specialties: string[]
   years_experience: number
   hourly_rate: number
-  rating: number
-  total_reviews: number
+  average_rating: number
+  review_count: number
   is_verified: boolean
   full_name: string
   email: string
@@ -54,8 +54,8 @@ export function useStylists() {
               specialties: stylist.specialties || [],
               years_experience: stylist.years_experience,
               hourly_rate: stylist.hourly_rate,
-              rating: stylist.rating,
-              total_reviews: stylist.total_reviews,
+              average_rating: stylist.average_rating,
+              review_count: stylist.review_count,
               is_verified: stylist.is_verified,
               full_name: 'Professional Stylist',
               email: 'stylist@example.com',
@@ -108,8 +108,8 @@ export function useStylists() {
             specialties: stylist.specialties || [],
             years_experience: stylist.years_experience,
             hourly_rate: stylist.hourly_rate,
-            rating: stylist.rating,
-            total_reviews: stylist.total_reviews,
+            average_rating: stylist.average_rating,
+            review_count: stylist.review_count,
             is_verified: stylist.is_verified,
             full_name: 'Professional Stylist',
             email: 'stylist@example.com',

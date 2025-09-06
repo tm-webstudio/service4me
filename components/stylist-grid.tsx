@@ -4,8 +4,9 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, Heart, Loader2 } from "lucide-react"
-import Link from "next/link"
+import { MapPin, Heart, Loader2, Star } from "lucide-react"
+import { StarDisplay } from "@/components/ui/star-rating"
+import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
 import { postcodeToAreaName } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
@@ -16,6 +17,7 @@ interface StylistGridProps {
 }
 
 export function StylistGrid({ category, location }: StylistGridProps = {}) {
+  const router = useRouter()
   const { stylists, loading, error } = useStylists()
   const [favorites, setFavorites] = useState<string[]>([])
 
@@ -123,78 +125,90 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
           const expertise = getExpertiseDisplay(stylist.specialties)
           const businessName = stylist.business_name || "Hair Studio"
           const location = stylist.location ? postcodeToAreaName(stylist.location) : "London, UK"
-          const rating = stylist.rating || 0
-          const reviewCount = stylist.total_reviews || 0
+          const rating = stylist.average_rating || 0
+          const reviewCount = stylist.review_count || 0
           
           return (
-            <Link key={stylist.id} href={`/stylist/${stylist.id}`}>
-              <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-md h-full">
-                <CardContent className="p-0 h-full">
-                  <div className="relative aspect-square md:aspect-[4/3]">
-                    <img
-                      src={getStylistImage(stylist)}
-                      alt={businessName}
-                      className="w-full h-full object-cover rounded-t-lg"
+            <Card 
+              key={stylist.id}
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-md h-full"
+              onClick={() => router.push(`/stylist/${stylist.id}`)}
+            >
+              <CardContent className="p-0 h-full">
+                <div className="relative aspect-square md:aspect-[4/3]">
+                  <img
+                    src={getStylistImage(stylist)}
+                    alt={businessName}
+                    className="w-full h-full object-cover rounded-t-lg"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      toggleFavorite(stylist.id)
+                    }}
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${
+                        favorites.includes(stylist.id) ? "fill-red-500 text-red-500" : "text-gray-600"
+                      }`}
                     />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-3 right-3 bg-white/80 hover:bg-white"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        toggleFavorite(stylist.id)
-                      }}
-                    >
-                      <Heart
-                        className={`w-4 h-4 ${
-                          favorites.includes(stylist.id) ? "fill-red-500 text-red-500" : "text-gray-600"
-                        }`}
-                      />
-                    </Button>
-                    {stylist.is_verified && (
-                      <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">Verified</Badge>
-                    )}
+                  </Button>
+                  {stylist.is_verified && (
+                    <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">Verified</Badge>
+                  )}
+                </div>
+
+                <div className="p-2 md:p-4">
+                  {/* Mobile Layout - Title first, then stars below */}
+                  <div className="md:hidden">
+                    <h3 className="font-semibold text-lg text-gray-900 mb-2">{businessName}</h3>
+                    <div className="mb-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium text-gray-700 text-sm">
+                          {rating > 0 ? rating.toFixed(1) : "New"}
+                        </span>
+                        <span className="text-gray-500 text-sm">
+                          ({reviewCount})
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="p-2 md:p-4">
-                    {/* Mobile Layout - Title first, then stars below */}
-                    <div className="md:hidden">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-2">{businessName}</h3>
-                      <div className="flex items-center space-x-1 mb-3">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{rating > 0 ? rating.toFixed(1) : "New"}</span>
-                        <span className="text-sm text-gray-500">({reviewCount})</span>
-                      </div>
-                    </div>
-
-                    {/* Desktop Layout - Title and stars side by side */}
-                    <div className="hidden md:flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-lg text-gray-900">{businessName}</h3>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{rating > 0 ? rating.toFixed(1) : "New"}</span>
-                        <span className="text-sm text-gray-500">({reviewCount})</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center text-gray-600 mb-3">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      <span className="text-sm">{location}</span>
-                    </div>
-
-                    <div className="mb-3">
-                      <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
-                        <span className="md:hidden">
-                          {expertise.length > 18 ? `${expertise.substring(0, 18)}...` : expertise}
-                        </span>
-                        <span className="hidden md:inline">{expertise}</span>
+                  {/* Desktop Layout - Title and stars side by side */}
+                  <div className="hidden md:flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-lg text-gray-900">{businessName}</h3>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium text-gray-700 text-sm">
+                        {rating > 0 ? rating.toFixed(1) : "New"}
+                      </span>
+                      <span className="text-gray-500 text-sm">
+                        ({reviewCount})
                       </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
+
+                  <div className="flex items-center text-gray-600 mb-3">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span className="text-sm">{location}</span>
+                  </div>
+
+                  <div className="mb-3">
+                    <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
+                      <span className="md:hidden">
+                        {expertise.length > 18 ? `${expertise.substring(0, 18)}...` : expertise}
+                      </span>
+                      <span className="hidden md:inline">{expertise}</span>
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           )
         })}
         </div>

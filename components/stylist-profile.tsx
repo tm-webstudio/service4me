@@ -14,6 +14,10 @@ import {
   ContactCardSkeleton, 
   ReviewsSkeleton 
 } from "@/components/ui/skeletons"
+import { StarDisplay } from "@/components/ui/star-rating"
+import { ReviewForm } from "@/components/review-form"
+import { ReviewsDisplay } from "@/components/reviews-display"
+import { useAuth } from "@/hooks/use-auth"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -54,47 +58,22 @@ const defaultHours = {
   sunday: "Closed",
 }
 
-const reviews = [
-  {
-    id: 1,
-    name: "Jasmine K.",
-    rating: 5,
-    date: "2 weeks ago",
-    comment:
-      "RS Hair did an amazing job on my knotless braids! They look so natural and the team was very gentle with my hair. Definitely booking again!",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 2,
-    name: "Tiffany M.",
-    rating: 5,
-    date: "1 month ago",
-    comment:
-      "Best braider in London! RS Hair is professional, skilled, and their salon is so clean and welcoming. My braids lasted 8 weeks and still looked fresh.",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 3,
-    name: "Keisha R.",
-    rating: 5,
-    date: "1 month ago",
-    comment:
-      "I've been going to RS Hair for 2 years now and they never disappoint. They really care about hair health and always give great advice.",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-]
 
 interface StylistProfileProps {
   stylistId: string
 }
 
 export function StylistProfile({ stylistId }: StylistProfileProps) {
-  const { stylist, loading, error } = useStylist(stylistId)
+  const { userProfile } = useAuth()
+  const { stylist, loading, error, refetch: refetchStylist } = useStylist(stylistId)
   const { services, loading: servicesLoading, error: servicesError, formatDuration } = useStylistServices(stylist?.id)
   const [isFavorite, setIsFavorite] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [editingReview, setEditingReview] = useState(null)
+  const [reviewsRefreshTrigger, setReviewsRefreshTrigger] = useState(0)
 
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
@@ -398,9 +377,16 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{displayData.businessName}</h1>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-gray-600 mb-2 text-[15px]">
                   <div className="flex items-center mb-2 sm:mb-0">
-                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400 mr-1" />
-                    <span className="font-medium">{displayData.rating > 0 ? displayData.rating.toFixed(1) : "New"}</span>
-                    <span className="ml-1">({displayData.reviewCount} reviews)</span>
+                    <StarDisplay
+                      rating={stylist.average_rating || 0}
+                      totalReviews={stylist.review_count || 0}
+                      size="md"
+                      showCount={false}
+                      className=""
+                    />
+                    <span className="text-gray-500 text-sm ml-1">
+                      ({stylist.review_count || 0} {(stylist.review_count || 0) === 1 ? 'review' : 'reviews'})
+                    </span>
                   </div>
                   <div className="flex items-center">
                     <MapPin className="w-4 h-4 mr-1" />
@@ -600,39 +586,50 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
       <div className="mt-12 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900">Reviews</h2>
-          <Button className="bg-red-600 hover:bg-red-700">Leave a Review</Button>
+          {userProfile?.role === 'client' && !showReviewForm && !editingReview && (
+            <Button 
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => setShowReviewForm(true)}
+            >
+              Leave a Review
+            </Button>
+          )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reviews.map((review) => (
-            <Card key={review.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <Avatar>
-                    <AvatarImage src={review.avatar || "/placeholder.svg"} />
-                    <AvatarFallback>{review.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold">{review.name}</h4>
-                      <span className="text-sm text-gray-500">{review.date}</span>
-                    </div>
-                    <div className="flex items-center mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-gray-700">{review.comment}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        
+        {/* Review Form */}
+        {(showReviewForm || editingReview) && (
+          <ReviewForm
+            stylistId={stylistId}
+            existingReview={editingReview}
+            onSuccess={() => {
+              setShowReviewForm(false)
+              setEditingReview(null)
+              setReviewsRefreshTrigger(prev => prev + 1)
+              refetchStylist() // Refresh stylist data to get updated rating
+            }}
+            onCancel={() => {
+              setShowReviewForm(false)
+              setEditingReview(null)
+            }}
+          />
+        )}
+        
+        {/* Reviews Display */}
+        <ReviewsDisplay
+          stylistId={stylistId}
+          onEditReview={(review) => {
+            setEditingReview({
+              id: review.id,
+              rating: review.rating,
+              comment: review.comment || ""
+            })
+            setShowReviewForm(false)
+          }}
+          refreshTrigger={reviewsRefreshTrigger}
+          onReviewDeleted={() => {
+            refetchStylist() // Refresh stylist data to get updated rating
+          }}
+        />
       </div>
 
       {/* Gallery Modal */}

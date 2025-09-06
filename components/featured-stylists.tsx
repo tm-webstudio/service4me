@@ -3,14 +3,16 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, Heart, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { MapPin, Heart, ChevronLeft, ChevronRight, Loader2, Star } from "lucide-react"
+import { StarDisplay } from "@/components/ui/star-rating"
 import { useState, useRef } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
 import { postcodeToAreaName } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
 
 export function FeaturedStylists() {
+  const router = useRouter()
   const { stylists, loading, error } = useStylists()
   const [favorites, setFavorites] = useState<string[]>([])
   const carouselRef = useRef<HTMLDivElement>(null)
@@ -70,11 +72,14 @@ export function FeaturedStylists() {
               London Stylists
             </h2>
           </div>
-          <Link href="/browse">
-            <Button variant="outline" size="sm" className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent">
-              View All
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
+            onClick={() => router.push("/browse")}
+          >
+            View All
+          </Button>
         </div>
 
         {/* Loading State with Skeletons */}
@@ -159,8 +164,8 @@ export function FeaturedStylists() {
                 const expertise = getExpertiseDisplay(stylist.specialties)
                 const businessName = stylist.business_name || "Hair Studio"
                 const location = stylist.location ? postcodeToAreaName(stylist.location) : "London, UK"
-                const rating = stylist.rating || 0
-                const reviewCount = stylist.total_reviews || 0
+                const rating = stylist.average_rating || 0
+                const reviewCount = stylist.review_count || 0
                 
                 return (
                   <div
@@ -168,63 +173,68 @@ export function FeaturedStylists() {
                     className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
                     style={{ scrollSnapAlign: "start" }}
                   >
-                    <Link href={`/stylist/${stylist.id}`}>
-                      <Card className="group cursor-pointer hover:shadow-lg transition-shadow h-full">
-                        <CardContent className="p-0 h-full">
-                          <div className="relative aspect-square md:aspect-[4/3]">
-                            <img
-                              src={getStylistImage(stylist)}
-                              alt={businessName}
-                              className="w-full h-full object-cover rounded-t-lg"
+                    <Card 
+                      className="group cursor-pointer hover:shadow-lg transition-shadow h-full"
+                      onClick={() => router.push(`/stylist/${stylist.id}`)}
+                    >
+                      <CardContent className="p-0 h-full">
+                        <div className="relative aspect-square md:aspect-[4/3]">
+                          <img
+                            src={getStylistImage(stylist)}
+                            alt={businessName}
+                            className="w-full h-full object-cover rounded-t-lg"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              toggleFavorite(stylist.id)
+                            }}
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${
+                                favorites.includes(stylist.id) ? "fill-red-500 text-red-500" : "text-gray-600"
+                              }`}
                             />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute top-3 right-3 bg-white/80 hover:bg-white"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                toggleFavorite(stylist.id)
-                              }}
-                            >
-                              <Heart
-                                className={`w-4 h-4 ${
-                                  favorites.includes(stylist.id) ? "fill-red-500 text-red-500" : "text-gray-600"
-                                }`}
-                              />
-                            </Button>
-                            {stylist.is_verified && (
-                              <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">Verified</Badge>
-                            )}
-                          </div>
+                          </Button>
+                          {stylist.is_verified && (
+                            <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">Verified</Badge>
+                          )}
+                        </div>
 
-                          <div className="p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <h3 className="font-semibold text-lg text-gray-900">{businessName}</h3>
-                              <div className="flex items-center space-x-1">
-                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm font-medium">{rating > 0 ? rating.toFixed(1) : "New"}</span>
-                                <span className="text-sm text-gray-500">({reviewCount})</span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center text-gray-600 mb-3">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              <span className="text-sm">{location}</span>
-                            </div>
-
-                            <div className="mb-3">
-                              <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
-                                <span className="md:hidden">
-                                  {expertise.length > 18 ? `${expertise.substring(0, 18)}...` : expertise}
-                                </span>
-                                <span className="hidden md:inline">{expertise}</span>
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-lg text-gray-900">{businessName}</h3>
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                              <span className="font-medium text-gray-700 text-sm">
+                                {rating > 0 ? rating.toFixed(1) : "New"}
+                              </span>
+                              <span className="text-gray-500 text-sm">
+                                ({reviewCount})
                               </span>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
+
+                          <div className="flex items-center text-gray-600 mb-3">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            <span className="text-sm">{location}</span>
+                          </div>
+
+                          <div className="mb-3">
+                            <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
+                              <span className="md:hidden">
+                                {expertise.length > 18 ? `${expertise.substring(0, 18)}...` : expertise}
+                              </span>
+                              <span className="hidden md:inline">{expertise}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )
               })}
