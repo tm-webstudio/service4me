@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle, Clock, DollarSign } from "lucide-react"
+import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle, Clock, DollarSign, ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
@@ -39,7 +39,38 @@ export function StylistDashboard() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
   const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [localGalleryImages, setLocalGalleryImages] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadInProgressRef = useRef(false)
+  
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('🔍 [DEBUG] hasUnsavedChanges changed to:', hasUnsavedChanges)
+  }, [hasUnsavedChanges])
+  
+  useEffect(() => {
+    console.log('🔍 [DEBUG] localGalleryImages changed to:', localGalleryImages.length, 'images')
+  }, [localGalleryImages])
+  
+  // Initialize local gallery with profile images when profile loads
+  useEffect(() => {
+    if (profile?.portfolio_images) {
+      console.log('🔄 [DEBUG] Profile loaded with', profile.portfolio_images.length, 'images')
+      console.log('🔄 [DEBUG] Profile images:', profile.portfolio_images)
+      console.log('🔄 [DEBUG] Current localGalleryImages:', localGalleryImages)
+      
+      // Only update local gallery if it's empty or if we have unsaved changes that need syncing
+      if (localGalleryImages.length === 0 && !hasUnsavedChanges) {
+        console.log('🔄 [DEBUG] Initializing localGalleryImages with profile images')
+        setLocalGalleryImages(profile.portfolio_images)
+      } else if (hasUnsavedChanges) {
+        console.log('🔄 [DEBUG] Has unsaved changes, keeping local gallery state')
+      } else {
+        console.log('🔄 [DEBUG] Local gallery already has images, keeping current state')
+      }
+    }
+  }, [profile?.portfolio_images, hasUnsavedChanges]) // Watch both portfolio images and unsaved changes
   
   // Services state
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
@@ -134,6 +165,69 @@ export function StylistDashboard() {
   }
 
   // Image upload handlers
+  const handleImageUpload = useCallback(async (files: FileList | File[]) => {
+    console.log('🔄 [DEBUG] handleImageUpload called with', files.length, 'files')
+    console.log('🔍 [DEBUG] uploadInProgress ref:', uploadInProgressRef.current)
+    
+    // Prevent duplicate uploads using ref
+    if (uploadInProgressRef.current) {
+      console.log('⚠️ [DEBUG] Upload already in progress, skipping...')
+      return
+    }
+    
+    // Set upload in progress
+    uploadInProgressRef.current = true
+    
+    // Convert FileList to array immediately to prevent it from becoming stale
+    const filesArray = Array.from(files)
+    console.log('🔄 [DEBUG] Converted to array:', filesArray.length, 'files')
+    
+    try {
+      // Get current images count using functional update approach
+      let currentImageCount = 0
+      setLocalGalleryImages(currentImages => {
+        currentImageCount = currentImages.length
+        console.log('🔍 [DEBUG] Current localGalleryImages from state:', currentImages.length, 'images:', currentImages)
+        return currentImages // Return unchanged
+      })
+      
+      const totalImages = currentImageCount + filesArray.length
+      
+      if (totalImages > 20) {
+        alert(`Cannot upload ${filesArray.length} images. Maximum 20 images allowed. You currently have ${currentImageCount} images.`)
+        uploadInProgressRef.current = false // Reset flag
+        return
+      }
+
+      console.log('🚀 [DEBUG] Starting file upload for', filesArray.length, 'files...')
+      console.log('🚀 [DEBUG] Current images before upload:', currentImageCount, 'images')
+      
+      // Upload files
+      const uploadedUrls = await uploadFiles(filesArray)
+      console.log('✅ [DEBUG] Files uploaded successfully, received', uploadedUrls.length, 'URLs:', uploadedUrls)
+      
+      if (uploadedUrls.length > 0) {
+        // Add uploaded URLs to existing images
+        setLocalGalleryImages(prevImages => {
+          const updatedImages = [...prevImages, ...uploadedUrls]
+          console.log('🔄 [DEBUG] Combining existing', prevImages.length, 'images with', uploadedUrls.length, 'new images')
+          console.log('🔄 [DEBUG] Final image array (', updatedImages.length, 'total):', updatedImages)
+          
+          return updatedImages
+        })
+        setHasUnsavedChanges(true)
+        console.log('💾 [DEBUG] Local gallery updated and hasUnsavedChanges set to true')
+      }
+      
+    } catch (err) {
+      console.error('❌ [DEBUG] Upload failed:', err)
+      alert('Failed to upload images. Please try again.')
+    } finally {
+      // Clear upload in progress flag
+      uploadInProgressRef.current = false
+    }
+  }, [uploadFiles])
+
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (files && files.length > 0) {
@@ -143,43 +237,21 @@ export function StylistDashboard() {
         event.target.value = ''
       }
     }
-  }, [])
-
-  const handleImageUpload = useCallback(async (files: FileList | File[]) => {
-    try {
-      const currentImages = profile?.portfolio_images || []
-      const totalImages = currentImages.length + files.length
-      
-      if (totalImages > 20) {
-        alert(`Cannot upload ${files.length} images. Maximum 20 images allowed. You currently have ${currentImages.length} images.`)
-        return
-      }
-
-      const uploadedUrls = await uploadFiles(files)
-      
-      if (uploadedUrls.length > 0) {
-        const updatedImages = [...currentImages, ...uploadedUrls]
-        await updatePortfolioImages(updatedImages)
-      }
-    } catch (err) {
-      console.error('Upload failed:', err)
-    }
-  }, [profile?.portfolio_images, uploadFiles, updatePortfolioImages])
+  }, [handleImageUpload])
 
   const handleImageDelete = useCallback(async (imageUrl: string, index: number) => {
-    if (!profile?.portfolio_images) return
+    if (!localGalleryImages.length) return
     
     try {
-      console.log('🔍 [DASHBOARD] Deleting image:', imageUrl)
-      await deleteImage(imageUrl)
-      const updatedImages = profile.portfolio_images.filter((_, i) => i !== index)
-      console.log('🔍 [DASHBOARD] Updating portfolio after deletion...')
-      await updatePortfolioImages(updatedImages)
-      console.log('✅ [DASHBOARD] Image deleted successfully!')
+      console.log('🔍 [DASHBOARD] Removing image from local gallery:', imageUrl)
+      const updatedImages = localGalleryImages.filter((_, i) => i !== index)
+      setLocalGalleryImages(updatedImages) // Update local state only
+      setHasUnsavedChanges(true) // Mark as having unsaved changes
+      console.log('✅ [DASHBOARD] Image removed from local gallery!')
     } catch (err) {
-      console.error('❌ [DASHBOARD] Delete failed:', err)
+      console.error('❌ [DASHBOARD] Remove failed:', err)
     }
-  }, [profile?.portfolio_images, deleteImage, updatePortfolioImages])
+  }, [localGalleryImages])
 
   // Drag and drop handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -226,6 +298,7 @@ export function StylistDashboard() {
     }
   }, [profile])
 
+
   // Gallery reorder handlers
   const handleImageDragStart = useCallback((e: React.DragEvent, index: number) => {
     setDraggedImageIndex(index)
@@ -247,13 +320,13 @@ export function StylistDashboard() {
     e.preventDefault()
     setDragOverImageIndex(null)
     
-    if (draggedImageIndex === null || draggedImageIndex === dropIndex || !profile?.portfolio_images) {
+    if (draggedImageIndex === null || draggedImageIndex === dropIndex || !localGalleryImages.length) {
       setDraggedImageIndex(null)
       return
     }
 
     try {
-      const images = [...profile.portfolio_images]
+      const images = [...localGalleryImages]
       const draggedImage = images[draggedImageIndex]
       
       // Remove the dragged image from its original position
@@ -263,20 +336,62 @@ export function StylistDashboard() {
       const adjustedDropIndex = draggedImageIndex < dropIndex ? dropIndex - 1 : dropIndex
       images.splice(adjustedDropIndex, 0, draggedImage)
       
-      console.log('🔄 [DASHBOARD] Reordering images:', { from: draggedImageIndex, to: dropIndex })
-      await updatePortfolioImages(images)
-      console.log('✅ [DASHBOARD] Gallery order updated successfully')
+      console.log('🔄 [DASHBOARD] Reordering images locally:', { from: draggedImageIndex, to: dropIndex })
+      setLocalGalleryImages(images) // Update local state only
+      setHasUnsavedChanges(true) // Mark as having unsaved changes
+      console.log('✅ [DASHBOARD] Local gallery order updated successfully')
     } catch (err) {
       console.error('❌ [DASHBOARD] Failed to reorder images:', err)
     } finally {
       setDraggedImageIndex(null)
     }
-  }, [draggedImageIndex, profile?.portfolio_images, updatePortfolioImages])
+  }, [draggedImageIndex, localGalleryImages])
 
   const handleImageDragEnd = useCallback(() => {
     setDraggedImageIndex(null)
     setDragOverImageIndex(null)
   }, [])
+
+  // Save gallery changes to database
+  const handleSaveGallery = useCallback(async () => {
+    try {
+      console.log('💾 [DEBUG] === SAVING GALLERY TO DATABASE ===')
+      console.log('💾 [DEBUG] Current localGalleryImages:', localGalleryImages.length, 'images:', localGalleryImages)
+      console.log('💾 [DEBUG] Original profile images:', profile?.portfolio_images?.length, 'images:', profile?.portfolio_images)
+      console.log('💾 [DEBUG] hasUnsavedChanges:', hasUnsavedChanges)
+      
+      // Delete old images that are no longer in the gallery
+      const originalImages = profile?.portfolio_images || []
+      const imagesToDelete = originalImages.filter(img => !localGalleryImages.includes(img))
+      
+      if (imagesToDelete.length > 0) {
+        console.log('🗑️ [DEBUG] Images to delete:', imagesToDelete.length, 'images:', imagesToDelete)
+        for (const imageUrl of imagesToDelete) {
+          try {
+            await deleteImage(imageUrl)
+            console.log('🗑️ [DEBUG] Successfully deleted image:', imageUrl)
+          } catch (err) {
+            console.error('❌ [DEBUG] Failed to delete image:', imageUrl, err)
+          }
+        }
+      } else {
+        console.log('🗑️ [DEBUG] No images to delete')
+      }
+      
+      // Save the current local gallery to database
+      console.log('💾 [DEBUG] Saving', localGalleryImages.length, 'images to database')
+      await updatePortfolioImages(localGalleryImages)
+      setHasUnsavedChanges(false)
+      console.log('✅ [DEBUG] Gallery saved successfully to database, unsaved changes cleared')
+      console.log('💾 [DEBUG] === GALLERY SAVE COMPLETE ===')
+      
+      // Show a brief success message (optional)
+      // Could add a toast notification here
+    } catch (err) {
+      console.error('❌ [DEBUG] Failed to save gallery:', err)
+      alert('Failed to save gallery. Please try again.')
+    }
+  }, [localGalleryImages, profile?.portfolio_images, updatePortfolioImages, deleteImage, hasUnsavedChanges])
 
   // Service management functions
   const openAddServiceModal = () => {
@@ -793,10 +908,22 @@ export function StylistDashboard() {
         {/* Gallery Settings Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Upload className="w-5 h-5 mr-2 text-red-600" />
-              Gallery Settings
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center">
+                <Upload className="w-5 h-5 mr-2 text-red-600" />
+                Gallery Settings
+              </CardTitle>
+              {hasUnsavedChanges && (
+                <Button
+                  onClick={handleSaveGallery}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Save className="w-3 h-3 mr-1" />
+                  Save Gallery
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Upload Progress */}
@@ -845,19 +972,19 @@ export function StylistDashboard() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-semibold text-gray-900">
-                  Current Gallery ({profile?.portfolio_images?.length || 0}/20)
+                  Current Gallery ({localGalleryImages.length || 0}/20)
                 </h4>
-                {profile?.portfolio_images?.length ? (
+                {localGalleryImages.length ? (
                   <p className="text-xs text-gray-500">Drag images to reorder</p>
                 ) : null}
               </div>
               <div className="grid grid-cols-3 gap-3">
-                {loading ? (
+                {loading && !profile ? (
                   <div className="col-span-3">
                     <DashboardGallerySkeleton />
                   </div>
-                ) : profile?.portfolio_images?.length ? (
-                  profile.portfolio_images.map((imageUrl, index) => (
+                ) : localGalleryImages.length ? (
+                  localGalleryImages.map((imageUrl, index) => (
                     <div 
                       key={`${imageUrl}-${index}`} 
                       className={`relative group aspect-square rounded-lg overflow-hidden cursor-move transition-all duration-200 ${
@@ -927,12 +1054,12 @@ export function StylistDashboard() {
               >
                 <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragOver ? 'text-red-500' : 'text-gray-400'}`} />
                 <h5 className="text-lg font-medium text-gray-900 mb-2">
-                  {isDragOver ? 'Drop your images here' : 'Upload Gallery Images'}
+                  {isDragOver ? 'Drop your images here' : 'Select Gallery Images'}
                 </h5>
                 <p className="text-sm text-gray-500 mb-4">
                   {isDragOver 
-                    ? 'Release to upload your images' 
-                    : 'Drag and drop images here, or click the button below'
+                    ? 'Release to stage your images for preview' 
+                    : 'Drag and drop images here, or click the button below to preview before uploading'
                   }
                 </p>
                 
@@ -940,7 +1067,7 @@ export function StylistDashboard() {
                 <label 
                   htmlFor="portfolio-file-input"
                   className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 py-2 text-red-600 border-red-600 hover:bg-red-50 cursor-pointer ${
-                    (isUploading || saving || (profile?.portfolio_images?.length || 0) >= 20) 
+                    (isUploading || saving || localGalleryImages.length >= 20) 
                       ? 'opacity-50 cursor-not-allowed pointer-events-none' 
                       : ''
                   }`}
@@ -953,13 +1080,13 @@ export function StylistDashboard() {
                   ) : (
                     <>
                       <Upload className="w-4 h-4 mr-2" />
-                      Choose Files
+                      Select Images
                     </>
                   )}
                 </label>
                 
                 <p className="text-xs text-gray-400 mt-3">
-                  <span className="font-medium text-gray-600">Tip:</span> Hold Ctrl (Windows) or Cmd (Mac) to select multiple files at once.<br/>
+                  <span className="font-medium text-gray-600">Tip:</span> Images will be staged for preview first. Hold Ctrl (Windows) or Cmd (Mac) to select multiple files at once.<br/>
                   JPG, PNG or GIF. Max 5MB per image. Up to 20 images total.
                 </p>
               </div>
@@ -1056,26 +1183,38 @@ export function StylistDashboard() {
                           )}
                         </div>
                       ) : (
-                        <div 
-                          onClick={triggerServiceImageSelect}
-                          onDragOver={handleServiceDragOver}
-                          onDragLeave={handleServiceDragLeave}
-                          onDrop={handleServiceDrop}
-                          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                            isServiceDragOver 
-                              ? 'border-red-400 bg-red-50' 
-                              : 'border-gray-300 hover:border-gray-400'
-                          }`}
-                        >
-                          <Upload className={`w-8 h-8 mx-auto mb-2 ${
-                            isServiceDragOver ? 'text-red-500' : 'text-gray-400'
-                          }`} />
-                          <p className={`text-sm ${
-                            isServiceDragOver ? 'text-red-600' : 'text-gray-500'
-                          }`}>
-                            {isServiceDragOver ? 'Drop image here' : 'Click or drag to upload service image'}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">JPG, PNG or GIF. Max 5MB.</p>
+                        <div className="space-y-4">
+                          <div 
+                            onDragOver={handleServiceDragOver}
+                            onDragLeave={handleServiceDragLeave}
+                            onDrop={handleServiceDrop}
+                            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                              isServiceDragOver 
+                                ? 'border-red-400 bg-red-50' 
+                                : 'border-gray-300'
+                            }`}
+                          >
+                            <Upload className={`w-8 h-8 mx-auto mb-2 ${
+                              isServiceDragOver ? 'text-red-500' : 'text-gray-400'
+                            }`} />
+                            <p className={`text-sm mb-3 ${
+                              isServiceDragOver ? 'text-red-600' : 'text-gray-500'
+                            }`}>
+                              {isServiceDragOver ? 'Drop image here' : 'Drag and drop an image here, or click the button below'}
+                            </p>
+                            
+                            {/* Select Images button */}
+                            <button
+                              type="button"
+                              onClick={triggerServiceImageSelect}
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 py-2 text-red-600 border-red-600 hover:bg-red-50"
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              Select Image
+                            </button>
+                            
+                            <p className="text-xs text-gray-400 mt-3">JPG, PNG or GIF. Max 5MB.</p>
+                          </div>
                         </div>
                       )}
                       <input
