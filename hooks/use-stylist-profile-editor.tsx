@@ -19,6 +19,7 @@ interface ProfileUpdateData {
   instagram_handle?: string
   tiktok_handle?: string
   portfolio_images?: string[]
+  is_active?: boolean
 }
 
 export function useStylistProfileEditor() {
@@ -89,6 +90,7 @@ export function useStylistProfileEditor() {
             rating: data.rating,
             total_reviews: data.total_reviews,
             is_verified: data.is_verified,
+            is_active: data.is_active ?? true,
             full_name: data.full_name || user.user_metadata?.full_name || 'Professional Stylist',
             email: data.email || user.email || 'stylist@example.com',
             booking_link: data.booking_link,
@@ -240,6 +242,7 @@ export function useStylistProfileEditor() {
           rating: data.rating,
           total_reviews: data.total_reviews,
           is_verified: data.is_verified,
+          is_active: data.is_active ?? true,
           full_name: currentUser.user_metadata?.full_name || 'Professional Stylist',
           email: data.email || currentUser.email || 'stylist@example.com',
           booking_link: data.booking_link,

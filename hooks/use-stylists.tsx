@@ -14,6 +14,7 @@ export interface StylistProfile {
   average_rating: number
   review_count: number
   is_verified: boolean
+  is_active: boolean
   full_name: string
   email: string
   booking_link?: string
@@ -57,6 +58,7 @@ export function useStylists() {
               average_rating: stylist.average_rating,
               review_count: stylist.review_count,
               is_verified: stylist.is_verified,
+              is_active: stylist.is_active ?? true,
               full_name: 'Professional Stylist',
               email: 'stylist@example.com',
               booking_link: stylist.booking_link,
@@ -87,6 +89,7 @@ export function useStylists() {
         const { data, error } = await supabase
           .from('stylist_profiles')
           .select('*')
+          .eq('is_active', true)
           .order('created_at', { ascending: false })
 
         const queryTime = Date.now() - startTime
@@ -111,6 +114,7 @@ export function useStylists() {
             average_rating: stylist.average_rating,
             review_count: stylist.review_count,
             is_verified: stylist.is_verified,
+            is_active: stylist.is_active ?? true,
             full_name: 'Professional Stylist',
             email: 'stylist@example.com',
             booking_link: stylist.booking_link,

@@ -44,6 +44,7 @@ export function useStylist(id: string) {
               average_rating: apiData.data.average_rating,
               review_count: apiData.data.review_count,
               is_verified: apiData.data.is_verified,
+              is_active: apiData.data.is_active ?? true,
               full_name: apiData.data.full_name || 'Professional Stylist',
               email: apiData.data.email || 'stylist@example.com',
               booking_link: apiData.data.booking_link,
@@ -75,6 +76,7 @@ export function useStylist(id: string) {
           .from('stylist_profiles')
           .select('*')
           .eq('id', id)
+          .eq('is_active', true)
           .single()
 
         const queryTime = Date.now() - startTime
@@ -99,6 +101,7 @@ export function useStylist(id: string) {
             average_rating: data.average_rating,
             review_count: data.review_count,
             is_verified: data.is_verified,
+            is_active: data.is_active ?? true,
             full_name: data.full_name || 'Professional Stylist',
             email: data.email || 'stylist@example.com',
             booking_link: data.booking_link,
@@ -132,6 +135,7 @@ export function useStylist(id: string) {
           average_rating: 4.8,
           review_count: 25,
           is_verified: true,
+          is_active: true,
           full_name: "Professional Stylist",
           email: "stylist@example.com"
         }

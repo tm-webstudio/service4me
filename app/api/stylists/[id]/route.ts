@@ -23,6 +23,7 @@ export async function GET(
       .from('stylist_profiles')
       .select('*')
       .eq('id', id)
+      .eq('is_active', true)
       .single()
 
     if (error) {

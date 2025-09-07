@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
 import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle, Clock, DollarSign, ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
@@ -352,6 +353,35 @@ export function StylistDashboard() {
     setDragOverImageIndex(null)
   }, [])
 
+  // Local state for optimistic UI updates
+  const [optimisticActive, setOptimisticActive] = useState<boolean | null>(null)
+
+  // Toggle profile active status with optimistic updates
+  const handleToggleActiveStatus = useCallback(async (isActive: boolean) => {
+    try {
+      console.log('🔄 [DEBUG] Toggling profile active status to:', isActive)
+      
+      // Immediately update the UI optimistically
+      setOptimisticActive(isActive)
+      
+      // Update the database in the background
+      await updateProfile({ is_active: isActive })
+      
+      console.log('✅ [DEBUG] Profile active status updated successfully')
+      
+      // Clear optimistic state once real data is updated
+      setOptimisticActive(null)
+      
+    } catch (err) {
+      console.error('❌ [DEBUG] Failed to update profile active status:', err)
+      
+      // Revert optimistic state on error
+      setOptimisticActive(null)
+      
+      alert('Failed to update profile status. Please try again.')
+    }
+  }, [updateProfile])
+
   // Save gallery changes to database
   const handleSaveGallery = useCallback(async () => {
     try {
@@ -604,17 +634,33 @@ export function StylistDashboard() {
       <div className="grid grid-cols-1 gap-4 mb-5">
         <div className="bg-gray-100 rounded-xl p-6 h-full flex flex-col justify-center">
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Hello {getBusinessName()}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Hello {getBusinessName()}</h1>
+              <Badge variant="secondary" className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} w-fit`}>
+                {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
+              </Badge>
+            </div>
             <div className="flex flex-col space-y-2 mt-3">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
-                <span className="font-medium">{getRating() > 0 ? getRating().toFixed(1) : "New"}</span>
-                <span className="text-gray-600 ml-1">({getReviewCount()} reviews)</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  {profile.is_verified ? "Verified Profile" : "Active Profile"}
-                </Badge>
+              <div className="flex items-center flex-wrap gap-4">
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
+                  <span className="font-medium">{getRating() > 0 ? getRating().toFixed(1) : "New"}</span>
+                  <span className="text-gray-600 ml-1">({getReviewCount()} reviews)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">Active:</span>
+                  <button
+                    onClick={() => handleToggleActiveStatus(!profile?.is_active)}
+                    disabled={saving}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+                      (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-red-600' : 'bg-gray-400'
+                    } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                      (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
               </div>
             </div>
             <div className="mt-4">
