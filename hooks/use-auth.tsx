@@ -45,19 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const lastFetchedUserId = useRef<string | null>(null)
 
   const createUserProfileFromAuth = async (user: User) => {
-    // Extract role from user metadata or default to client
     const role = user.user_metadata?.role || 'client'
     const fullName = user.user_metadata?.full_name || null
     const phone = user.user_metadata?.phone || null
 
     try {
-      console.log('🔧 [AUTH] Creating user profile with data:', {
-        id: user.id,
-        email: user.email,
-        full_name: fullName,
-        role: role,
-        phone: phone
-      })
 
       const { data, error } = await supabase
         .from('users')
@@ -71,18 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select()
         .single()
 
-      if (error && error.code !== '23505') { // Ignore duplicate key errors
-        console.error('❌ [AUTH] Error creating user profile from auth:', error)
+      if (error && error.code !== '23505') {
+        console.error('Error creating user profile:', error)
         setUserProfile(null)
       } else if (error?.code === '23505') {
-        // User already exists, just fetch it
-        console.log('✅ [AUTH] User profile already exists, fetching...')
         await fetchUserProfile(user.id)
       } else {
-        console.log('✅ [AUTH] User profile created successfully:', data)
         setUserProfile(data)
-        
-        // If this is a stylist, create stylist profile with sign-up data
         if (role === 'stylist' && user.user_metadata) {
           const { error: stylistUpdateError } = await supabase
             .from('stylist_profiles')
@@ -95,14 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('user_id', user.id)
 
           if (stylistUpdateError) {
-            console.error('❌ [AUTH] Error updating stylist profile from auth:', stylistUpdateError)
-          } else {
-            console.log('✅ [AUTH] Stylist profile updated with sign-up data')
+            console.error('Error updating stylist profile:', stylistUpdateError)
           }
         }
       }
     } catch (error) {
-      console.error('❌ [AUTH] Exception creating user profile from auth:', error)
+      console.error('Exception creating user profile:', error)
       setUserProfile(null)
     }
   }
@@ -114,18 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastFetchTime = sessionStorage.getItem(lastFetchKey)
       const now = Date.now()
       
-      if (lastFetchTime && (now - parseInt(lastFetchTime)) < 5000) { // 5 second cooldown
-        console.log('🔍 [AUTH] Skipping recent fetch for user:', userId)
+      if (lastFetchTime && (now - parseInt(lastFetchTime)) < 5000) {
         return
       }
 
       sessionStorage.setItem(lastFetchKey, now.toString())
-      console.log('🔍 [AUTH] Fetching user profile for ID:', userId)
       
       // Check if we have a valid session first
       const { data: { session } } = await supabase.auth.getSession()
-      console.log('🔍 [AUTH] Current session exists:', !!session)
-      console.log('🔍 [AUTH] Session user ID:', session?.user?.id)
       
       const { data, error } = await supabase
         .from('users')
@@ -134,13 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single()
 
       if (error) {
-        console.error('❌ [AUTH] Error fetching user profile:', error)
-        console.error('❌ [AUTH] Error code:', error.code)
-        console.error('❌ [AUTH] Error details:', JSON.stringify(error, null, 2))
+        console.error('Error fetching user profile:', error)
         
         if (error.code === 'PGRST116') {
           // No profile found - try to create one from auth user data
-          console.log('🔧 [AUTH] No user profile found, creating from auth data for user:', userId)
           const { data: { user } } = await supabase.auth.getUser()
           if (user && user.id === userId) {
             // Prevent recursive calls by checking if we've already tried creating this user
@@ -152,7 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               sessionStorage.setItem(attemptKey, now.toString())
               await createUserProfileFromAuth(user)
             } else {
-              console.log('⚠️ [AUTH] Recent creation attempt failed, skipping retry')
               setUserProfile(null)
             }
           } else {
@@ -164,33 +141,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
       
-      console.log('✅ [AUTH] User profile fetched successfully:', JSON.stringify(data, null, 2))
       setUserProfile(data)
     } catch (error) {
-      console.error('❌ [AUTH] Exception fetching user profile:', error)
+      console.error('Exception fetching user profile:', error)
       setUserProfile(null)
     }
   }
 
   useEffect(() => {
-    // Check if Supabase is properly configured
     if (!isSupabaseConfigured()) {
-      console.warn('Supabase not configured with valid environment variables')
       setLoading(false)
       return
     }
 
-    // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
         
-        // Handle refresh token errors gracefully
         if (error) {
-          console.warn('⚠️ [AUTH] Session error:', error.message)
           if (error.message?.includes('Refresh Token Not Found') || 
               error.message?.includes('Invalid Refresh Token')) {
-            // Clear any stored session data and proceed as unauthenticated
             setSession(null)
             setUser(null)
             setUserProfile(null)
@@ -212,7 +182,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
       } catch (error) {
         console.error('Error getting session:', error)
-        // Clear all auth state on any error to prevent stuck loading states
         setSession(null)
         setUser(null)
         setUserProfile(null)
@@ -222,11 +191,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     getInitialSession()
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         try {
-          console.log('🔍 [AUTH] Auth state change event:', event)
           
           if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED') {
             setSession(null)
@@ -237,7 +204,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return
           }
           
-          // Only fetch profile for actual sign-in events, not initial session
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             setSession(session)
             setUser(session?.user ?? null)
@@ -252,7 +218,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           console.error('Error in auth state change:', error)
-          // Clear auth state on any error during state change
           setSession(null)
           setUser(null)
           setUserProfile(null)
@@ -284,7 +249,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error
 
-      // Only create user profile if email is confirmed (or if confirmation is disabled)
       if (data.user && (data.user.email_confirmed_at || !data.user.confirmation_sent_at)) {
         const { error: profileError } = await supabase
           .from('users')
@@ -299,7 +263,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (profileError) {
           console.error('Error creating user profile:', profileError)
         } else if (role === 'stylist' && additionalData) {
-          // Update the stylist profile with actual user data
           const { error: stylistUpdateError } = await supabase
             .from('stylist_profiles')
             .update({
@@ -352,24 +315,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      // Check if there's an active session before attempting signOut
       const { data: { session } } = await supabase.auth.getSession()
       
       if (session) {
-        // Sign out from Supabase - this will trigger the auth state change listener
         const { error } = await supabase.auth.signOut()
         
         if (error) {
-          console.warn('⚠️ [AUTH] SignOut error:', error.message)
-          // If signOut fails, manually clear state
           setUser(null)
           setUserProfile(null)
           setSession(null)
           return
         }
       } else {
-        // No active session, just clear local state
-        console.log('🔍 [AUTH] No active session, clearing local state only')
         setUser(null)
         setUserProfile(null)
         setSession(null)
@@ -377,7 +334,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Signout error:', error)
-      // Even if there's an error, clear local state to ensure user is signed out locally
       setUser(null)
       setUserProfile(null)
       setSession(null)
@@ -385,15 +341,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const getDashboardUrl = () => {
-    if (!userProfile) return '/dashboard/client' // Default to client
+    if (!userProfile) return '/dashboard/client'
     
     switch (userProfile.role) {
+      case 'admin':
+        return '/admin'
       case 'stylist':
         return '/dashboard/stylist'
       case 'client':
         return '/dashboard/client'
       default:
-        return '/dashboard/client' // Default to client for unknown roles
+        return '/dashboard/client'
     }
   }
 

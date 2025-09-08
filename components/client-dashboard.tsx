@@ -157,33 +157,7 @@ export function ClientDashboard() {
     )
   }
 
-  // Show login prompt if not authenticated
-  if (!userProfile) {
-    return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Please log in to view your dashboard.
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-
-  // Show non-client message
-  if (userProfile.role !== 'client') {
-    return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            This dashboard is only available for clients.
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
+  // User is authenticated and is a client - show dashboard
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

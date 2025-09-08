@@ -30,29 +30,21 @@ export function LoginForm() {
     
     try {
       const result = await signIn(email, password)
-      console.log("Login successful", result)
       
-      // Don't rely on userProfile state - instead check the user metadata directly
-      // since the auth state updates immediately but React state updates are async
       if (result.user?.user_metadata?.role) {
         const role = result.user.user_metadata.role
-        console.log('User role from metadata:', role)
         
-        if (role === 'stylist') {
-          console.log('Redirecting to stylist dashboard')
+        setLoading(false)
+        if (role === 'admin') {
+          router.push('/admin')
+        } else if (role === 'stylist') {
           router.push('/dashboard/stylist')
-        } else if (role === 'client') {
-          console.log('Redirecting to client dashboard')
-          router.push('/dashboard/client')
         } else {
-          console.log('Unknown role, redirecting to client dashboard')
           router.push('/dashboard/client')
         }
-        setLoading(false)
+        return
       } else {
-        // Fallback: try to get role from database directly
-        console.log('No role in metadata, fetching from database...')
-        const { data: profile } = await import('@/lib/supabase').then(async m => {
+        const { data: profile, error: profileError } = await import('@/lib/supabase').then(async m => {
           return m.supabase
             .from('users')
             .select('role')
@@ -60,14 +52,15 @@ export function LoginForm() {
             .single()
         })
         
-        if (profile?.role === 'stylist') {
-          console.log('Database role: stylist, redirecting to stylist dashboard')
+        setLoading(false)
+        if (profile?.role === 'admin') {
+          router.push('/admin')
+        } else if (profile?.role === 'stylist') {
           router.push('/dashboard/stylist')
         } else {
-          console.log('Database role: client or unknown, redirecting to client dashboard')
           router.push('/dashboard/client')
         }
-        setLoading(false)
+        return
       }
       
     } catch (err: any) {
