@@ -514,16 +514,25 @@ export function StylistDashboard() {
   }
 
   const handleSaveService = async () => {
+    console.log('🔍 [DEBUG] handleSaveService called')
+    console.log('🔍 [DEBUG] serviceForm:', serviceForm)
+    
     if (!validateServiceForm()) {
+      console.log('❌ [DEBUG] Form validation failed')
       return
     }
 
+    console.log('✅ [DEBUG] Form validation passed')
+
     try {
       let imageUrl = serviceImagePreview
+      console.log('🔍 [DEBUG] Initial imageUrl:', imageUrl)
 
       // Upload new image if a file is selected
       if (serviceImageFile) {
+        console.log('🔍 [DEBUG] Uploading image file:', serviceImageFile.name)
         imageUrl = await uploadServiceImage(serviceImageFile)
+        console.log('✅ [DEBUG] Image uploaded:', imageUrl)
       }
 
       const serviceData = {
@@ -532,22 +541,26 @@ export function StylistDashboard() {
         duration: serviceForm.duration,
         image_url: imageUrl || undefined
       }
+      console.log('🔍 [DEBUG] Service data to save:', serviceData)
 
       if (editingService) {
-        // Update existing service
+        console.log('🔍 [DEBUG] Updating existing service:', editingService.id)
         await updateService(editingService.id, serviceData)
       } else {
-        // Add new service
-        await addService(serviceData)
+        console.log('🔍 [DEBUG] Adding new service')
+        const result = await addService(serviceData)
+        console.log('✅ [DEBUG] Service added successfully:', result)
       }
 
+      console.log('✅ [DEBUG] Service operation completed, closing modal')
       setIsServiceModalOpen(false)
       setServiceImageFile(null)
       setServiceImagePreview('')
       setIsServiceDragOver(false)
     } catch (err) {
-      console.error('Error saving service:', err)
-      alert('Failed to save service. Please try again.')
+      console.error('❌ [DEBUG] Error saving service:', err)
+      console.error('❌ [DEBUG] Error details:', JSON.stringify(err, null, 2))
+      alert(`Failed to save service: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -675,55 +688,55 @@ export function StylistDashboard() {
         </div>
       </div>
 
-      {/* Profile Settings */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-        {/* Profile Information Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center">
-                <Settings className="w-5 h-5 mr-2 text-red-600" />
-                Profile Information
-              </CardTitle>
-              <Button 
-                onClick={() => setIsEditing(!isEditing)}
-                variant={isEditing ? "outline" : "default"}
-                className={isEditing ? "" : "bg-red-600 hover:bg-red-700"}
-                disabled={saving}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                {isEditing ? "Cancel" : "Edit Profile"}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            {/* 1. LOGO SECTION */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Logo</h3>
-              <div className="flex items-center space-x-4">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={`/placeholder.svg?height=100&width=100&text=${encodeURIComponent(getBusinessName())}`} />
-                  <AvatarFallback>{getBusinessName().split(" ").map((n) => n[0]).join("")}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-sm mb-2"
-                    onClick={() => {
-                      // Placeholder function - will be implemented when connected to file upload
-                      console.log('Change photo clicked');
-                    }}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Change Photo
-                  </Button>
-                  <p className="text-xs text-gray-400">JPG, PNG or GIF. Max 5MB.</p>
-                </div>
+      {/* Profile Information Card */}
+      <Card className="mb-5">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center">
+              <Settings className="w-5 h-5 mr-2 text-red-600" />
+              Profile Information
+            </CardTitle>
+            <Button 
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? "outline" : "default"}
+              className={isEditing ? "" : "bg-red-600 hover:bg-red-700"}
+              disabled={saving}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              {isEditing ? "Cancel" : "Edit Profile"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* 1. LOGO SECTION */}
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Logo</h3>
+            <div className="flex items-center space-x-4">
+              <Avatar className="w-16 h-16">
+                <AvatarImage src={`/placeholder.svg?height=100&width=100&text=${encodeURIComponent(getBusinessName())}`} />
+                <AvatarFallback>{getBusinessName().split(" ").map((n) => n[0]).join("")}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-sm mb-2"
+                  onClick={() => {
+                    // Placeholder function - will be implemented when connected to file upload
+                    console.log('Change photo clicked');
+                  }}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Change Photo
+                </Button>
+                <p className="text-xs text-gray-400">JPG, PNG or GIF. Max 5MB.</p>
               </div>
             </div>
+          </div>
 
-            {/* 2. BASIC INFORMATION SECTION */}
+          {/* 2. TWO COLUMN LAYOUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Basic Information */}
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Basic Information</h3>
               <div className="space-y-5">
@@ -801,10 +814,36 @@ export function StylistDashboard() {
                     <p className="text-gray-700 leading-relaxed">{getBio()}</p>
                   )}
                 </div>
+
+                {/* Experience and Rate */}
+                {isEditing && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Years of Experience</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.years_experience}
+                        onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
+                        placeholder="Years"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Hourly Rate (£)</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.hourly_rate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: parseInt(e.target.value) || 0 }))}
+                        placeholder="Rate"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* 3. CONTACT DETAILS SECTION */}
+            {/* Right Column - Contact Details */}
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Contact Details</h3>
               <div className="space-y-5">
@@ -892,67 +931,40 @@ export function StylistDashboard() {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Experience and Rate */}
-            {isEditing && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="experience" className="text-sm font-medium">Years of Experience</Label>
-                  <Input
-                    id="experience"
-                    type="number"
-                    min="0"
-                    value={formData.years_experience}
-                    onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
-                    placeholder="Years"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="hourly-rate" className="text-sm font-medium">Hourly Rate (£)</Label>
-                  <Input
-                    id="hourly-rate"
-                    type="number"
-                    min="0"
-                    value={formData.hourly_rate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: parseInt(e.target.value) || 0 }))}
-                    placeholder="Rate"
-                  />
-                </div>
-              </div>
-            )}
+          {/* Save/Cancel buttons */}
+          {isEditing && (
+            <div className="flex gap-2 pt-4">
+              <Button 
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-red-600 hover:bg-red-700 flex-1"
+              >
+                {saving ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                ) : (
+                  <><Save className="w-4 h-4 mr-2" />Save Changes</>
+                )}
+              </Button>
+              <Button 
+                onClick={handleCancel}
+                variant="outline"
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
 
-            {/* Save/Cancel buttons */}
-            {isEditing && (
-              <div className="flex gap-2 pt-4">
-                <Button 
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="bg-red-600 hover:bg-red-700 flex-1"
-                >
-                  {saving ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                  ) : (
-                    <><Save className="w-4 h-4 mr-2" />Save Changes</>
-                  )}
-                </Button>
-                <Button 
-                  onClick={handleCancel}
-                  variant="outline"
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
-
-            {error && (
-              <p className="text-red-600 text-sm">{error}</p>
-            )}
-          </CardContent>
-        </Card>
+          {error && (
+            <p className="text-red-600 text-sm">{error}</p>
+          )}
+        </CardContent>
+      </Card>
 
         {/* Gallery Settings Card */}
-        <Card>
+        <Card className="mb-5">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">
@@ -1144,7 +1156,7 @@ export function StylistDashboard() {
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/gif"
                 onChange={handleFileSelect}
-                style={{ display: 'none' }}
+                className="hidden"
                 multiple
               />
             </div>
@@ -1161,8 +1173,6 @@ export function StylistDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
 
       {/* Services Management */}
       <Card>
@@ -1237,7 +1247,7 @@ export function StylistDashboard() {
                             className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                               isServiceDragOver 
                                 ? 'border-red-400 bg-red-50' 
-                                : 'border-gray-300'
+                                : 'border-gray-300 hover:border-gray-400'
                             }`}
                           >
                             <Upload className={`w-8 h-8 mx-auto mb-2 ${
@@ -1249,15 +1259,15 @@ export function StylistDashboard() {
                               {isServiceDragOver ? 'Drop image here' : 'Drag and drop an image here, or click the button below'}
                             </p>
                             
-                            {/* Select Images button */}
-                            <button
+                            <Button
                               type="button"
+                              variant="outline"
                               onClick={triggerServiceImageSelect}
-                              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 py-2 text-red-600 border-red-600 hover:bg-red-50"
+                              className="text-red-600 border-red-600 hover:bg-red-50"
                             >
                               <Upload className="w-4 h-4 mr-2" />
                               Select Image
-                            </button>
+                            </Button>
                             
                             <p className="text-xs text-gray-400 mt-3">JPG, PNG or GIF. Max 5MB.</p>
                           </div>
@@ -1268,7 +1278,7 @@ export function StylistDashboard() {
                         type="file"
                         accept="image/jpeg,image/jpg,image/png,image/gif"
                         onChange={handleServiceImageSelect}
-                        style={{ display: 'none' }}
+                        className="hidden"
                       />
                     </div>
                   </div>
@@ -1317,7 +1327,7 @@ export function StylistDashboard() {
                     <Button 
                       onClick={handleSaveService}
                       className="bg-red-600 hover:bg-red-700 flex-1"
-                      disabled={!serviceForm.name || serviceForm.price <= 0}
+                      disabled={!serviceForm.name || serviceForm.price <= 0 || serviceForm.duration <= 0}
                     >
                       <Save className="w-4 h-4 mr-2" />
                       {editingService ? 'Update Service' : 'Add Service'}
@@ -1325,6 +1335,7 @@ export function StylistDashboard() {
                     <Button 
                       onClick={() => setIsServiceModalOpen(false)}
                       variant="outline"
+                      disabled={false}
                     >
                       Cancel
                     </Button>
