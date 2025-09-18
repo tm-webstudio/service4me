@@ -86,7 +86,7 @@ export function CategoryCarousel() {
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-lg rounded-full hidden md:flex"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-sm rounded-full hidden md:flex"
               onClick={() => scroll("left")}
               style={{ marginLeft: "-20px" }}
             >
@@ -98,7 +98,7 @@ export function CategoryCarousel() {
           <Button
             variant="outline"
             size="icon"
-            className={`absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-lg rounded-full hidden md:flex ${
+            className={`absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-sm rounded-full hidden md:flex ${
               !canScrollRight ? "opacity-50 cursor-not-allowed" : ""
             }`}
             onClick={() => scroll("right")}
@@ -127,7 +127,7 @@ export function CategoryCarousel() {
               >
                 <Link href={`/browse?category=${encodeURIComponent(category.name)}`}>
                   <Card
-                    className="group cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                    className="group cursor-pointer hover:shadow-sm transition-shadow overflow-hidden"
                     style={{ aspectRatio: "4/5" }}
                   >
                     <CardContent className="p-0 relative h-full">

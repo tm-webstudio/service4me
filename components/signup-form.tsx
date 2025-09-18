@@ -130,7 +130,7 @@ export function SignupForm() {
           <p className="mt-2 text-gray-600">Join the Service4Me community</p>
         </div>
 
-        <Card className="border-0 shadow-lg">
+        <Card className="border shadow-sm">
           {!signupSuccess && (
             <CardHeader className="space-y-1 pb-6">
               <CardTitle className="text-center text-xl">Sign up</CardTitle>

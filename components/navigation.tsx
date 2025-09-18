@@ -218,7 +218,7 @@ export function Navigation() {
                     onMouseEnter={handleBrowseMouseEnter}
                     onMouseLeave={handleBrowseMouseLeave}
                   >
-                    <div className="bg-white border border-gray-200 rounded-b-lg shadow-xl">
+                    <div className="bg-white border border-gray-200 rounded-b-lg shadow-sm">
                       <div className="p-6">
                         <h3 className="font-semibold text-gray-900 text-lg mb-4">Hair Styling Categories</h3>
                         <div className="grid grid-cols-3 gap-4">
@@ -280,7 +280,7 @@ export function Navigation() {
                     onMouseEnter={handleLocationsMouseEnter}
                     onMouseLeave={handleLocationsMouseLeave}
                   >
-                    <div className="bg-white border border-gray-200 rounded-b-lg shadow-xl">
+                    <div className="bg-white border border-gray-200 rounded-b-lg shadow-sm">
                       <div className="p-6">
                         <div className="space-y-4">
                           <h3 className="font-semibold text-gray-900 text-lg mb-4">London Areas</h3>
@@ -383,7 +383,7 @@ export function Navigation() {
 
                   {/* Menu Panel */}
                   <div
-                    className={`fixed top-0 right-0 bottom-0 w-[300px] sm:w-[400px] bg-white shadow-xl transform transition-transform duration-300 ease-out ${
+                    className={`fixed top-0 right-0 bottom-0 w-[300px] sm:w-[400px] bg-white shadow-lg transform transition-transform duration-300 ease-out ${
                       isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                     style={{

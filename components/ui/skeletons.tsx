@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 // Skeleton for stylist cards in grid and carousel
 export function StylistCardSkeleton() {
   return (
-    <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-md h-full">
+    <Card className="group cursor-pointer hover:shadow-sm transition-all duration-300 border h-full">
       <CardContent className="p-0 h-full">
         <div className="relative aspect-square md:aspect-[4/3]">
           <Skeleton className="w-full h-full rounded-t-lg" />

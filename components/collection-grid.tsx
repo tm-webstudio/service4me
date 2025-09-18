@@ -53,7 +53,7 @@ export function CollectionGrid() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {categories.map((category, index) => (
           <Link key={index} href={`/browse?category=${encodeURIComponent(category.name)}`}>
-            <Card className="group cursor-pointer hover:shadow-lg transition-shadow h-full">
+            <Card className="group cursor-pointer hover:shadow-sm transition-shadow h-full">
               <CardContent className="p-0 h-full">
                 <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: "4/5" }}>
                   <img

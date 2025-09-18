@@ -127,7 +127,7 @@ export function FeaturedStylists() {
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-lg rounded-full hidden md:flex"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-sm rounded-full hidden md:flex"
                 onClick={() => scroll("left")}
                 style={{ marginLeft: "-20px" }}
               >
@@ -139,7 +139,7 @@ export function FeaturedStylists() {
             <Button
               variant="outline"
               size="icon"
-              className={`absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-lg rounded-full hidden md:flex ${
+              className={`absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-sm rounded-full hidden md:flex ${
                 !canScrollRight ? "opacity-50 cursor-not-allowed" : ""
               }`}
               onClick={() => scroll("right")}
@@ -174,7 +174,7 @@ export function FeaturedStylists() {
                     style={{ scrollSnapAlign: "start" }}
                   >
                     <Card 
-                      className="group cursor-pointer hover:shadow-lg transition-shadow h-full"
+                      className="group cursor-pointer hover:shadow-sm transition-shadow h-full"
                       onClick={() => router.push(`/stylist/${stylist.id}`)}
                     >
                       <CardContent className="p-0 h-full">

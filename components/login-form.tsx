@@ -77,7 +77,7 @@ export function LoginForm() {
           <p className="mt-2 text-gray-600">Sign in to your Service4Me account</p>
         </div>
 
-        <Card className="border-0 shadow-lg">
+        <Card className="border shadow-sm">
           <CardHeader className="space-y-1 pb-6">
             <CardTitle className="text-center text-xl">Sign in</CardTitle>
           </CardHeader>

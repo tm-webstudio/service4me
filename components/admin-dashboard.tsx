@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X } from "lucide-react"
+import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
@@ -87,7 +87,70 @@ export function AdminDashboard() {
   console.log('📊 [ADMIN-DASHBOARD] AdminDashboard component is rendering...')
   const { user } = useAuth()
   const [stylists, setStylists] = useState(pendingStylists)
+  const [allStylists, setAllStylists] = useState<any[]>([])
+  const [loadingStylists, setLoadingStylists] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [isAddingService, setIsAddingService] = useState(false)
+
+  // Fetch all stylists for manage tab
+  const fetchAllStylists = useCallback(async () => {
+    setLoadingStylists(true)
+    try {
+      const { data, error } = await supabase
+        .from('stylist_profiles')
+        .select(`
+          *,
+          users:user_id (
+            id,
+            email
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching stylists:', error)
+        return
+      }
+
+      setAllStylists(data || [])
+    } catch (err) {
+      console.error('Failed to fetch stylists:', err)
+    } finally {
+      setLoadingStylists(false)
+    }
+  }, [])
+
+  // Load stylists when component mounts
+  useEffect(() => {
+    fetchAllStylists()
+  }, [fetchAllStylists])
+
+  // Filter stylists based on search and status
+  const filteredStylists = allStylists.filter(stylist => {
+    const matchesSearch = 
+      stylist.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      stylist.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      stylist.location?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const hasAccount = stylist.user_id !== null
+    const matchesStatus = 
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && hasAccount) ||
+      (statusFilter === 'no-account' && !hasAccount)
+    
+    return matchesSearch && matchesStatus
+  })
+
+  // Get account status for a stylist
+  const getAccountStatus = (stylist: any) => {
+    if (stylist.user_id) {
+      return { status: 'active', label: 'Active Account', color: 'bg-green-100 text-green-800' }
+    } else {
+      return { status: 'no-account', label: 'No Account', color: 'bg-red-100 text-red-800' }
+    }
+  }
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -116,7 +179,6 @@ export function AdminDashboard() {
     location: '',
     specialties: '',
     years_experience: 0,
-    hourly_rate: 0,
     booking_link: '',
     phone: '',
     contact_email: '',
@@ -265,7 +327,6 @@ export function AdminDashboard() {
             location: profileData.location,
             specialties: profileData.specialties,
             years_experience: profileData.years_experience,
-            hourly_rate: profileData.hourly_rate,
             booking_link: profileData.booking_link,
             phone: profileData.phone,
             contact_email: profileData.contact_email,
@@ -359,7 +420,6 @@ export function AdminDashboard() {
         location: '',
         specialties: '',
         years_experience: 0,
-        hourly_rate: 0,
         booking_link: '',
         phone: '',
         contact_email: '',
@@ -696,7 +756,6 @@ export function AdminDashboard() {
       location: '',
       specialties: '',
       years_experience: 0,
-      hourly_rate: 0,
       booking_link: '',
       phone: '',
       contact_email: '',
@@ -720,18 +779,25 @@ export function AdminDashboard() {
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="pending">Pending Verification</TabsTrigger>
-          <TabsTrigger value="create">Create Stylist</TabsTrigger>
+        <TabsList className="bg-transparent p-0 h-auto gap-2 flex-wrap justify-start">
+          <TabsTrigger value="pending" className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 hover:bg-gray-100 data-[state=active]:bg-red-600 data-[state=active]:border-red-600 data-[state=active]:text-white font-medium transition-colors">
+            Pending Verification
+          </TabsTrigger>
+          <TabsTrigger value="manage" className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 hover:bg-gray-100 data-[state=active]:bg-red-600 data-[state=active]:border-red-600 data-[state=active]:text-white font-medium transition-colors">
+            Manage Stylists
+          </TabsTrigger>
+          <TabsTrigger value="create" className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 hover:bg-gray-100 data-[state=active]:bg-red-600 data-[state=active]:border-red-600 data-[state=active]:text-white font-medium transition-colors">
+            Create Stylist
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <CardTitle>Stylists Awaiting Verification</CardTitle>
               <CardDescription>Review and approve or reject stylist applications</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               {stylists.length === 0 ? (
                 <div className="text-center py-8">
                   <User className="mx-auto h-12 w-12 text-gray-400" />
@@ -742,7 +808,7 @@ export function AdminDashboard() {
                 <div className="space-y-6">
                   {stylists.map((stylist) => (
                     <Card key={stylist.id}>
-                      <CardContent className="p-6">
+                      <CardContent className="p-4 sm:p-6">
                         <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
                           <div className="flex flex-col lg:flex-row lg:items-start lg:space-x-4 w-full lg:w-auto space-y-4 lg:space-y-0">
                             {/* Large gallery image - full width on mobile, fixed width on desktop */}
@@ -815,6 +881,223 @@ export function AdminDashboard() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="manage" className="space-y-6">
+          <Card>
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Manage Stylists</CardTitle>
+                  <CardDescription>View and manage all stylist profiles and their account status</CardDescription>
+                </div>
+                <Button 
+                  onClick={() => window.location.href = '#create'}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Stylist
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              {/* Search and Filter Controls */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search by name, email, or location..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Stylists</SelectItem>
+                    <SelectItem value="active">Active Accounts</SelectItem>
+                    <SelectItem value="no-account">No Account</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Results Summary */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-gray-600">
+                  Showing {filteredStylists.length} of {allStylists.length} stylists
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchAllStylists}
+                  disabled={loadingStylists}
+                >
+                  {loadingStylists ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh'}
+                </Button>
+              </div>
+
+              {/* Stylists Table */}
+              {loadingStylists ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+                  <span className="ml-2 text-gray-600">Loading stylists...</span>
+                </div>
+              ) : filteredStylists.length === 0 ? (
+                <div className="text-center py-12">
+                  <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No stylists found</h3>
+                  <p className="text-gray-500 mb-4">
+                    {searchTerm || statusFilter !== 'all' 
+                      ? 'Try adjusting your search or filter criteria.' 
+                      : 'Start by creating your first stylist profile.'
+                    }
+                  </p>
+                  {(!searchTerm && statusFilter === 'all') && (
+                    <Button 
+                      onClick={() => window.location.href = '#create'}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create First Stylist
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="text-left p-4 font-medium text-gray-900">Stylist</th>
+                          <th className="text-left p-4 font-medium text-gray-900">Contact</th>
+                          <th className="text-left p-4 font-medium text-gray-900">Location</th>
+                          <th className="text-left p-4 font-medium text-gray-900">Account Status</th>
+                          <th className="text-left p-4 font-medium text-gray-900">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {filteredStylists.map((stylist) => {
+                          const accountStatus = getAccountStatus(stylist)
+                          
+                          return (
+                            <tr key={stylist.id} className="hover:bg-gray-50">
+                              {/* Stylist Info */}
+                              <td className="p-4">
+                                <div className="flex items-center space-x-3">
+                                  <Avatar className="w-10 h-10">
+                                    <AvatarImage src={stylist.portfolio_images?.[0]} />
+                                    <AvatarFallback>
+                                      {stylist.business_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'S'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="font-medium text-gray-900">
+                                      {stylist.business_name || 'Unnamed Business'}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {stylist.specialties?.[0] || 'No specialty'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Contact */}
+                              <td className="p-4">
+                                <div className="text-sm">
+                                  <div className="text-gray-900">
+                                    {stylist.contact_email || stylist.users?.email || 'No email'}
+                                  </div>
+                                  {stylist.phone && (
+                                    <div className="text-gray-500">{stylist.phone}</div>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Location */}
+                              <td className="p-4">
+                                <div className="text-sm text-gray-900">
+                                  {stylist.location || 'No location'}
+                                </div>
+                              </td>
+
+
+                              {/* Account Status */}
+                              <td className="p-4">
+                                <Badge variant="secondary" className={accountStatus.color}>
+                                  {accountStatus.status === 'active' ? (
+                                    <UserCheck className="w-3 h-3 mr-1" />
+                                  ) : (
+                                    <UserX className="w-3 h-3 mr-1" />
+                                  )}
+                                  {accountStatus.label}
+                                </Badge>
+                              </td>
+
+                              {/* Actions */}
+                              <td className="p-4">
+                                <div className="flex items-center space-x-2">
+                                  {accountStatus.status === 'no-account' ? (
+                                    <Button
+                                      size="sm"
+                                      className="bg-green-600 hover:bg-green-700 w-40"
+                                      onClick={() => {
+                                        alert('Account generation functionality will be implemented next')
+                                      }}
+                                    >
+                                      <Key className="w-3 h-3 mr-1" />
+                                      Generate Account
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="w-40"
+                                      onClick={() => {
+                                        alert('Password reset functionality will be implemented next')
+                                      }}
+                                    >
+                                      <Key className="w-3 h-3 mr-1" />
+                                      Reset Password
+                                    </Button>
+                                  )}
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      window.open(`/stylist/${stylist.id}`, '_blank')
+                                    }}
+                                  >
+                                    <ExternalLink className="w-3 h-3 mr-1" />
+                                    View
+                                  </Button>
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      alert('Edit functionality will be added to the Create tab')
+                                    }}
+                                  >
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Edit
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="create" className="space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start space-x-2">
@@ -832,7 +1115,7 @@ export function AdminDashboard() {
 
           {/* Profile Information Card */}
           <Card className="mb-5">
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center">
                   <Settings className="w-5 h-5 mr-2 text-red-600" />
@@ -840,10 +1123,10 @@ export function AdminDashboard() {
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-8">
+            <CardContent className="space-y-8 p-4 sm:p-6">
               {/* 1. LOGO SECTION */}
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Logo</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Logo</h3>
                 <div className="flex items-center space-x-4">
                   <Avatar className="w-16 h-16">
                     <AvatarImage src={`/placeholder.svg?height=100&width=100&text=${encodeURIComponent(formData.business_name || 'Business')}`} />
@@ -875,11 +1158,11 @@ export function AdminDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column - Basic Information */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Basic Information</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Basic Information</h3>
                   <div className="space-y-5">
                     {/* Business Name */}
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Business Name</label>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Business Name <span className="text-red-500">*</span></label>
                       <Input
                         value={formData.business_name}
                         onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
@@ -889,7 +1172,7 @@ export function AdminDashboard() {
 
                     {/* Location */}
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Postcode</label>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Postcode <span className="text-red-500">*</span></label>
                       <Input
                         value={formData.location}
                         onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value.toUpperCase() }))}
@@ -902,7 +1185,7 @@ export function AdminDashboard() {
 
                     {/* Specialties */}
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Specialty</label>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Specialty <span className="text-red-500">*</span></label>
                       <Select
                         value={formData.specialties}
                         onValueChange={setSpecialty}
@@ -922,7 +1205,7 @@ export function AdminDashboard() {
 
                     {/* Bio */}
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Bio</label>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Bio <span className="text-red-500">*</span></label>
                       <Textarea
                         value={formData.bio}
                         onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
@@ -932,37 +1215,24 @@ export function AdminDashboard() {
                       />
                     </div>
 
-                    {/* Experience and Rate */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="experience" className="text-sm font-medium">Years of Experience</Label>
-                        <Input
-                          id="experience"
-                          type="number"
-                          min="0"
-                          value={formData.years_experience}
-                          onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
-                          placeholder="Years"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="hourly-rate" className="text-sm font-medium">Hourly Rate (£)</Label>
-                        <Input
-                          id="hourly-rate"
-                          type="number"
-                          min="0"
-                          value={formData.hourly_rate}
-                          onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: parseInt(e.target.value) || 0 }))}
-                          placeholder="Rate"
-                        />
-                      </div>
+                    {/* Experience */}
+                    <div>
+                      <label htmlFor="experience" className="text-sm font-medium text-gray-700 mb-2 block">Years of Experience</label>
+                      <Input
+                        id="experience"
+                        type="number"
+                        min="0"
+                        value={formData.years_experience}
+                        onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
+                        placeholder="Years"
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Right Column - Contact Details */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Contact Details</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Details</h3>
                   <div className="space-y-5">
                     {/* Booking Link */}
                     <div>
@@ -1025,7 +1295,7 @@ export function AdminDashboard() {
 
           {/* Gallery Settings Card */}
           <Card className="mb-5">
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center">
                   <Upload className="w-5 h-5 mr-2 text-red-600" />
@@ -1033,19 +1303,26 @@ export function AdminDashboard() {
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-4 sm:p-6">
               {/* Current Gallery */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">
-                    Current Gallery ({galleryImages.length}/20)
-                  </h4>
-                  <p className="text-xs text-gray-500">Drag images to reorder</p>
+                <div className="mb-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-900">
+                      Current Gallery ({galleryImages.length}/20)
+                    </h4>
+                    {galleryImages.length > 0 && (
+                      <p className="text-xs text-gray-500 hidden sm:block">Drag images to reorder</p>
+                    )}
+                  </div>
+                  {galleryImages.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1 sm:hidden">Drag images to reorder</p>
+                  )}
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
                   {galleryImages.length === 0 ? (
-                    <div className="col-span-3 text-center py-8 text-gray-500">
-                      <Upload className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                    <div className="col-span-3 lg:col-span-5 text-center py-8 text-gray-500">
+                      <Image className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                       <p className="text-sm">No images uploaded yet</p>
                       <p className="text-xs">Start building your portfolio by uploading images below</p>
                     </div>
@@ -1152,18 +1429,15 @@ export function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* Services & Pricing Card */}
+          {/* Services Card */}
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center">
                     <Scissors className="w-5 h-5 mr-2 text-red-600" />
-                    Services & Pricing
+                    Services
                   </CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Note: Service saving requires SUPABASE_SERVICE_ROLE_KEY in .env.local
-                  </p>
                 </div>
                 <Dialog open={isServiceModalOpen} onOpenChange={(open) => {
                   setIsServiceModalOpen(open)
@@ -1174,6 +1448,7 @@ export function AdminDashboard() {
                   <DialogTrigger asChild>
                     <Button 
                       onClick={openAddServiceModal}
+                      size="sm"
                       className="bg-red-600 hover:bg-red-700"
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -1326,7 +1601,7 @@ export function AdminDashboard() {
                 </Dialog>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               {mockServices.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {mockServices.map((service) => (
@@ -1386,7 +1661,6 @@ export function AdminDashboard() {
                 <div className="text-center py-8 text-gray-500">
                   <Scissors className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                   <p className="text-sm">No services added yet</p>
-                  <p className="text-xs">Add services for this stylist using the button above</p>
                 </div>
               )}
             </CardContent>
@@ -1394,7 +1668,7 @@ export function AdminDashboard() {
 
           {/* Account Access Section */}
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center">
                 <User className="w-5 h-5 mr-2 text-red-600" />
                 Account Access
@@ -1403,24 +1677,19 @@ export function AdminDashboard() {
                 Create stylist profile and generate login credentials
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4 sm:p-6">
               <div className="bg-gray-50 rounded-lg p-4 border">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900">Stylist Profile Status</h4>
-                    <p className="text-sm text-gray-500 mt-1">Complete the form above to create a new stylist profile</p>
-                  </div>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                    Ready to Create
-                  </Badge>
+                <div className="mb-4">
+                  <h4 className="font-medium text-gray-900">Stylist Profile Status</h4>
+                  <p className="text-sm text-gray-500 mt-1">Complete the form above to create a new stylist profile</p>
                 </div>
                 
-                {/* Create Profile Button */}
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
                     onClick={handleSaveStylist}
                     disabled={saving}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 flex-1"
                   >
                     {saving ? (
                       <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating Profile...</>
@@ -1428,21 +1697,14 @@ export function AdminDashboard() {
                       <><Save className="w-4 h-4 mr-2" />Create Stylist Profile</>
                     )}
                   </Button>
-                </div>
-                
-                {/* Generate Login - Placeholder */}
-                <div className="mt-4 pt-4 border-t">
                   <Button 
                     variant="outline" 
                     disabled={true}
-                    className="bg-gray-100 text-gray-400 cursor-not-allowed w-full"
+                    className="bg-gray-100 text-gray-400 cursor-not-allowed flex-1"
                   >
                     <User className="w-4 h-4 mr-2" />
                     Generate Login Account
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    Create the stylist profile first, then generate login credentials
-                  </p>
                 </div>
               </div>
             </CardContent>

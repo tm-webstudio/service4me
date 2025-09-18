@@ -76,10 +76,10 @@ export function useServices() {
         throw error
       }
 
-      // Convert prices from pence to pounds
+      // Convert prices from pence to pounds (handle both numeric and integer types)
       const servicesWithCorrectPrices = (data || []).map(service => ({
         ...service,
-        price: service.price / 100
+        price: parseFloat(service.price) / 100
       }))
       setServices(servicesWithCorrectPrices)
     } catch (err) {
@@ -92,7 +92,11 @@ export function useServices() {
 
   // Add new service
   const addService = useCallback(async (serviceInput: ServiceInput): Promise<Service | null> => {
+    console.log('🔍 [SERVICES] addService called with:', serviceInput)
+    console.log('🔍 [SERVICES] user:', user)
+    
     if (!user?.id) {
+      console.log('❌ [SERVICES] User not authenticated')
       throw new Error('User not authenticated')
     }
 
@@ -100,36 +104,48 @@ export function useServices() {
     setError(null)
 
     try {
+      console.log('🔍 [SERVICES] Getting stylist ID...')
       const stylistId = await getStylistId()
+      console.log('🔍 [SERVICES] Stylist ID:', stylistId)
+      
       if (!stylistId) {
+        console.log('❌ [SERVICES] Stylist profile not found')
         throw new Error('Stylist profile not found')
       }
 
+      const insertData = {
+        stylist_id: stylistId,
+        name: serviceInput.name,
+        price: serviceInput.price * 100, // convert to pence
+        duration: serviceInput.duration,
+        image_url: serviceInput.image_url
+      }
+      console.log('🔍 [SERVICES] Inserting data:', insertData)
+
       const { data, error } = await supabase
         .from('services')
-        .insert({
-          stylist_id: stylistId,
-          name: serviceInput.name,
-          price: serviceInput.price * 100, // convert to pence
-          duration: serviceInput.duration,
-          image_url: serviceInput.image_url
-        })
+        .insert(insertData)
         .select()
         .single()
 
+      console.log('🔍 [SERVICES] Supabase response:', { data, error })
+
       if (error) {
+        console.log('❌ [SERVICES] Supabase error:', error)
         throw error
       }
 
       const newService = {
         ...data,
-        price: data.price / 100 // convert back to pounds
+        price: parseFloat(data.price) / 100 // convert back to pounds
       }
+      console.log('✅ [SERVICES] New service created:', newService)
 
       setServices(prev => [newService, ...prev])
       return newService
     } catch (err) {
-      console.error('Error adding service:', err)
+      console.error('❌ [SERVICES] Error adding service:', err)
+      console.error('❌ [SERVICES] Error details:', JSON.stringify(err, null, 2))
       setError(err instanceof Error ? err.message : 'Failed to add service')
       throw err
     } finally {
@@ -165,7 +181,7 @@ export function useServices() {
 
       const updatedService = {
         ...data,
-        price: data.price / 100 // convert back to pounds
+        price: parseFloat(data.price) / 100 // convert back to pounds
       }
 
       setServices(prev => prev.map(service => 

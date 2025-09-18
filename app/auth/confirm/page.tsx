@@ -60,7 +60,7 @@ function ConfirmContent() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-md w-full">
-        <Card className="border-0 shadow-lg">
+        <Card className="border shadow-sm">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
               {status === 'loading' && <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />}
@@ -97,7 +97,7 @@ export default function ConfirmPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-md w-full">
-          <Card className="border-0 shadow-lg">
+          <Card className="border shadow-sm">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4">
                 <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />

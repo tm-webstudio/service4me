@@ -94,7 +94,6 @@ export function StylistDashboard() {
     location: '',
     specialties: '',
     years_experience: 0,
-    hourly_rate: 0,
     booking_link: '',
     phone: '',
     contact_email: '',
@@ -113,7 +112,6 @@ export function StylistDashboard() {
         location: profile.location || '',
         specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
         years_experience: profile.years_experience || 0,
-        hourly_rate: profile.hourly_rate || 0,
         booking_link: profile.booking_link || '',
         phone: profile.phone || '',
         contact_email: profile.contact_email || '',
@@ -147,7 +145,6 @@ export function StylistDashboard() {
         location: profile.location || '',
         specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
         years_experience: profile.years_experience || 0,
-        hourly_rate: profile.hourly_rate || 0,
         booking_link: profile.booking_link || '',
         phone: profile.phone || '',
         contact_email: profile.contact_email || '',
@@ -639,13 +636,12 @@ export function StylistDashboard() {
   const getReviewCount = () => profile.total_reviews || 0
   const getSpecialties = () => profile.specialties || []
   const getExperience = () => profile.years_experience || 0
-  const getHourlyRate = () => profile.hourly_rate || 50
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       {/* Welcome Header */}
       <div className="grid grid-cols-1 gap-4 mb-5">
-        <div className="bg-gray-100 rounded-xl p-6 h-full flex flex-col justify-center">
+        <div className="bg-gray-100 p-6 h-full flex flex-col justify-center">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Hello {getBusinessName()}</h1>
@@ -690,7 +686,7 @@ export function StylistDashboard() {
 
       {/* Profile Information Card */}
       <Card className="mb-5">
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
               <Settings className="w-5 h-5 mr-2 text-red-600" />
@@ -707,10 +703,10 @@ export function StylistDashboard() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className={`${isEditing ? 'space-y-8' : 'space-y-10'} p-4 sm:p-6`}>
           {/* 1. LOGO SECTION */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Logo</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Logo</h3>
             <div className="flex items-center space-x-4">
               <Avatar className="w-16 h-16">
                 <AvatarImage src={`/placeholder.svg?height=100&width=100&text=${encodeURIComponent(getBusinessName())}`} />
@@ -738,11 +734,11 @@ export function StylistDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Basic Information */}
             <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Basic Information</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Basic Information</h3>
               <div className="space-y-5">
                 {/* Business Name */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Business Name</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Business Name <span className="text-red-500">*</span></label>
                   {isEditing ? (
                     <Input
                       value={formData.business_name}
@@ -756,7 +752,7 @@ export function StylistDashboard() {
 
                 {/* Location */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>
                     {isEditing ? "Postcode" : "Location"}
                   </label>
                   {isEditing ? (
@@ -775,7 +771,7 @@ export function StylistDashboard() {
 
                 {/* Specialties */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Specialty</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Specialty <span className="text-red-500">*</span></label>
                   {isEditing ? (
                     <Select
                       value={formData.specialties}
@@ -801,7 +797,7 @@ export function StylistDashboard() {
 
                 {/* Bio */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Bio</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Bio <span className="text-red-500">*</span></label>
                   {isEditing ? (
                     <Textarea
                       value={formData.bio}
@@ -817,27 +813,15 @@ export function StylistDashboard() {
 
                 {/* Experience and Rate */}
                 {isEditing && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Years of Experience</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData.years_experience}
-                        onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
-                        placeholder="Years"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Hourly Rate (£)</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData.hourly_rate}
-                        onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: parseInt(e.target.value) || 0 }))}
-                        placeholder="Rate"
-                      />
-                    </div>
+                  <div>
+                    <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Years of Experience</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={formData.years_experience}
+                      onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
+                      placeholder="Years"
+                    />
                   </div>
                 )}
               </div>
@@ -845,11 +829,11 @@ export function StylistDashboard() {
 
             {/* Right Column - Contact Details */}
             <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Contact Details</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Details</h3>
               <div className="space-y-5">
                 {/* Booking Link */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Booking Link</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Booking Link</label>
                   {isEditing ? (
                     <Input
                       value={formData.booking_link}
@@ -866,7 +850,7 @@ export function StylistDashboard() {
 
                 {/* Phone Number */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Phone Number</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Phone Number</label>
                   {isEditing ? (
                     <Input
                       value={formData.phone}
@@ -883,7 +867,7 @@ export function StylistDashboard() {
 
                 {/* Contact Email */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Contact Email</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Contact Email</label>
                   {isEditing ? (
                     <Input
                       value={formData.contact_email}
@@ -900,7 +884,7 @@ export function StylistDashboard() {
 
                 {/* Instagram Handle */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Instagram</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Instagram</label>
                   {isEditing ? (
                     <Input
                       value={formData.instagram_handle}
@@ -916,7 +900,7 @@ export function StylistDashboard() {
 
                 {/* TikTok Handle */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">TikTok</label>
+                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>TikTok</label>
                   {isEditing ? (
                     <Input
                       value={formData.tiktok_handle}
@@ -965,7 +949,7 @@ export function StylistDashboard() {
 
         {/* Gallery Settings Card */}
         <Card className="mb-5">
-          <CardHeader>
+          <CardHeader className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">
                 <Upload className="w-5 h-5 mr-2 text-red-600" />
@@ -983,7 +967,7 @@ export function StylistDashboard() {
               )}
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-4 sm:p-6">
             {/* Upload Progress */}
             {uploadProgress.length > 0 && (
               <div className="space-y-2">
@@ -1028,15 +1012,20 @@ export function StylistDashboard() {
 
             {/* Current Gallery */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-gray-900">
-                  Current Gallery ({localGalleryImages.length || 0}/20)
-                </h4>
-                {localGalleryImages.length ? (
-                  <p className="text-xs text-gray-500">Drag images to reorder</p>
-                ) : null}
+              <div className="mb-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900">
+                    Current Gallery ({localGalleryImages.length || 0}/20)
+                  </h4>
+                  {localGalleryImages.length > 0 && (
+                    <p className="text-xs text-gray-500 hidden sm:block">Drag images to reorder</p>
+                  )}
+                </div>
+                {localGalleryImages.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1 sm:hidden">Drag images to reorder</p>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
                 {loading && !profile ? (
                   <div className="col-span-3">
                     <DashboardGallerySkeleton />
@@ -1087,7 +1076,7 @@ export function StylistDashboard() {
                   ))
                 ) : (
                   <div className="col-span-3 text-center py-8 text-gray-500">
-                    <Upload className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                    <ImageIcon className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                     <p className="text-sm">No images uploaded yet</p>
                     <p className="text-xs">Start building your portfolio by uploading images below</p>
                   </div>
@@ -1176,11 +1165,11 @@ export function StylistDashboard() {
 
       {/* Services Management */}
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
               <Scissors className="w-5 h-5 mr-2 text-red-600" />
-              Services & Pricing
+              Services
             </CardTitle>
             <Dialog open={isServiceModalOpen} onOpenChange={(open) => {
               setIsServiceModalOpen(open)
@@ -1345,7 +1334,7 @@ export function StylistDashboard() {
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           {servicesError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start space-x-2">
               <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />

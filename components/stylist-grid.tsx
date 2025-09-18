@@ -131,7 +131,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
           return (
             <Card 
               key={stylist.id}
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-md h-full"
+              className="group cursor-pointer hover:shadow-sm transition-all duration-300 border h-full"
               onClick={() => router.push(`/stylist/${stylist.id}`)}
             >
               <CardContent className="p-0 h-full">

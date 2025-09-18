@@ -56,7 +56,7 @@ export function BusinessFeatures() {
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card key={index} className="border shadow-sm hover:shadow-sm transition-shadow">
                 <CardContent className="p-4 md:p-8 text-center">
                   <div className="mb-4">
                     <Icon className="h-8 w-8 md:h-12 md:w-12 text-red-600 mx-auto" />

@@ -21,7 +21,7 @@ export function ContactSection() {
             {/* Contact Cards */}
             <div className="flex justify-center mb-12">
               {/* Email Card */}
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow max-w-md w-full">
+              <Card className="border shadow-sm hover:shadow-sm transition-shadow max-w-md w-full">
                 <CardContent className="p-8 text-center">
                   <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mail className="w-8 h-8 text-red-600" />

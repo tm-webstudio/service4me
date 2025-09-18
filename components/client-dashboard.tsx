@@ -249,7 +249,7 @@ export function ClientDashboard() {
           {!loading && !error && reviews.length > 0 && (
             <div className="space-y-4">
               {reviews.map((review) => (
-                <Card key={review.id} className="shadow-sm">
+                <Card key={review.id} className="border shadow-sm">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
