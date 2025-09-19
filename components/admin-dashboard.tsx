@@ -161,6 +161,11 @@ export function AdminDashboard() {
   const [accountCredentials, setAccountCredentials] = useState<{email: string, password: string} | null>(null)
   const [accountError, setAccountError] = useState('')
   
+  // Table-specific account generation state
+  const [generatingAccountForStylist, setGeneratingAccountForStylist] = useState<string | null>(null)
+  const [tableAccountCredentials, setTableAccountCredentials] = useState<{stylist_id: string, email: string, password: string} | null>(null)
+  const [tableAccountError, setTableAccountError] = useState('')
+  
   // Portfolio upload hook for handling real file uploads
   const { uploadFiles, deleteImage, uploadProgress: portfolioProgress, isUploading: portfolioUploading, error: portfolioError } = usePortfolioUpload()
   
@@ -564,6 +569,92 @@ Please change your password after first login.`
     setAccountError('')
     setError('')
     setSuccess('')
+  }
+
+  // Generate account for table stylist
+  const handleTableGenerateAccount = async (stylist: any) => {
+    if (!stylist.contact_email) {
+      setTableAccountError('Stylist must have an email address to generate an account')
+      return
+    }
+    
+    console.log('🔍 [TABLE ACCOUNT] Generating account for stylist:', {
+      stylist_id: stylist.id,
+      business_name: stylist.business_name,
+      contact_email: stylist.contact_email
+    })
+    
+    setTableAccountError('')
+    setGeneratingAccountForStylist(stylist.id)
+    
+    try {
+      const tempPassword = generateSecurePassword()
+      
+      // Call API to create user account
+      const response = await fetch('/api/admin/create-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: stylist.contact_email,
+          password: tempPassword,
+          stylist_id: stylist.id,
+          business_name: stylist.business_name
+        })
+      })
+
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create account')
+      }
+      
+      // Store credentials for display
+      setTableAccountCredentials({
+        stylist_id: stylist.id,
+        email: stylist.contact_email,
+        password: tempPassword
+      })
+      
+      // Update the local stylists list to reflect the new account
+      setAllStylists(prevStylists => 
+        prevStylists.map(s => 
+          s.id === stylist.id 
+            ? { ...s, user_id: result.user_id, users: { id: result.user_id, email: stylist.contact_email } }
+            : s
+        )
+      )
+      
+    } catch (err: any) {
+      console.error('Error generating table account:', err)
+      setTableAccountError(err.message || 'Failed to generate account')
+    } finally {
+      setGeneratingAccountForStylist(null)
+    }
+  }
+
+  // Copy table credentials to clipboard
+  const copyTableCredentials = async (credentials: {stylist_id: string, email: string, password: string}) => {
+    const stylist = allStylists.find(s => s.id === credentials.stylist_id)
+    const credentialsText = `Login Credentials for ${stylist?.business_name || 'Stylist'}:
+Email: ${credentials.email}
+Temporary Password: ${credentials.password}
+
+Please change your password after first login.`
+    
+    try {
+      await navigator.clipboard.writeText(credentialsText)
+      // Could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy credentials:', err)
+    }
+  }
+
+  // Close table credentials modal
+  const closeTableCredentials = () => {
+    setTableAccountCredentials(null)
+    setTableAccountError('')
   }
   
   // Service state - similar to stylist dashboard
@@ -1164,13 +1255,27 @@ Please change your password after first login.`
                                   {accountStatus.status === 'no-account' ? (
                                     <Button
                                       size="sm"
-                                      className="bg-green-600 hover:bg-green-700 px-3 py-2 w-[180px]"
-                                      onClick={() => {
-                                        alert('Account generation functionality will be implemented next')
-                                      }}
+                                      className="bg-green-600 hover:bg-green-700 px-3 py-2 w-[180px] disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                      disabled={generatingAccountForStylist === stylist.id || !stylist.contact_email}
+                                      onClick={() => handleTableGenerateAccount(stylist)}
+                                      title={!stylist.contact_email ? 'Stylist must have an email address to generate an account' : ''}
                                     >
-                                      <Key className="w-3 h-3 mr-1" />
-                                      Generate Account
+                                      {generatingAccountForStylist === stylist.id ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                          Generating...
+                                        </>
+                                      ) : !stylist.contact_email ? (
+                                        <>
+                                          <UserX className="w-3 h-3 mr-1" />
+                                          No Email
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Key className="w-3 h-3 mr-1" />
+                                          Generate Account
+                                        </>
+                                      )}
                                     </Button>
                                   ) : (
                                     <Button
@@ -1219,6 +1324,71 @@ Please change your password after first login.`
               )}
             </CardContent>
           </Card>
+
+          {/* Account Credentials Modal */}
+          <Dialog open={!!tableAccountCredentials} onOpenChange={(open) => {
+            if (!open) closeTableCredentials()
+          }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+                  Account Created Successfully
+                </DialogTitle>
+              </DialogHeader>
+              {tableAccountCredentials && (
+                <div className="space-y-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-medium text-green-900 mb-2">
+                      Account for {allStylists.find(s => s.id === tableAccountCredentials.stylist_id)?.business_name}
+                    </h4>
+                    <p className="text-sm text-green-700 mb-3">
+                      Login credentials have been generated successfully.
+                    </p>
+                    
+                    <div className="bg-white rounded border p-3 space-y-2">
+                      <div className="text-sm">
+                        <span className="font-medium">Email:</span> {tableAccountCredentials.email}
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium">Temporary Password:</span>
+                        <code className="ml-1 px-1 bg-gray-100 rounded text-xs break-all">
+                          {tableAccountCredentials.password}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
+                  {tableAccountError && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-sm text-red-600">{tableAccountError}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => copyTableCredentials(tableAccountCredentials)}
+                      className="bg-green-600 hover:bg-green-700 flex-1"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Credentials
+                    </Button>
+                    <Button 
+                      onClick={closeTableCredentials}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Close
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 text-center">
+                    Share these credentials with the stylist. They should change their password after first login.
+                  </p>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="create" className="space-y-6">
