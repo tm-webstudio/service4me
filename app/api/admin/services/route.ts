@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // Create a Supabase client for admin operations
-// Use service role key if available, otherwise fall back to anon key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function createSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!url || (!serviceKey && !anonKey)) {
+    throw new Error('Missing required Supabase configuration')
+  }
+  
+  return createClient(url, serviceKey || anonKey!)
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +28,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Create admin client at runtime
+    const supabaseAdmin = createSupabaseAdmin()
 
     // Insert services using service role (bypasses RLS)
     const { data, error } = await supabaseAdmin
