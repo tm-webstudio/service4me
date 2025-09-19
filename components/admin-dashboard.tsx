@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image } from "lucide-react"
+import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
@@ -155,6 +155,12 @@ export function AdminDashboard() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   
+  // Account generation state
+  const [createdStylist, setCreatedStylist] = useState<any>(null)
+  const [generatingAccount, setGeneratingAccount] = useState(false)
+  const [accountCredentials, setAccountCredentials] = useState<{email: string, password: string} | null>(null)
+  const [accountError, setAccountError] = useState('')
+  
   // Portfolio upload hook for handling real file uploads
   const { uploadFiles, deleteImage, uploadProgress: portfolioProgress, isUploading: portfolioUploading, error: portfolioError } = usePortfolioUpload()
   
@@ -262,6 +268,10 @@ export function AdminDashboard() {
     setError('')
     setSuccess('')
     setSaving(true)
+    
+    // Clear any previous stylist state when starting a new profile creation
+    setCreatedStylist(null)
+    setAccountCredentials(null)
     
     try {
       // Validate required fields
@@ -413,6 +423,11 @@ export function AdminDashboard() {
       
       setSuccess(successMessage)
       
+      // Store created stylist data for account generation
+      console.log('🔍 [ADMIN] Setting createdStylist to:', data[0])
+      setCreatedStylist(data[0])
+      setAccountCredentials(null) // Reset any previous credentials
+      
       // Reset form and clear all images
       setFormData({
         business_name: '',
@@ -441,6 +456,114 @@ export function AdminDashboard() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Generate secure random password
+  const generateSecurePassword = (): string => {
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const numbers = '0123456789'
+    const symbols = '!@#$%^&*'
+    const allChars = lowercase + uppercase + numbers + symbols
+    
+    let password = ''
+    // Ensure at least one character from each category
+    password += lowercase[Math.floor(Math.random() * lowercase.length)]
+    password += uppercase[Math.floor(Math.random() * uppercase.length)]
+    password += numbers[Math.floor(Math.random() * numbers.length)]
+    password += symbols[Math.floor(Math.random() * symbols.length)]
+    
+    // Add remaining characters
+    for (let i = 4; i < 12; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)]
+    }
+    
+    // Shuffle the password
+    return password.split('').sort(() => Math.random() - 0.5).join('')
+  }
+
+  // Generate login account for created stylist
+  const handleGenerateAccount = async () => {
+    if (!createdStylist) return
+    
+    console.log('🔍 [ADMIN DASHBOARD] createdStylist state:', createdStylist)
+    console.log('🔍 [ADMIN DASHBOARD] About to generate account for:', {
+      stylist_id: createdStylist.id,
+      business_name: createdStylist.business_name,
+      contact_email: createdStylist.contact_email
+    })
+    
+    setAccountError('')
+    setGeneratingAccount(true)
+    
+    try {
+      const tempPassword = generateSecurePassword()
+      
+      // Call API to create user account
+      const response = await fetch('/api/admin/create-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: createdStylist.contact_email,
+          password: tempPassword,
+          stylist_id: createdStylist.id,
+          business_name: createdStylist.business_name
+        })
+      })
+
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create account')
+      }
+      
+      // Store credentials for display
+      setAccountCredentials({
+        email: createdStylist.contact_email,
+        password: tempPassword
+      })
+      
+      // Update created stylist with user_id
+      setCreatedStylist({
+        ...createdStylist,
+        user_id: result.user_id
+      })
+      
+    } catch (err: any) {
+      console.error('Error generating account:', err)
+      setAccountError(err.message || 'Failed to generate account')
+    } finally {
+      setGeneratingAccount(false)
+    }
+  }
+
+  // Copy credentials to clipboard
+  const copyCredentials = async () => {
+    if (!accountCredentials) return
+    
+    const credentialsText = `Login Credentials for ${createdStylist?.business_name}:
+Email: ${accountCredentials.email}
+Temporary Password: ${accountCredentials.password}
+
+Please change your password after first login.`
+    
+    try {
+      await navigator.clipboard.writeText(credentialsText)
+      // Could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy credentials:', err)
+    }
+  }
+
+  // Reset to start over
+  const resetCreationState = () => {
+    setCreatedStylist(null)
+    setAccountCredentials(null)
+    setAccountError('')
+    setError('')
+    setSuccess('')
   }
   
   // Service state - similar to stylist dashboard
@@ -1041,7 +1164,7 @@ export function AdminDashboard() {
                                   {accountStatus.status === 'no-account' ? (
                                     <Button
                                       size="sm"
-                                      className="bg-green-600 hover:bg-green-700 w-40"
+                                      className="bg-green-600 hover:bg-green-700 px-3 py-2 w-[180px]"
                                       onClick={() => {
                                         alert('Account generation functionality will be implemented next')
                                       }}
@@ -1053,7 +1176,7 @@ export function AdminDashboard() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="w-40"
+                                      className="px-3 py-2 w-[180px]"
                                       onClick={() => {
                                         alert('Password reset functionality will be implemented next')
                                       }}
@@ -1678,35 +1801,172 @@ export function AdminDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 p-4 sm:p-6">
-              <div className="bg-gray-50 rounded-lg p-4 border">
-                <div className="mb-4">
-                  <h4 className="font-medium text-gray-900">Stylist Profile Status</h4>
-                  <p className="text-sm text-gray-500 mt-1">Complete the form above to create a new stylist profile</p>
+              {/* Profile Status */}
+              {!createdStylist ? (
+                <div className="bg-gray-50 rounded-lg p-4 border">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="font-medium text-gray-900">Profile Status</h4>
+                      <p className="text-sm text-gray-500 mt-1">Complete the form above to create a new stylist profile</p>
+                    </div>
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                      Not Created
+                    </Badge>
+                  </div>
+                  
+                  {/* Action Buttons Section */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* Create Profile Button */}
+                    <Button 
+                      onClick={handleSaveStylist}
+                      disabled={saving}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      {saving ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating Profile...</>
+                      ) : (
+                        <><Save className="w-4 h-4 mr-2" />Create Stylist Profile</>
+                      )}
+                    </Button>
+
+                    {/* Generate Account Button */}
+                    <Button 
+                      onClick={handleGenerateAccount}
+                      disabled={!createdStylist || generatingAccount}
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      {generatingAccount ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Account...</>
+                      ) : (
+                        <><User className="w-4 h-4 mr-2" />Generate Login Account</>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button 
-                    onClick={handleSaveStylist}
-                    disabled={saving}
-                    className="bg-red-600 hover:bg-red-700 flex-1"
-                  >
-                    {saving ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating Profile...</>
+              ) : (
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="font-medium text-green-900 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Profile Created Successfully
+                      </h4>
+                      <p className="text-sm text-green-700 mt-1">
+                        Business: {createdStylist.business_name}
+                      </p>
+                      <p className="text-sm text-green-700">
+                        Email: {createdStylist.contact_email}
+                      </p>
+                    </div>
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      ✅ Created
+                    </Badge>
+                  </div>
+                  
+                  {/* Action Buttons Section */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* Create Profile Button */}
+                    <Button 
+                      onClick={handleSaveStylist}
+                      disabled={saving}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      {saving ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating Profile...</>
+                      ) : (
+                        <><Save className="w-4 h-4 mr-2" />Create Stylist Profile</>
+                      )}
+                    </Button>
+
+                    {/* Generate Account Button */}
+                    <Button 
+                      onClick={handleGenerateAccount}
+                      disabled={!createdStylist || generatingAccount}
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      {generatingAccount ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Account...</>
+                      ) : (
+                        <><User className="w-4 h-4 mr-2" />Generate Login Account</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Account Status */}
+              {createdStylist && (
+                  <div className={`rounded-lg p-4 border ${
+                    accountCredentials 
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-yellow-50 border-yellow-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className={`font-medium ${
+                        accountCredentials ? 'text-green-900' : 'text-yellow-900'
+                      }`}>
+                        Login Account Status
+                      </h4>
+                      <Badge variant="secondary" className={
+                        accountCredentials 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }>
+                        {accountCredentials ? '✅ Account Created' : 'No login account'}
+                      </Badge>
+                    </div>
+
+                    {accountCredentials ? (
+                      <div className="bg-white rounded border p-3">
+                        <h5 className="font-medium text-sm mb-2">Login Credentials</h5>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium">Email:</span> {accountCredentials.email}
+                          </div>
+                          <div>
+                            <span className="font-medium">Temporary Password:</span> 
+                            <code className="ml-1 px-1 bg-gray-100 rounded text-xs">{accountCredentials.password}</code>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2 mt-3">
+                          <Button 
+                            onClick={copyCredentials}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copy Credentials
+                          </Button>
+                          <Button 
+                            onClick={resetCreationState}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Another
+                          </Button>
+                        </div>
+                        
+                        <p className="text-xs text-gray-500 mt-2">
+                          Share these credentials with the stylist. They should change their password after first login.
+                        </p>
+                      </div>
                     ) : (
-                      <><Save className="w-4 h-4 mr-2" />Create Stylist Profile</>
+                      <p className="text-sm text-yellow-700">
+                        Click "Generate Login Account" button above to create login credentials for this stylist.
+                      </p>
                     )}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    disabled={true}
-                    className="bg-gray-100 text-gray-400 cursor-not-allowed flex-1"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Generate Login Account
-                  </Button>
-                </div>
-              </div>
+
+                    {accountError && (
+                      <div className="bg-red-50 border border-red-200 rounded p-3 mt-3">
+                        <p className="text-sm text-red-600">{accountError}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
             </CardContent>
           </Card>
 
