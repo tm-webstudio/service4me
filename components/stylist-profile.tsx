@@ -72,7 +72,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showReviewForm, setShowReviewForm] = useState(false)
-  const [editingReview, setEditingReview] = useState(null)
+  const [editingReview, setEditingReview] = useState<{id: string; rating: number; comment: string} | null>(null)
   const [reviewsRefreshTrigger, setReviewsRefreshTrigger] = useState(0)
 
   const [touchStart, setTouchStart] = useState(0)
@@ -191,8 +191,8 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
     const years = stylist.years_experience || 0
     return years > 0 ? `${years} years` : "Experienced"
   }
-  const getRating = () => stylist.rating || 0
-  const getReviewCount = () => stylist.total_reviews || 0
+  const getRating = () => stylist.average_rating || 0
+  const getReviewCount = () => stylist.review_count || 0
   const getHourlyRate = () => stylist.hourly_rate || 50
 
   // Get real services from database with fallbacks
@@ -215,9 +215,10 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         price: getHourlyRate() + (index * 20),
         duration: "2-3 hours",
         image: "/placeholder.svg?height=200&width=300",
+        id: `fallback-${index}`
       }))
     }
-    
+
     // Final fallback
     return [
       {
@@ -225,12 +226,14 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         price: getHourlyRate(),
         duration: "1-2 hours",
         image: "/placeholder.svg?height=200&width=300",
+        id: 'fallback-1'
       },
       {
         name: "Hair Care",
         price: getHourlyRate() + 20,
         duration: "2-3 hours",
         image: "/placeholder.svg?height=200&width=300",
+        id: 'fallback-2'
       }
     ]
   }
@@ -348,7 +351,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Mobile Slideshow */}
             <div className="md:hidden relative">
               <div
-                className="relative aspect-square rounded-lg overflow-hidden"
+                className="relative aspect-[4/3] rounded-lg overflow-hidden"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -374,29 +377,52 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{displayData.businessName}</h1>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-gray-600 mb-2 text-[15px]">
-                  <div className="flex items-center mb-2 sm:mb-0">
-                    <StarDisplay
-                      rating={stylist.average_rating || 0}
-                      totalReviews={stylist.review_count || 0}
-                      size="md"
-                      showCount={false}
-                      className=""
-                    />
-                    <span className="text-gray-500 text-sm ml-1">
-                      ({stylist.review_count || 0} {(stylist.review_count || 0) === 1 ? 'review' : 'reviews'})
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayData.businessName}</h1>
+
+                {/* Mobile Layout - Stacked */}
+                <div className="flex flex-col sm:hidden space-y-2 mb-3">
+                  <div className="flex items-center">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium text-gray-700 ml-1" style={{ fontSize: '15px' }}>
+                      {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
+                    </span>
+                    <span className="text-gray-500 ml-1" style={{ fontSize: '15px' }}>
+                      ({stylist.review_count || 0})
                     </span>
                   </div>
+                  <div className="flex items-center text-gray-600 text-[15px]">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span>{displayData.location}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600 text-[15px]">
+                    <Award className="w-4 h-4 mr-1" />
+                    <span>{displayData.experience} experience</span>
+                  </div>
+                </div>
+
+                {/* Desktop Layout - Row with bullets */}
+                <div className="hidden sm:flex items-center text-gray-600 mb-2 text-[15px] flex-wrap gap-y-1">
+                  <div className="flex items-center">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium text-gray-700 ml-1" style={{ fontSize: '15px' }}>
+                      {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
+                    </span>
+                    <span className="text-gray-500 ml-1" style={{ fontSize: '15px' }}>
+                      ({stylist.review_count || 0})
+                    </span>
+                  </div>
+                  <span className="mx-2 text-gray-400">•</span>
                   <div className="flex items-center">
                     <MapPin className="w-4 h-4 mr-1" />
                     <span>{displayData.location}</span>
                   </div>
+                  <span className="mx-2 text-gray-400">•</span>
+                  <div className="flex items-center">
+                    <Award className="w-4 h-4 mr-1" />
+                    <span>{displayData.experience} experience</span>
+                  </div>
                 </div>
-                <div className="flex items-center text-gray-600 mb-2 text-[15px]">
-                  <Award className="w-4 h-4 mr-1" />
-                  <span>{displayData.experience} experience</span>
-                </div>
+
                 <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[14px]">
                   {displayData.expertise}
                 </div>
@@ -420,12 +446,12 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-4">
               {stylist.booking_link ? (
-                <Button 
-                  className="bg-red-600 hover:bg-red-700 px-12 py-6 w-full sm:w-2/5" 
+                <Button
+                  className="bg-red-600 hover:bg-red-700 px-12 py-6 w-full sm:w-2/5"
                   size="lg"
                   onClick={() => {
-                    const url = stylist.booking_link.startsWith('http') 
-                      ? stylist.booking_link 
+                    const url = stylist.booking_link?.startsWith('http')
+                      ? stylist.booking_link
                       : `https://${stylist.booking_link}`;
                     window.location.href = url;
                   }}
@@ -448,7 +474,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                   variant="outline"
                   size="icon"
                   className="rounded-full h-12 w-12 flex items-center justify-center flex-shrink-0 bg-transparent"
-                  onClick={() => window.open(`https://instagram.com/${stylist.instagram_handle.replace('@', '')}`, '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(`https://instagram.com/${stylist.instagram_handle?.replace('@', '')}`, '_blank', 'noopener,noreferrer')}
                 >
                   <Instagram className="w-5 h-5 text-gray-600" />
                 </Button>
@@ -458,7 +484,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
           {/* Services & Pricing */}
           <div className="space-y-6 max-w-lg">
-            <h2 className="text-xl font-bold text-gray-900">Services & Pricing</h2>
+            <h2 className="text-lg font-bold text-gray-900">Services & Pricing</h2>
             {servicesLoading ? (
               <ServicesSkeleton />
             ) : servicesError ? (
@@ -504,19 +530,29 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
+        {/* Sidebar - Sticky on desktop */}
+        <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
           {/* Location */}
           <Card>
-            <CardHeader>
-              <CardTitle>Location</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center mb-3">
-                <MapPin className="w-4 h-4 mr-2 text-gray-600" />
-                <span className="text-sm">{getLocationWithCode()}</span>
+            <CardContent className="p-4 sm:p-6">
+              {/* Profile Card */}
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={stylist.portfolio_images?.[0]} />
+                  <AvatarFallback className="bg-red-600/70 text-white font-semibold text-lg">
+                    {displayData.businessName.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 mb-1" style={{ fontSize: '17px' }}>{displayData.businessName}</h3>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <MapPin className="w-3.5 h-3.5 mr-1" />
+                    <span>{getLocationWithCode()}</span>
+                  </div>
+                </div>
               </div>
-              <StylistLocationMap 
+
+              <StylistLocationMap
                 postcode={stylist.location || ''}
                 businessName={displayData.businessName}
                 className="h-48"
@@ -527,13 +563,13 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           {/* Contact */}
           <Card>
             <CardHeader>
-              <CardTitle>Contact</CardTitle>
+              <CardTitle className="text-lg">Contact</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {stylist.phone && (
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-3 text-gray-600" />
-                  <a href={`tel:${stylist.phone}`} className="text-gray-700 hover:text-gray-900">
+                  <a href={`tel:${stylist.phone}`} className="text-gray-700 hover:text-gray-900" style={{ fontSize: '15px' }}>
                     {stylist.phone}
                   </a>
                 </div>
@@ -541,7 +577,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
               {stylist.contact_email && (
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-3 text-gray-600" />
-                  <a href={`mailto:${stylist.contact_email}`} className="text-gray-700 hover:text-gray-900">
+                  <a href={`mailto:${stylist.contact_email}`} className="text-gray-700 hover:text-gray-900" style={{ fontSize: '15px' }}>
                     {stylist.contact_email}
                   </a>
                 </div>
@@ -600,7 +636,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         {(showReviewForm || editingReview) && (
           <ReviewForm
             stylistId={stylistId}
-            existingReview={editingReview}
+            existingReview={editingReview || undefined}
             onSuccess={() => {
               setShowReviewForm(false)
               setEditingReview(null)

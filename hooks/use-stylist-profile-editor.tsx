@@ -87,8 +87,8 @@ export function useStylistProfileEditor() {
             specialties: data.specialties || [],
             years_experience: data.years_experience,
             hourly_rate: data.hourly_rate,
-            rating: data.rating,
-            total_reviews: data.total_reviews,
+            average_rating: data.average_rating,
+            review_count: data.review_count,
             is_verified: data.is_verified,
             is_active: data.is_active ?? true,
             full_name: data.full_name || user.user_metadata?.full_name || 'Professional Stylist',
@@ -108,7 +108,7 @@ export function useStylistProfileEditor() {
 
         throw new Error('Profile not found')
         
-      } catch (err) {
+      } catch (err: any) {
         console.log('❌ [PROFILE-EDITOR] Failed to fetch profile:', err?.message)
         setError('Failed to load profile data')
       } finally {
@@ -195,7 +195,7 @@ export function useStylistProfileEditor() {
 
       throw new Error('Update failed - no data returned')
       
-    } catch (err) {
+    } catch (err: any) {
       console.log('❌ [PROFILE-EDITOR] Update failed:', err?.message)
       const errorMessage = err instanceof Error ? err.message : 'Failed to update profile'
       setError(errorMessage)
@@ -239,8 +239,8 @@ export function useStylistProfileEditor() {
           specialties: data.specialties || [],
           years_experience: data.years_experience,
           hourly_rate: data.hourly_rate,
-          rating: data.rating,
-          total_reviews: data.total_reviews,
+          average_rating: data.average_rating,
+          review_count: data.review_count,
           is_verified: data.is_verified,
           is_active: data.is_active ?? true,
           full_name: currentUser.user_metadata?.full_name || 'Professional Stylist',
@@ -296,7 +296,7 @@ export function useStylistProfileEditor() {
 
       throw new Error('Portfolio images update failed - no data returned')
       
-    } catch (err) {
+    } catch (err: any) {
       console.log('❌ [PROFILE-EDITOR] Portfolio images update failed:', err?.message)
       const errorMessage = err instanceof Error ? err.message : 'Failed to update portfolio images'
       setError(errorMessage)

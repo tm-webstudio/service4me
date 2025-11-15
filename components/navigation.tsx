@@ -113,7 +113,6 @@ export function Navigation() {
       router.push("/")
       setIsOpen(false)
     } catch (error) {
-      console.error('Error during sign out:', error)
       // Still redirect and close menu even if there's an error
       router.push("/")
       setIsOpen(false)
@@ -135,7 +134,9 @@ export function Navigation() {
     const style = document.createElement("style")
     style.textContent = safariStyles
     document.head.appendChild(style)
-    return () => document.head.removeChild(style)
+    return () => {
+      document.head.removeChild(style)
+    }
   }, [])
 
   // Prevent body scroll when menu is open
@@ -387,14 +388,12 @@ export function Navigation() {
                       isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                     style={{
-                      height: "100vh",
                       height: "100svh",
-                      maxHeight: "100vh",
                       maxHeight: "100svh",
                       display: "flex",
                       flexDirection: "column",
                       position: "fixed",
-                    }}
+                    } as React.CSSProperties}
                   >
                     {/* Header - Fixed at top */}
                     <div className="flex items-center justify-between pl-6 pr-4 py-4 border-b bg-white flex-shrink-0">
@@ -430,7 +429,7 @@ export function Navigation() {
                       )}
                       {/* Browse Stylists Collapsible */}
                       <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-medium text-gray-900 hover:text-red-600 transition-colors py-2">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2" style={{ fontSize: '17px' }}>
                           Browse Stylists
                           <ChevronDown
                             className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
@@ -468,7 +467,7 @@ export function Navigation() {
 
                       {/* Locations Collapsible */}
                       <Collapsible open={londonOpen} onOpenChange={setLondonOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full text-lg font-medium text-gray-900 hover:text-red-600 transition-colors py-2">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2" style={{ fontSize: '17px' }}>
                           Locations
                           <ChevronDown
                             className={`w-4 h-4 text-red-600 transition-transform duration-200 ${

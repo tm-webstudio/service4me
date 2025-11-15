@@ -21,18 +21,13 @@ export function useStylist(id: string) {
       try {
         setLoading(true)
         setError(null)
-        
-        console.log('🔍 [STYLIST] Fetching stylist with ID:', id)
-        
+
         // Primary approach: Use reliable API endpoint first
-        console.log('🔍 [STYLIST] Trying API endpoint (reliable method)...')
         try {
           const apiResponse = await fetch(`/api/stylists/${id}`)
           const apiData = await apiResponse.json()
-          
+
           if (apiData.success && apiData.data) {
-            console.log('✅ [STYLIST] API method successful for ID:', id)
-            
             const transformedData: StylistProfile = {
               id: apiData.data.id,
               business_name: apiData.data.business_name,
@@ -54,24 +49,18 @@ export function useStylist(id: string) {
               tiktok_handle: apiData.data.tiktok_handle,
               portfolio_images: apiData.data.portfolio_images || []
             }
-            
+
             setStylist(transformedData)
-            console.log('✅ [STYLIST] Real data loaded for:', transformedData.business_name)
             return
           }
         } catch (apiError) {
-          console.log('❌ [STYLIST] API method failed:', apiError)
         }
 
         // Fallback approach: Try direct Supabase client
         if (!isSupabaseConfigured()) {
-          console.log('❌ [STYLIST] Supabase not configured')
           throw new Error('Supabase not configured')
         }
 
-        console.log('🔍 [STYLIST] Trying direct Supabase client as fallback...')
-        const startTime = Date.now()
-        
         const { data, error } = await supabase
           .from('stylist_profiles')
           .select('*')
@@ -79,17 +68,11 @@ export function useStylist(id: string) {
           .eq('is_active', true)
           .single()
 
-        const queryTime = Date.now() - startTime
-        console.log('🔍 [STYLIST] Direct query completed in:', queryTime, 'ms')
-        
         if (error) {
-          console.log('❌ [STYLIST] Direct Supabase client failed:', error.message)
           throw error
         }
 
         if (data) {
-          console.log('✅ [STYLIST] Direct client successful for ID:', id)
-          
           const transformedData: StylistProfile = {
             id: data.id,
             business_name: data.business_name,
@@ -113,16 +96,13 @@ export function useStylist(id: string) {
           }
 
           setStylist(transformedData)
-          console.log('✅ [STYLIST] Direct client data loaded for:', transformedData.business_name)
           return
         }
 
         // If we get here, no method worked
         throw new Error('Stylist not found')
-        
+
       } catch (err) {
-        console.log('❌ [STYLIST] All methods failed, using fallback data for ID:', id, err?.message)
-        
         // Final fallback: Show sample data for the specific ID
         const fallbackData: StylistProfile = {
           id: id,
@@ -141,10 +121,8 @@ export function useStylist(id: string) {
         }
         setStylist(fallbackData)
         setError(null)
-        console.log('✅ [STYLIST] Fallback data loaded for ID:', id)
       } finally {
         setLoading(false)
-        console.log('🔍 [STYLIST] Fetch completed for ID:', id)
       }
     }
 

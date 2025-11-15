@@ -40,7 +40,6 @@ export function useServices() {
       .single()
 
     if (error) {
-      console.error('Error fetching stylist ID:', error)
       return null
     }
 
@@ -83,7 +82,6 @@ export function useServices() {
       }))
       setServices(servicesWithCorrectPrices)
     } catch (err) {
-      console.error('Error fetching services:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch services')
     } finally {
       setLoading(false)
@@ -92,11 +90,7 @@ export function useServices() {
 
   // Add new service
   const addService = useCallback(async (serviceInput: ServiceInput): Promise<Service | null> => {
-    console.log('🔍 [SERVICES] addService called with:', serviceInput)
-    console.log('🔍 [SERVICES] user:', user)
-    
     if (!user?.id) {
-      console.log('❌ [SERVICES] User not authenticated')
       throw new Error('User not authenticated')
     }
 
@@ -104,12 +98,9 @@ export function useServices() {
     setError(null)
 
     try {
-      console.log('🔍 [SERVICES] Getting stylist ID...')
       const stylistId = await getStylistId()
-      console.log('🔍 [SERVICES] Stylist ID:', stylistId)
-      
+
       if (!stylistId) {
-        console.log('❌ [SERVICES] Stylist profile not found')
         throw new Error('Stylist profile not found')
       }
 
@@ -120,7 +111,6 @@ export function useServices() {
         duration: serviceInput.duration,
         image_url: serviceInput.image_url
       }
-      console.log('🔍 [SERVICES] Inserting data:', insertData)
 
       const { data, error } = await supabase
         .from('services')
@@ -128,10 +118,7 @@ export function useServices() {
         .select()
         .single()
 
-      console.log('🔍 [SERVICES] Supabase response:', { data, error })
-
       if (error) {
-        console.log('❌ [SERVICES] Supabase error:', error)
         throw error
       }
 
@@ -139,13 +126,10 @@ export function useServices() {
         ...data,
         price: parseFloat(data.price) / 100 // convert back to pounds
       }
-      console.log('✅ [SERVICES] New service created:', newService)
 
       setServices(prev => [newService, ...prev])
       return newService
     } catch (err) {
-      console.error('❌ [SERVICES] Error adding service:', err)
-      console.error('❌ [SERVICES] Error details:', JSON.stringify(err, null, 2))
       setError(err instanceof Error ? err.message : 'Failed to add service')
       throw err
     } finally {
@@ -190,7 +174,6 @@ export function useServices() {
 
       return updatedService
     } catch (err) {
-      console.error('Error updating service:', err)
       setError(err instanceof Error ? err.message : 'Failed to update service')
       throw err
     } finally {
@@ -219,7 +202,6 @@ export function useServices() {
 
       setServices(prev => prev.filter(service => service.id !== serviceId))
     } catch (err) {
-      console.error('Error deleting service:', err)
       setError(err instanceof Error ? err.message : 'Failed to delete service')
       throw err
     } finally {

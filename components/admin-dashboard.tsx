@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy } from "lucide-react"
+import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
@@ -39,7 +39,7 @@ const pendingStylists = [
     specialties: ["Natural Hair", "Protective Styles"],
     experience: "8 years",
     bio: "Specializing in natural hair care and protective styling. I believe in enhancing your natural beauty while maintaining hair health.",
-    image: "/placeholder-user.jpg",
+    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop",
     status: "pending",
   },
   {
@@ -52,7 +52,7 @@ const pendingStylists = [
     specialties: ["Braids", "Twists"],
     experience: "6 years",
     bio: "Expert in intricate braiding techniques and twist styles. Creating beautiful, long-lasting protective styles for all hair types.",
-    image: "/placeholder-user.jpg",
+    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop",
     status: "pending",
   },
   {
@@ -65,7 +65,7 @@ const pendingStylists = [
     specialties: ["Locs", "Maintenance"],
     experience: "10 years",
     bio: "Loc specialist with over a decade of experience. From starter locs to maintenance and styling, I've got you covered.",
-    image: "/placeholder-user.jpg",
+    image: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&h=300&fit=crop",
     status: "pending",
   },
   {
@@ -78,13 +78,12 @@ const pendingStylists = [
     specialties: ["Silk Press", "Blowouts"],
     experience: "7 years",
     bio: "Master of the silk press technique. Achieving smooth, sleek styles while maintaining hair health and integrity.",
-    image: "/placeholder-user.jpg",
+    image: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop",
     status: "pending",
   },
 ]
 
 export function AdminDashboard() {
-  console.log('📊 [ADMIN-DASHBOARD] AdminDashboard component is rendering...')
   const { user } = useAuth()
   const [stylists, setStylists] = useState(pendingStylists)
   const [allStylists, setAllStylists] = useState<any[]>([])
@@ -109,13 +108,11 @@ export function AdminDashboard() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching stylists:', error)
         return
       }
 
       setAllStylists(data || [])
     } catch (err) {
-      console.error('Failed to fetch stylists:', err)
     } finally {
       setLoadingStylists(false)
     }
@@ -228,9 +225,8 @@ export function AdminDashboard() {
         const { data, error: uploadError } = await supabase.storage
           .from('stylist-portfolios')
           .upload(fileName, file)
-        
+
         if (uploadError) {
-          console.error('Upload error:', uploadError)
           throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`)
         }
         
@@ -240,12 +236,10 @@ export function AdminDashboard() {
           .getPublicUrl(fileName)
         
         uploadedUrls.push(publicUrl)
-        console.log(`✅ Admin uploaded: ${file.name} -> ${publicUrl}`)
       }
-      
+
       return uploadedUrls
     } catch (error) {
-      console.error('Admin upload failed:', error)
       throw error
     }
   }, [user?.id])
@@ -253,13 +247,11 @@ export function AdminDashboard() {
   const handleApprove = (id: number) => {
     setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
     // In a real app, this would make an API call to approve the stylist
-    console.log("Approving stylist:", id)
   }
 
   const handleReject = (id: number) => {
     setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
     // In a real app, this would make an API call to reject the stylist
-    console.log("Rejecting stylist:", id)
   }
 
   const setSpecialty = (specialty: string) => {
@@ -319,18 +311,10 @@ export function AdminDashboard() {
         is_active: true, // New profiles are immediately active and visible
         is_verified: true // Admin-created profiles are pre-verified
       }
-      
-      console.log('Creating stylist profile:', profileData)
-      console.log('Gallery images count:', galleryImages.length)
-      
+
       // Use the actual uploaded image URLs
       const portfolioImages = galleryImages
-      
-      // Log the image upload status
-      if (galleryImages.length > 0) {
-        console.log('Gallery images to be saved:', galleryImages)
-      }
-      
+
       // First create a temporary user_id (in real implementation, this would come from user creation)
       // For now, we'll create the profile without a user_id and admin can link it later
       const { data, error: insertError } = await supabase
@@ -356,27 +340,18 @@ export function AdminDashboard() {
           }
         ])
         .select()
-      
+
       if (insertError) {
-        console.error('Supabase error:', insertError)
-        console.error('Error details:', JSON.stringify(insertError, null, 2))
         throw new Error(`Database error: ${insertError.message || insertError.details || 'Unknown database error'}`)
       }
-      
-      console.log('Stylist profile created successfully:', data)
-      
+
       const stylistId = data[0].id
-      console.log('🔍 [ADMIN] About to check mockServices. Length:', mockServices.length)
-      console.log('🔍 [ADMIN] mockServices content:', mockServices)
       
       // Save services if any have been added
       let servicesSaveFailed = false
       let servicesFailReason = ''
-      
+
       if (mockServices.length > 0) {
-        console.log('Saving services for stylist:', stylistId)
-        console.log('Mock services data:', mockServices)
-        
         try {
           const response = await fetch('/api/admin/services', {
             method: 'POST',
@@ -390,22 +365,16 @@ export function AdminDashboard() {
           })
 
           const result = await response.json()
-          
+
           if (!response.ok) {
-            console.error('Error saving services via API:', result)
-            
             // Check if it's an RLS policy error
             if (result.details?.code === '42501') {
-              console.warn('⚠️ Services could not be saved due to database permissions. This requires a service role key to be configured.')
               // Set a flag to show this in the success message
               servicesSaveFailed = true
               servicesFailReason = 'Database permissions required (service role key needed)'
             }
-          } else {
-            console.log('Services saved successfully via API:', result.services)
           }
         } catch (apiError) {
-          console.error('Error calling services API:', apiError)
           // Continue with profile creation even if services fail
         }
       }
@@ -427,9 +396,8 @@ export function AdminDashboard() {
       successMessage += ` You can now generate login credentials using the Account Access section.`
       
       setSuccess(successMessage)
-      
+
       // Store created stylist data for account generation
-      console.log('🔍 [ADMIN] Setting createdStylist to:', data[0])
       setCreatedStylist(data[0])
       setAccountCredentials(null) // Reset any previous credentials
       
@@ -453,10 +421,8 @@ export function AdminDashboard() {
       setServiceImageFile(null)
       setServiceImagePreview('')
       setMockServices([]) // Clear services list
-      
+
     } catch (err: any) {
-      console.error('Error in handleSaveStylist:', err)
-      console.error('Error details:', JSON.stringify(err, null, 2))
       setError(err.message || 'Failed to create stylist profile')
     } finally {
       setSaving(false)
@@ -490,14 +456,7 @@ export function AdminDashboard() {
   // Generate login account for created stylist
   const handleGenerateAccount = async () => {
     if (!createdStylist) return
-    
-    console.log('🔍 [ADMIN DASHBOARD] createdStylist state:', createdStylist)
-    console.log('🔍 [ADMIN DASHBOARD] About to generate account for:', {
-      stylist_id: createdStylist.id,
-      business_name: createdStylist.business_name,
-      contact_email: createdStylist.contact_email
-    })
-    
+
     setAccountError('')
     setGeneratingAccount(true)
     
@@ -535,9 +494,8 @@ export function AdminDashboard() {
         ...createdStylist,
         user_id: result.user_id
       })
-      
+
     } catch (err: any) {
-      console.error('Error generating account:', err)
       setAccountError(err.message || 'Failed to generate account')
     } finally {
       setGeneratingAccount(false)
@@ -547,18 +505,17 @@ export function AdminDashboard() {
   // Copy credentials to clipboard
   const copyCredentials = async () => {
     if (!accountCredentials) return
-    
+
     const credentialsText = `Login Credentials for ${createdStylist?.business_name}:
 Email: ${accountCredentials.email}
 Temporary Password: ${accountCredentials.password}
 
 Please change your password after first login.`
-    
+
     try {
       await navigator.clipboard.writeText(credentialsText)
       // Could add a toast notification here
     } catch (err) {
-      console.error('Failed to copy credentials:', err)
     }
   }
 
@@ -577,13 +534,7 @@ Please change your password after first login.`
       setTableAccountError('Stylist must have an email address to generate an account')
       return
     }
-    
-    console.log('🔍 [TABLE ACCOUNT] Generating account for stylist:', {
-      stylist_id: stylist.id,
-      business_name: stylist.business_name,
-      contact_email: stylist.contact_email
-    })
-    
+
     setTableAccountError('')
     setGeneratingAccountForStylist(stylist.id)
     
@@ -625,9 +576,8 @@ Please change your password after first login.`
             : s
         )
       )
-      
+
     } catch (err: any) {
-      console.error('Error generating table account:', err)
       setTableAccountError(err.message || 'Failed to generate account')
     } finally {
       setGeneratingAccountForStylist(null)
@@ -642,12 +592,11 @@ Email: ${credentials.email}
 Temporary Password: ${credentials.password}
 
 Please change your password after first login.`
-    
+
     try {
       await navigator.clipboard.writeText(credentialsText)
       // Could add a toast notification here
     } catch (err) {
-      console.error('Failed to copy credentials:', err)
     }
   }
 
@@ -759,15 +708,9 @@ Please change your password after first login.`
   }
 
   const handleSaveService = () => {
-    console.log('🔍 [ADMIN] handleSaveService called')
-    console.log('🔍 [ADMIN] Service form data:', serviceForm)
-    
     if (!validateServiceForm()) {
-      console.log('❌ [ADMIN] Form validation failed')
       return
     }
-
-    console.log('✅ [ADMIN] Form validation passed')
 
     const serviceData = {
       id: editingService?.id || Date.now().toString(),
@@ -777,15 +720,12 @@ Please change your password after first login.`
       image_url: serviceImagePreview
     }
 
-    console.log('🔍 [ADMIN] Service data to save:', serviceData)
-
     if (editingService) {
       // Update existing service
       setMockServices(prev => {
-        const updated = prev.map(service => 
+        const updated = prev.map(service =>
           service.id === editingService.id ? serviceData : service
         )
-        console.log('🔍 [ADMIN] Updated mock services:', updated)
         return updated
       })
       alert(`Service "${serviceForm.name}" updated successfully!`)
@@ -793,7 +733,6 @@ Please change your password after first login.`
       // Add new service
       setMockServices(prev => {
         const newServices = [serviceData, ...prev]
-        console.log('🔍 [ADMIN] New mock services after adding:', newServices)
         return newServices
       })
       alert(`Service "${serviceForm.name}" added successfully!`)
@@ -845,11 +784,8 @@ Please change your password after first login.`
       
       // Add the real URLs to gallery images
       setGalleryImages(prevImages => [...prevImages, ...uploadedUrls])
-      
-      console.log(`📷 [ADMIN] Successfully uploaded ${uploadedUrls.length} images to gallery`)
-      
+
     } catch (err) {
-      console.error('Failed to upload images:', err)
       alert(err instanceof Error ? err.message : 'Failed to upload images. Please try again.')
     } finally {
       setIsUploading(false)
@@ -948,11 +884,9 @@ Please change your password after first login.`
       // Insert at new position (adjust index if needed)
       const adjustedDropIndex = draggedImageIndex < dropIndex ? dropIndex - 1 : dropIndex
       images.splice(adjustedDropIndex, 0, draggedImage)
-      
+
       setGalleryImages(images)
-      console.log(`📷 [ADMIN] Reordered image from position ${draggedImageIndex + 1} to ${adjustedDropIndex + 1}`)
     } catch (err) {
-      console.error('❌ [ADMIN] Failed to reorder images:', err)
     } finally {
       setDraggedImageIndex(null)
     }
@@ -987,23 +921,220 @@ Please change your password after first login.`
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Manage stylist profiles and verifications</p>
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-lg px-6 py-8 mb-8">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold tracking-wider text-red-600 uppercase">
+            Admin Dashboard
+          </p>
+          <h1 className="text-4xl font-bold text-gray-900">
+            Platform Management
+          </h1>
+          <p className="text-base text-red-700/80 mt-3">
+            Manage stylists, services, and platform operations
+          </p>
+        </div>
       </div>
 
-      <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="bg-transparent p-0 h-auto gap-2 flex-wrap justify-start">
-          <TabsTrigger value="pending" className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 hover:bg-gray-100 data-[state=active]:bg-red-600 data-[state=active]:border-red-600 data-[state=active]:text-white font-medium transition-colors">
+      <Tabs defaultValue="dashboard" className="space-y-6">
+        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-6 flex-wrap justify-start rounded-none w-full">
+          <TabsTrigger
+            value="dashboard"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger
+            value="pending"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <Clock className="w-4 h-4" />
             Pending Verification
           </TabsTrigger>
-          <TabsTrigger value="manage" className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 hover:bg-gray-100 data-[state=active]:bg-red-600 data-[state=active]:border-red-600 data-[state=active]:text-white font-medium transition-colors">
+          <TabsTrigger
+            value="manage"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <User className="w-4 h-4" />
             Manage Stylists
           </TabsTrigger>
-          <TabsTrigger value="create" className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 hover:bg-gray-100 data-[state=active]:bg-red-600 data-[state=active]:border-red-600 data-[state=active]:text-white font-medium transition-colors">
+          <TabsTrigger
+            value="create"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
             Create Stylist
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Total Stylists */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Stylists</CardTitle>
+                <User className="h-4 w-4 text-gray-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{allStylists.length}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {allStylists.filter(s => s.user_id).length} with accounts
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Active Stylists */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
+                <UserCheck className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{allStylists.filter(s => s.user_id).length}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Stylists with active accounts
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* No Account */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">No Account</CardTitle>
+                <UserX className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{allStylists.filter(s => !s.user_id).length}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Stylists without accounts
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Pending */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+                <Clock className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stylists.length}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Applications awaiting verification
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pending Verification Carousel */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Pending Verification</CardTitle>
+                <CardDescription>Stylists awaiting approval</CardDescription>
+              </div>
+              {stylists.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
+                  onClick={() => {
+                    // Switch to pending tab
+                    const pendingTab = document.querySelector('[value="pending"]') as HTMLElement
+                    if (pendingTab) pendingTab.click()
+                  }}
+                >
+                  View All
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {stylists.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No pending applications</h3>
+                  <p className="mt-1 text-sm text-gray-500">All stylist applications have been processed.</p>
+                </div>
+              ) : (
+                <div className="flex overflow-x-auto gap-4 pb-4 scroll-smooth" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                  {stylists.map((stylist, index) => {
+                    const placeholderImages = [
+                      'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop',
+                      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop',
+                      'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&h=300&fit=crop',
+                      'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop'
+                    ]
+                    const placeholderImage = placeholderImages[index % placeholderImages.length]
+
+                    return (
+                      <div key={stylist.id} className="flex-none w-[280px]">
+                        <Card className="group cursor-pointer hover:shadow-sm transition-shadow h-full">
+                          <CardContent className="p-0 h-full">
+                            <div className="relative aspect-square md:aspect-[4/3]">
+                              <img
+                                src={stylist.image || placeholderImage}
+                                alt={stylist.businessName}
+                                className="w-full h-full object-cover rounded-t-lg"
+                              />
+                              <div className="absolute top-3 right-3 flex gap-2">
+                                <Button
+                                  size="icon"
+                                  className="bg-green-600 hover:bg-green-700 h-9 w-9 shadow-md rounded-md"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleApprove(stylist.id)
+                                  }}
+                                >
+                                  <Check className="h-5 w-5" strokeWidth={3} />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  className="bg-red-600 hover:bg-red-700 h-9 w-9 shadow-md rounded-md"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleReject(stylist.id)
+                                  }}
+                                >
+                                  <X className="h-5 w-5" strokeWidth={3} />
+                                </Button>
+                              </div>
+                              <Badge className="absolute top-3 left-3 bg-orange-600 hover:bg-orange-700">
+                                Pending
+                              </Badge>
+                            </div>
+
+                            <div className="p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-semibold text-lg text-gray-900">{stylist.businessName}</h3>
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                  <span className="font-medium text-gray-700 text-sm">New</span>
+                                  <span className="text-gray-500 text-sm">(0)</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center text-gray-600 mb-3">
+                                <MapPin className="w-4 h-4 mr-1" />
+                                <span className="text-sm">{stylist.location}</span>
+                              </div>
+
+                              <div className="mb-3">
+                                <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
+                                  {stylist.specialties[0] ? `${stylist.specialties[0]} Specialist` : 'Hair Specialist'}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
           <Card>
@@ -1014,81 +1145,82 @@ Please change your password after first login.`
             <CardContent className="p-4 sm:p-6">
               {stylists.length === 0 ? (
                 <div className="text-center py-8">
-                  <User className="mx-auto h-12 w-12 text-gray-400" />
+                  <Clock className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No pending applications</h3>
                   <p className="mt-1 text-sm text-gray-500">All stylist applications have been processed.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {stylists.map((stylist) => (
-                    <Card key={stylist.id}>
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
-                          <div className="flex flex-col lg:flex-row lg:items-start lg:space-x-4 w-full lg:w-auto space-y-4 lg:space-y-0">
-                            {/* Large gallery image - full width on mobile, fixed width on desktop */}
-                            <div className="w-full lg:w-64 h-48 lg:h-48 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                              <img
-                                src="/placeholder.svg"
-                                alt={`${stylist.name}'s work`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {stylists.map((stylist, index) => {
+                    // Generate different placeholder images for each card
+                    const placeholderImages = [
+                      'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop',
+                      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop',
+                      'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&h=300&fit=crop',
+                      'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop'
+                    ]
+                    const placeholderImage = placeholderImages[index % placeholderImages.length]
 
-                            {/* Stylist information */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                                  <img
-                                    src="/placeholder.svg"
-                                    alt={`${stylist.businessName}'s profile`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-900">{stylist.businessName}</h3>
-                              </div>
-                              <div className="mt-2 space-y-1 text-sm text-gray-600">
-                                <div className="flex items-center">
-                                  <MapPin className="h-4 w-4 mr-2" />
-                                  {stylist.location}
-                                </div>
-                                <div className="mt-2">
-                                  <span className="text-sm text-gray-600">Experience: {stylist.experience}</span>
-                                </div>
-                              </div>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {stylist.specialties.map((specialty) => (
-                                  <Badge key={specialty} variant="secondary">
-                                    {specialty}
-                                  </Badge>
-                                ))}
-                              </div>
-                              <div className="mt-3">
-                                <p className="text-sm text-gray-700">{stylist.bio}</p>
-                              </div>
+                    return (
+                    <Card key={stylist.id} className="group cursor-pointer hover:shadow-sm transition-shadow h-full">
+                      <CardContent className="p-0 h-full">
+                        <div className="relative aspect-square md:aspect-[4/3]">
+                          <img
+                            src={stylist.image || placeholderImage}
+                            alt={stylist.businessName}
+                            className="w-full h-full object-cover rounded-t-lg"
+                          />
+                          <div className="absolute top-3 right-3 flex gap-2">
+                            <Button
+                              size="icon"
+                              className="bg-green-600 hover:bg-green-700 h-9 w-9 shadow-md rounded-md"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleApprove(stylist.id)
+                              }}
+                            >
+                              <Check className="h-5 w-5" strokeWidth={3} />
+                            </Button>
+                            <Button
+                              size="icon"
+                              className="bg-red-600 hover:bg-red-700 h-9 w-9 shadow-md rounded-md"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleReject(stylist.id)
+                              }}
+                            >
+                              <X className="h-5 w-5" strokeWidth={3} />
+                            </Button>
+                          </div>
+                          <Badge className="absolute top-3 left-3 bg-orange-600 hover:bg-orange-700">
+                            Pending
+                          </Badge>
+                        </div>
+
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-lg text-gray-900">{stylist.businessName}</h3>
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                              <span className="font-medium text-gray-700 text-sm">New</span>
+                              <span className="text-gray-500 text-sm">(0)</span>
                             </div>
                           </div>
 
-                          {/* Action buttons */}
-                          <div className="flex space-x-2 w-full lg:w-auto lg:justify-end">
-                            <Button
-                              onClick={() => handleApprove(stylist.id)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Approve
-                            </Button>
-                            <Button
-                              onClick={() => handleReject(stylist.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Reject
-                            </Button>
+                          <div className="flex items-center text-gray-600 mb-3">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            <span className="text-sm">{stylist.location}</span>
+                          </div>
+
+                          <div className="mb-3">
+                            <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
+                              {stylist.specialties[0] ? `${stylist.specialties[0]} Specialist` : 'Hair Specialist'}
+                            </span>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )})}
                 </div>
               )}
             </CardContent>
@@ -1203,7 +1335,7 @@ Please change your password after first login.`
                                   <Avatar className="w-10 h-10">
                                     <AvatarImage src={stylist.portfolio_images?.[0]} />
                                     <AvatarFallback>
-                                      {stylist.business_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'S'}
+                                      {stylist.business_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'S'}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>

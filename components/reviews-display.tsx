@@ -94,15 +94,15 @@ export function ReviewsDisplay({
         throw error
       }
 
-      const transformedReviews: Review[] = (data || []).map(review => ({
+      const transformedReviews: Review[] = (data || []).map((review: any) => ({
         id: review.id,
         rating: review.rating,
         comment: review.comment,
         created_at: review.created_at,
         updated_at: review.updated_at,
         client_id: review.client_id,
-        client_name: review.client?.full_name || 'Anonymous',
-        client_avatar: review.client?.avatar_url
+        client_name: Array.isArray(review.client) ? review.client[0]?.full_name : review.client?.full_name || 'Anonymous',
+        client_avatar: Array.isArray(review.client) ? review.client[0]?.avatar_url : review.client?.avatar_url
       }))
 
       setReviews(transformedReviews)

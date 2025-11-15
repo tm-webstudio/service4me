@@ -122,7 +122,7 @@ export function CategoryCarousel() {
             {categories.map((category, index) => (
               <div
                 key={index}
-                className="flex-none w-[70%] sm:w-[45%] md:w-[30%] lg:w-[23%]"
+                className="flex-none w-[70%] sm:w-[45%] md:w-[30%] lg:w-[18%]"
                 style={{ scrollSnapAlign: "start" }}
               >
                 <Link href={`/browse?category=${encodeURIComponent(category.name)}`}>

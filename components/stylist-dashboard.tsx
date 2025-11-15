@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
-import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle, Clock, DollarSign, ImageIcon } from "lucide-react"
+import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle, Clock, DollarSign, ImageIcon, LayoutDashboard, User } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
@@ -45,30 +46,12 @@ export function StylistDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadInProgressRef = useRef(false)
   
-  // Debug logging for state changes
-  useEffect(() => {
-    console.log('🔍 [DEBUG] hasUnsavedChanges changed to:', hasUnsavedChanges)
-  }, [hasUnsavedChanges])
-  
-  useEffect(() => {
-    console.log('🔍 [DEBUG] localGalleryImages changed to:', localGalleryImages.length, 'images')
-  }, [localGalleryImages])
-  
   // Initialize local gallery with profile images when profile loads
   useEffect(() => {
     if (profile?.portfolio_images) {
-      console.log('🔄 [DEBUG] Profile loaded with', profile.portfolio_images.length, 'images')
-      console.log('🔄 [DEBUG] Profile images:', profile.portfolio_images)
-      console.log('🔄 [DEBUG] Current localGalleryImages:', localGalleryImages)
-      
       // Only update local gallery if it's empty or if we have unsaved changes that need syncing
       if (localGalleryImages.length === 0 && !hasUnsavedChanges) {
-        console.log('🔄 [DEBUG] Initializing localGalleryImages with profile images')
         setLocalGalleryImages(profile.portfolio_images)
-      } else if (hasUnsavedChanges) {
-        console.log('🔄 [DEBUG] Has unsaved changes, keeping local gallery state')
-      } else {
-        console.log('🔄 [DEBUG] Local gallery already has images, keeping current state')
       }
     }
   }, [profile?.portfolio_images, hasUnsavedChanges]) // Watch both portfolio images and unsaved changes
@@ -104,8 +87,6 @@ export function StylistDashboard() {
   // Update form data when profile loads
   useEffect(() => {
     if (profile) {
-      console.log('🔍 [DASHBOARD] Profile data received:', JSON.stringify(profile, null, 2))
-      console.log('🔍 [DASHBOARD] Booking link value:', profile.booking_link)
       setFormData({
         business_name: profile.business_name || '',
         bio: profile.bio || '',
@@ -133,7 +114,6 @@ export function StylistDashboard() {
       await updateProfile(updateData)
       setIsEditing(false)
     } catch (err) {
-      console.error('Failed to save profile:', err)
     }
   }
   
@@ -164,28 +144,22 @@ export function StylistDashboard() {
 
   // Image upload handlers
   const handleImageUpload = useCallback(async (files: FileList | File[]) => {
-    console.log('🔄 [DEBUG] handleImageUpload called with', files.length, 'files')
-    console.log('🔍 [DEBUG] uploadInProgress ref:', uploadInProgressRef.current)
-    
     // Prevent duplicate uploads using ref
     if (uploadInProgressRef.current) {
-      console.log('⚠️ [DEBUG] Upload already in progress, skipping...')
       return
     }
     
     // Set upload in progress
     uploadInProgressRef.current = true
-    
+
     // Convert FileList to array immediately to prevent it from becoming stale
     const filesArray = Array.from(files)
-    console.log('🔄 [DEBUG] Converted to array:', filesArray.length, 'files')
-    
+
     try {
       // Get current images count using functional update approach
       let currentImageCount = 0
       setLocalGalleryImages(currentImages => {
         currentImageCount = currentImages.length
-        console.log('🔍 [DEBUG] Current localGalleryImages from state:', currentImages.length, 'images:', currentImages)
         return currentImages // Return unchanged
       })
       
@@ -197,28 +171,20 @@ export function StylistDashboard() {
         return
       }
 
-      console.log('🚀 [DEBUG] Starting file upload for', filesArray.length, 'files...')
-      console.log('🚀 [DEBUG] Current images before upload:', currentImageCount, 'images')
-      
       // Upload files
       const uploadedUrls = await uploadFiles(filesArray)
-      console.log('✅ [DEBUG] Files uploaded successfully, received', uploadedUrls.length, 'URLs:', uploadedUrls)
-      
+
       if (uploadedUrls.length > 0) {
         // Add uploaded URLs to existing images
         setLocalGalleryImages(prevImages => {
           const updatedImages = [...prevImages, ...uploadedUrls]
-          console.log('🔄 [DEBUG] Combining existing', prevImages.length, 'images with', uploadedUrls.length, 'new images')
-          console.log('🔄 [DEBUG] Final image array (', updatedImages.length, 'total):', updatedImages)
-          
+
           return updatedImages
         })
         setHasUnsavedChanges(true)
-        console.log('💾 [DEBUG] Local gallery updated and hasUnsavedChanges set to true')
       }
-      
+
     } catch (err) {
-      console.error('❌ [DEBUG] Upload failed:', err)
       alert('Failed to upload images. Please try again.')
     } finally {
       // Clear upload in progress flag
@@ -239,15 +205,12 @@ export function StylistDashboard() {
 
   const handleImageDelete = useCallback(async (imageUrl: string, index: number) => {
     if (!localGalleryImages.length) return
-    
+
     try {
-      console.log('🔍 [DASHBOARD] Removing image from local gallery:', imageUrl)
       const updatedImages = localGalleryImages.filter((_, i) => i !== index)
       setLocalGalleryImages(updatedImages) // Update local state only
       setHasUnsavedChanges(true) // Mark as having unsaved changes
-      console.log('✅ [DASHBOARD] Image removed from local gallery!')
     } catch (err) {
-      console.error('❌ [DASHBOARD] Remove failed:', err)
     }
   }, [localGalleryImages])
 
@@ -288,11 +251,6 @@ export function StylistDashboard() {
       // Force set attributes to ensure Chrome compatibility
       input.setAttribute('multiple', 'true')
       input.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/gif')
-      
-      // Add a small delay to ensure DOM is fully ready
-      setTimeout(() => {
-        console.log('🔍 [DASHBOARD] File input configured - multiple:', input.multiple, 'accept:', input.accept)
-      }, 100)
     }
   }, [profile])
 
@@ -333,13 +291,10 @@ export function StylistDashboard() {
       // Insert at new position (adjust index if needed)
       const adjustedDropIndex = draggedImageIndex < dropIndex ? dropIndex - 1 : dropIndex
       images.splice(adjustedDropIndex, 0, draggedImage)
-      
-      console.log('🔄 [DASHBOARD] Reordering images locally:', { from: draggedImageIndex, to: dropIndex })
+
       setLocalGalleryImages(images) // Update local state only
       setHasUnsavedChanges(true) // Mark as having unsaved changes
-      console.log('✅ [DASHBOARD] Local gallery order updated successfully')
     } catch (err) {
-      console.error('❌ [DASHBOARD] Failed to reorder images:', err)
     } finally {
       setDraggedImageIndex(null)
     }
@@ -356,25 +311,19 @@ export function StylistDashboard() {
   // Toggle profile active status with optimistic updates
   const handleToggleActiveStatus = useCallback(async (isActive: boolean) => {
     try {
-      console.log('🔄 [DEBUG] Toggling profile active status to:', isActive)
-      
       // Immediately update the UI optimistically
       setOptimisticActive(isActive)
-      
+
       // Update the database in the background
       await updateProfile({ is_active: isActive })
-      
-      console.log('✅ [DEBUG] Profile active status updated successfully')
-      
+
       // Clear optimistic state once real data is updated
       setOptimisticActive(null)
-      
+
     } catch (err) {
-      console.error('❌ [DEBUG] Failed to update profile active status:', err)
-      
       // Revert optimistic state on error
       setOptimisticActive(null)
-      
+
       alert('Failed to update profile status. Please try again.')
     }
   }, [updateProfile])
@@ -382,40 +331,26 @@ export function StylistDashboard() {
   // Save gallery changes to database
   const handleSaveGallery = useCallback(async () => {
     try {
-      console.log('💾 [DEBUG] === SAVING GALLERY TO DATABASE ===')
-      console.log('💾 [DEBUG] Current localGalleryImages:', localGalleryImages.length, 'images:', localGalleryImages)
-      console.log('💾 [DEBUG] Original profile images:', profile?.portfolio_images?.length, 'images:', profile?.portfolio_images)
-      console.log('💾 [DEBUG] hasUnsavedChanges:', hasUnsavedChanges)
-      
       // Delete old images that are no longer in the gallery
       const originalImages = profile?.portfolio_images || []
       const imagesToDelete = originalImages.filter(img => !localGalleryImages.includes(img))
-      
+
       if (imagesToDelete.length > 0) {
-        console.log('🗑️ [DEBUG] Images to delete:', imagesToDelete.length, 'images:', imagesToDelete)
         for (const imageUrl of imagesToDelete) {
           try {
             await deleteImage(imageUrl)
-            console.log('🗑️ [DEBUG] Successfully deleted image:', imageUrl)
           } catch (err) {
-            console.error('❌ [DEBUG] Failed to delete image:', imageUrl, err)
           }
         }
-      } else {
-        console.log('🗑️ [DEBUG] No images to delete')
       }
-      
+
       // Save the current local gallery to database
-      console.log('💾 [DEBUG] Saving', localGalleryImages.length, 'images to database')
       await updatePortfolioImages(localGalleryImages)
       setHasUnsavedChanges(false)
-      console.log('✅ [DEBUG] Gallery saved successfully to database, unsaved changes cleared')
-      console.log('💾 [DEBUG] === GALLERY SAVE COMPLETE ===')
-      
+
       // Show a brief success message (optional)
       // Could add a toast notification here
     } catch (err) {
-      console.error('❌ [DEBUG] Failed to save gallery:', err)
       alert('Failed to save gallery. Please try again.')
     }
   }, [localGalleryImages, profile?.portfolio_images, updatePortfolioImages, deleteImage, hasUnsavedChanges])
@@ -511,25 +446,16 @@ export function StylistDashboard() {
   }
 
   const handleSaveService = async () => {
-    console.log('🔍 [DEBUG] handleSaveService called')
-    console.log('🔍 [DEBUG] serviceForm:', serviceForm)
-    
     if (!validateServiceForm()) {
-      console.log('❌ [DEBUG] Form validation failed')
       return
     }
 
-    console.log('✅ [DEBUG] Form validation passed')
-
     try {
-      let imageUrl = serviceImagePreview
-      console.log('🔍 [DEBUG] Initial imageUrl:', imageUrl)
+      let imageUrl: string | null = serviceImagePreview
 
       // Upload new image if a file is selected
       if (serviceImageFile) {
-        console.log('🔍 [DEBUG] Uploading image file:', serviceImageFile.name)
         imageUrl = await uploadServiceImage(serviceImageFile)
-        console.log('✅ [DEBUG] Image uploaded:', imageUrl)
       }
 
       const serviceData = {
@@ -538,25 +464,18 @@ export function StylistDashboard() {
         duration: serviceForm.duration,
         image_url: imageUrl || undefined
       }
-      console.log('🔍 [DEBUG] Service data to save:', serviceData)
 
       if (editingService) {
-        console.log('🔍 [DEBUG] Updating existing service:', editingService.id)
         await updateService(editingService.id, serviceData)
       } else {
-        console.log('🔍 [DEBUG] Adding new service')
         const result = await addService(serviceData)
-        console.log('✅ [DEBUG] Service added successfully:', result)
       }
 
-      console.log('✅ [DEBUG] Service operation completed, closing modal')
       setIsServiceModalOpen(false)
       setServiceImageFile(null)
       setServiceImagePreview('')
       setIsServiceDragOver(false)
     } catch (err) {
-      console.error('❌ [DEBUG] Error saving service:', err)
-      console.error('❌ [DEBUG] Error details:', JSON.stringify(err, null, 2))
       alert(`Failed to save service: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
@@ -570,12 +489,11 @@ export function StylistDashboard() {
       await deleteService(serviceId)
       setShowDeleteConfirm(null)
     } catch (err) {
-      console.error('Error deleting service:', err)
       alert('Failed to delete service. Please try again.')
     }
   }
 
-  const formatDuration = (minutes) => {
+  const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
     if (hours > 0 && mins > 0) {
@@ -589,7 +507,7 @@ export function StylistDashboard() {
   
   if (loading) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-red-600" />
           <span className="ml-2 text-gray-600">Loading your profile...</span>
@@ -600,7 +518,7 @@ export function StylistDashboard() {
   
   if (error && !profile) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-20">
           <p className="text-red-600 mb-4">Error loading profile: {error}</p>
           <Button onClick={() => window.location.reload()} variant="outline">
@@ -613,7 +531,7 @@ export function StylistDashboard() {
   
   if (!profile) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-20">
           <p className="text-gray-600 mb-4">No profile found.</p>
           <p className="text-sm text-gray-500">Please contact support if this error persists.</p>
@@ -632,58 +550,119 @@ export function StylistDashboard() {
     }
     return "London, UK"
   }
-  const getRating = () => profile.rating || 0
-  const getReviewCount = () => profile.total_reviews || 0
+  const getRating = () => profile.average_rating || 0
+  const getReviewCount = () => profile.review_count || 0
   const getSpecialties = () => profile.specialties || []
   const getExperience = () => profile.years_experience || 0
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      {/* Welcome Header */}
-      <div className="grid grid-cols-1 gap-4 mb-5">
-        <div className="bg-gray-100 p-6 h-full flex flex-col justify-center">
-          <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Hello {getBusinessName()}</h1>
-              <Badge variant="secondary" className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} w-fit`}>
-                {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
-              </Badge>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 rounded-lg px-6 py-8 mb-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <p className="text-xs font-semibold tracking-wider text-green-600 uppercase">
+              Stylist Dashboard
+            </p>
+            <Badge variant="secondary" className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
+            </Badge>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900">
+            Hello, {getBusinessName()}!
+          </h1>
+          <div className="flex items-center flex-wrap gap-6 text-base text-green-700/80">
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+              <span className="font-medium">{getRating() > 0 ? getRating().toFixed(1) : "New"}</span>
+              <span>({getReviewCount()} reviews)</span>
             </div>
-            <div className="flex flex-col space-y-2 mt-3">
-              <div className="flex items-center flex-wrap gap-4">
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
-                  <span className="font-medium">{getRating() > 0 ? getRating().toFixed(1) : "New"}</span>
-                  <span className="text-gray-600 ml-1">({getReviewCount()} reviews)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">Active:</span>
-                  <button
-                    onClick={() => handleToggleActiveStatus(!profile?.is_active)}
-                    disabled={saving}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                      (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-red-600' : 'bg-gray-400'
-                    } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
-                      (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-              </div>
+            <div className="flex items-center gap-3">
+              <span className="font-medium">Profile Status:</span>
+              <button
+                onClick={() => handleToggleActiveStatus(!profile?.is_active)}
+                disabled={saving}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                  (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-600' : 'bg-gray-400'
+                } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                  (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+              <span className="text-sm">{(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'Active' : 'Inactive'}</span>
             </div>
-            <div className="mt-4">
-              <Link href={`/stylist/${profile.id}`}>
-                <Button variant="outline" className="w-full bg-transparent">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  View Public Profile
-                </Button>
-              </Link>
-            </div>
+          </div>
+          <div className="pt-2">
+            <Link href={`/stylist/${profile.id}`}>
+              <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 bg-transparent">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Public Profile
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
 
+      <Tabs defaultValue="dashboard" className="space-y-6">
+        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-6 flex-wrap justify-start rounded-none w-full">
+          <TabsTrigger
+            value="dashboard"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger
+            value="profile"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <User className="w-4 h-4" />
+            Profile
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Overview</CardTitle>
+              <CardDescription>Your business performance and activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-100">
+                  <div className="bg-green-600 p-3 rounded-full">
+                    <Star className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Rating</p>
+                    <p className="text-2xl font-bold text-gray-900">{getRating() > 0 ? getRating().toFixed(1) : "New"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-100">
+                  <div className="bg-green-600 p-3 rounded-full">
+                    <MessageSquare className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Reviews</p>
+                    <p className="text-2xl font-bold text-gray-900">{getReviewCount()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-100">
+                  <div className="bg-green-600 p-3 rounded-full">
+                    <Scissors className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Specialties</p>
+                    <p className="text-2xl font-bold text-gray-900">{formData.specialties ? 1 : 0}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="profile" className="space-y-6">
       {/* Profile Information Card */}
       <Card className="mb-5">
         <CardHeader className="p-4 sm:p-6">
@@ -719,7 +698,6 @@ export function StylistDashboard() {
                   className="text-sm mb-2"
                   onClick={() => {
                     // Placeholder function - will be implemented when connected to file upload
-                    console.log('Change photo clicked');
                   }}
                 >
                   <Upload className="w-4 h-4 mr-2" />
@@ -1455,6 +1433,8 @@ export function StylistDashboard() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -3,9 +3,9 @@ import { supabase } from '@/lib/supabase'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params
+  const { id } = await params
   
   console.log('🔍 [API] /api/stylists/[id] called for ID:', id, 'at:', new Date().toISOString())
   

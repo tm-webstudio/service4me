@@ -64,7 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single()
 
       if (error && error.code !== '23505') {
-        console.error('Error creating user profile:', error)
         setUserProfile(null)
       } else if (error?.code === '23505') {
         await fetchUserProfile(user.id)
@@ -82,69 +81,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('user_id', user.id)
 
           if (stylistUpdateError) {
-            console.error('Error updating stylist profile:', stylistUpdateError)
           }
         }
       }
     } catch (error) {
-      console.error('Exception creating user profile:', error)
       setUserProfile(null)
     }
   }
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // Prevent duplicate fetches for the same user within a short timeframe
-      const lastFetchKey = `lastUserFetch_${userId}`
-      const lastFetchTime = sessionStorage.getItem(lastFetchKey)
-      const now = Date.now()
-      
-      if (lastFetchTime && (now - parseInt(lastFetchTime)) < 5000) {
+      // Verify this is still the current session's user
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+
+      if (!currentSession || currentSession.user.id !== userId) {
+        // Session has changed or is invalid, don't fetch profile
+        setUserProfile(null)
         return
       }
 
-      sessionStorage.setItem(lastFetchKey, now.toString())
-      
-      // Check if we have a valid session first
-      const { data: { session } } = await supabase.auth.getSession()
-      
+      // Check if we've already fetched this user recently
+      if (lastFetchedUserId.current === userId) {
+        return
+      }
+
+      lastFetchedUserId.current = userId
+
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
 
+      // Verify session hasn't changed during the fetch
+      const { data: { session: verifySession } } = await supabase.auth.getSession()
+
+      if (!verifySession || verifySession.user.id !== userId) {
+        // Session changed during fetch, discard results
+        setUserProfile(null)
+        lastFetchedUserId.current = null
+        return
+      }
+
       if (error) {
-        console.error('Error fetching user profile:', error)
-        
         if (error.code === 'PGRST116') {
           // No profile found - try to create one from auth user data
           const { data: { user } } = await supabase.auth.getUser()
           if (user && user.id === userId) {
-            // Prevent recursive calls by checking if we've already tried creating this user
-            const attemptKey = `createAttempt_${userId}`
-            const lastAttempt = sessionStorage.getItem(attemptKey)
-            const now = Date.now()
-            
-            if (!lastAttempt || (now - parseInt(lastAttempt)) > 30000) { // 30 second cooldown
-              sessionStorage.setItem(attemptKey, now.toString())
-              await createUserProfileFromAuth(user)
-            } else {
-              setUserProfile(null)
-            }
+            await createUserProfileFromAuth(user)
           } else {
             setUserProfile(null)
+            lastFetchedUserId.current = null
           }
         } else {
           setUserProfile(null)
+          lastFetchedUserId.current = null
         }
         return
       }
-      
+
       setUserProfile(data)
     } catch (error) {
-      console.error('Exception fetching user profile:', error)
       setUserProfile(null)
+      lastFetchedUserId.current = null
     }
   }
 
@@ -156,10 +155,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const getInitialSession = async () => {
       try {
+        // Clear any stale cache data on init
+        lastFetchedUserId.current = null
+
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) {
-          if (error.message?.includes('Refresh Token Not Found') || 
+          if (error.message?.includes('Refresh Token Not Found') ||
               error.message?.includes('Invalid Refresh Token')) {
             setSession(null)
             setUser(null)
@@ -169,22 +171,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           throw error
         }
-        
+
         setSession(session)
         setUser(session?.user ?? null)
-        
+
         if (session?.user) {
           await fetchUserProfile(session.user.id)
         } else {
           setUserProfile(null)
         }
-        
+
         setLoading(false)
       } catch (error) {
-        console.error('Error getting session:', error)
         setSession(null)
         setUser(null)
         setUserProfile(null)
+        lastFetchedUserId.current = null
         setLoading(false)
       }
     }
@@ -194,8 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         try {
-          
-          if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED') {
+          if (event === 'SIGNED_OUT') {
             setSession(null)
             setUser(null)
             setUserProfile(null)
@@ -217,7 +218,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false)
           }
         } catch (error) {
-          console.error('Error in auth state change:', error)
           setSession(null)
           setUser(null)
           setUserProfile(null)
@@ -261,7 +261,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           })
 
         if (profileError) {
-          console.error('Error creating user profile:', profileError)
         } else if (role === 'stylist' && additionalData) {
           const { error: stylistUpdateError } = await supabase
             .from('stylist_profiles')
@@ -274,14 +273,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('user_id', data.user.id)
 
           if (stylistUpdateError) {
-            console.error('Error updating stylist profile:', stylistUpdateError)
           }
         }
       }
 
       return data
     } catch (error) {
-      console.error('Signup error:', error)
       throw error
     }
   }
@@ -300,43 +297,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error
       return data
     } catch (error) {
-      console.error('Signin error:', error)
       throw error
     }
   }
 
   const signOut = async () => {
+    // Clear local state IMMEDIATELY for instant UI response
+    setUser(null)
+    setUserProfile(null)
+    setSession(null)
+    lastFetchedUserId.current = null
+    sessionStorage.clear()
+
+    // Then handle the Supabase sign out in the background
     if (!isSupabaseConfigured()) {
-      // Even if not configured, clear local state
-      setUser(null)
-      setUserProfile(null)
-      setSession(null)
       return
     }
-    
+
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        const { error } = await supabase.auth.signOut()
-        
-        if (error) {
-          setUser(null)
-          setUserProfile(null)
-          setSession(null)
-          return
-        }
-      } else {
-        setUser(null)
-        setUserProfile(null)
-        setSession(null)
-        return
-      }
+      // This runs async but doesn't block the UI
+      await supabase.auth.signOut()
     } catch (error) {
-      console.error('Signout error:', error)
-      setUser(null)
-      setUserProfile(null)
-      setSession(null)
+      // Silently handle errors since we've already cleared the local state
+      // The user is already signed out from the UI perspective
     }
   }
 

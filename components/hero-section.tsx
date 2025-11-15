@@ -73,9 +73,9 @@ export function HeroSection() {
           />
 
           <div className="w-full relative z-10">
-            <div className="max-w-[90%] md:max-w-[35%]">
+            <div className="max-w-[90%] md:max-w-[25%]">
               <h1
-                className="font-bold text-white mb-2 text-[2.125rem] md:mb-3 md:text-6xl tracking-tight"
+                className="font-bold text-white mb-2 text-[2.125rem] md:mb-3 md:text-5xl tracking-tight"
                 style={{ lineHeight: "108%" }}
               >
                 Find Your Next Hair Stylist.
@@ -106,9 +106,7 @@ export function HeroSection() {
               style={{
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
-                WebkitScrollbar: { display: "none" },
-                msOverflowStyle: "none",
-              }}
+              } as React.CSSProperties}
             >
               {[
                 "Braids In North London",

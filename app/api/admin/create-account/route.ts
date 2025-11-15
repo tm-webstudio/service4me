@@ -145,14 +145,15 @@ export async function POST(request: NextRequest) {
     console.log('User created successfully:', authData.user.id)
 
     // Temporarily disable the trigger to prevent automatic stylist profile creation
-    console.log('Disabling trigger before user creation')
-    try {
-      await supabaseAdmin.sql`ALTER TABLE users DISABLE TRIGGER trigger_create_stylist_profile`
-      console.log('Trigger disabled successfully')
-    } catch (triggerError) {
-      console.error('Could not disable trigger:', triggerError)
-      // Continue anyway
-    }
+    // Note: SQL commands not available via Supabase client
+    // console.log('Disabling trigger before user creation')
+    // try {
+    //   await supabaseAdmin.sql`ALTER TABLE users DISABLE TRIGGER trigger_create_stylist_profile`
+    //   console.log('Trigger disabled successfully')
+    // } catch (triggerError) {
+    //   console.error('Could not disable trigger:', triggerError)
+    //   // Continue anyway
+    // }
 
     // Create user profile record in our users table
     const { error: userProfileError } = await supabaseAdmin
@@ -165,14 +166,15 @@ export async function POST(request: NextRequest) {
       })
 
     // Re-enable the trigger
-    console.log('Re-enabling trigger after user creation')
-    try {
-      await supabaseAdmin.sql`ALTER TABLE users ENABLE TRIGGER trigger_create_stylist_profile`
-      console.log('Trigger re-enabled successfully')
-    } catch (triggerError) {
-      console.error('Could not re-enable trigger:', triggerError)
-      // Continue anyway - this is not critical
-    }
+    // Note: SQL commands not available via Supabase client
+    // console.log('Re-enabling trigger after user creation')
+    // try {
+    //   await supabaseAdmin.sql`ALTER TABLE users ENABLE TRIGGER trigger_create_stylist_profile`
+    //   console.log('Trigger re-enabled successfully')
+    // } catch (triggerError) {
+    //   console.error('Could not re-enable trigger:', triggerError)
+    //   // Continue anyway - this is not critical
+    // }
 
     if (userProfileError) {
       console.error('Error creating user profile:', userProfileError)

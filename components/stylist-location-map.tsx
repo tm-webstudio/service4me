@@ -46,6 +46,9 @@ export function StylistLocationMap({ postcode, businessName, className = '' }: S
       const response = await fetch(`https://api.postcodes.io/postcodes/${cleanPostcode}`)
       
       if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Postcode not found')
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
       
@@ -156,7 +159,7 @@ export function StylistLocationMap({ postcode, businessName, className = '' }: S
 export function MapStylesImport() {
   useEffect(() => {
     // Import leaflet CSS
-    import('leaflet/dist/leaflet.css')
+    import('leaflet/dist/leaflet.css' as any)
     
     // Fix for default markers in react-leaflet
     import('leaflet').then((L) => {

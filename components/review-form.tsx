@@ -104,8 +104,6 @@ export function ReviewForm({
       }, 1500)
 
     } catch (err: any) {
-      console.error('Review submission error:', err)
-      
       if (err.code === '23505') {
         setError("You have already reviewed this stylist. You can only submit one review per stylist.")
       } else if (err.code === 'PGRST301' || err.message?.includes('permission denied')) {

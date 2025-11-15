@@ -1,21 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { ReviewForm } from "@/components/review-form"
-import { 
-  User, 
-  Calendar, 
-  Star, 
-  Edit2, 
-  Trash2, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  User,
+  Calendar,
+  Star,
+  Edit2,
+  Trash2,
   MessageSquare,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  LayoutDashboard
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
@@ -69,14 +71,14 @@ export function ClientDashboard() {
         throw error
       }
 
-      const transformedReviews: ClientReview[] = (data || []).map(review => ({
+      const transformedReviews: ClientReview[] = (data || []).map((review: any) => ({
         id: review.id,
         rating: review.rating,
         comment: review.comment,
         created_at: review.created_at,
         updated_at: review.updated_at,
         stylist_id: review.stylist_id,
-        stylist_business_name: review.stylist?.business_name || 'Unknown Stylist'
+        stylist_business_name: Array.isArray(review.stylist) ? review.stylist[0]?.business_name : review.stylist?.business_name || 'Unknown Stylist'
       }))
 
       setReviews(transformedReviews)
@@ -149,7 +151,7 @@ export function ClientDashboard() {
   // Show loading state
   if (authLoading) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
@@ -160,61 +162,160 @@ export function ClientDashboard() {
   // User is authenticated and is a client - show dashboard
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-start gap-4">
-          <div className="bg-red-100 p-3 rounded-full">
-            <User className="h-6 w-6 text-red-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {userProfile.full_name || 'Client'}!
-            </h1>
-            <p className="text-gray-600 mt-1 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Member since {getMemberSince()}
-            </p>
-            {userProfile.email && (
-              <p className="text-gray-500 text-sm mt-1">{userProfile.email}</p>
-            )}
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg px-6 py-8 mb-8">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold tracking-wider text-blue-600 uppercase">
+            Client Dashboard
+          </p>
+          <h1 className="text-4xl font-bold text-gray-900">
+            Welcome back, {userProfile?.full_name || 'Client'}!
+          </h1>
+          <p className="text-base text-blue-700/80 mt-3 flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Member since {getMemberSince()}
+          </p>
         </div>
       </div>
 
-      {/* Edit Review Form */}
-      {editingReview && (
-        <div className="mb-8">
-          <ReviewForm
-            stylistId={editingReview.stylist_id}
-            existingReview={{
-              id: editingReview.id,
-              rating: editingReview.rating,
-              comment: editingReview.comment || ""
-            }}
-            onSuccess={() => {
-              setEditingReview(null)
-              setRefreshTrigger(prev => prev + 1)
-            }}
-            onCancel={() => setEditingReview(null)}
-          />
-        </div>
-      )}
+      <Tabs defaultValue="dashboard" className="space-y-6">
+        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-6 flex-wrap justify-start rounded-none w-full">
+          <TabsTrigger
+            value="dashboard"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger
+            value="reviews"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <MessageSquare className="w-4 h-4" />
+            My Reviews
+          </TabsTrigger>
+        </TabsList>
 
-      {/* My Reviews Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              My Reviews
-            </CardTitle>
-            <Badge variant="outline">
-              {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
+        <TabsContent value="dashboard" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Overview</CardTitle>
+              <CardDescription>Your activity and account summary</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="bg-blue-600 p-3 rounded-full">
+                    <MessageSquare className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Reviews</p>
+                    <p className="text-2xl font-bold text-gray-900">{reviews.length}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <div className="bg-indigo-600 p-3 rounded-full">
+                    <Star className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Average Rating</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {reviews.length > 0
+                        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+                        : '0.0'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {reviews.length === 0 ? (
+                <div className="text-center py-12 mt-6">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No reviews yet</h3>
+                  <p className="text-gray-500 mb-4">
+                    Start by booking a service and leaving your first review!
+                  </p>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => router.push("/browse")}
+                  >
+                    Browse Stylists
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Reviews</h3>
+                  <div className="space-y-4">
+                    {reviews.slice(0, 3).map((review) => (
+                      <Card key={review.id} className="border shadow-sm">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4
+                                className="font-semibold text-gray-900 hover:underline cursor-pointer mb-2"
+                                onClick={() => router.push(`/stylist/${review.stylist_id}`)}
+                              >
+                                {review.stylist_business_name}
+                              </h4>
+                              <div className="flex items-center gap-2 mb-2">
+                                <StarDisplay rating={review.rating} size="sm" showCount={false} />
+                                <span className="text-sm text-gray-500">
+                                  {formatDate(review.created_at)}
+                                </span>
+                              </div>
+                              {review.comment && (
+                                <p className="text-sm text-gray-600 line-clamp-2">{review.comment}</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reviews" className="space-y-6">
+          {/* Edit Review Form */}
+          {editingReview && (
+            <div className="mb-6">
+              <ReviewForm
+                stylistId={editingReview.stylist_id}
+                existingReview={{
+                  id: editingReview.id,
+                  rating: editingReview.rating,
+                  comment: editingReview.comment || ""
+                }}
+                onSuccess={() => {
+                  setEditingReview(null)
+                  setRefreshTrigger(prev => prev + 1)
+                }}
+                onCancel={() => setEditingReview(null)}
+              />
+            </div>
+          )}
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    My Reviews
+                  </CardTitle>
+                  <CardDescription>All your reviews and feedback</CardDescription>
+                </div>
+                <Badge variant="outline">
+                  {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
           {loading && (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -317,6 +418,8 @@ export function ClientDashboard() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

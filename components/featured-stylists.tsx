@@ -170,7 +170,7 @@ export function FeaturedStylists() {
                 return (
                   <div
                     key={stylist.id}
-                    className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
+                    className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(22.22%-9px)]"
                     style={{ scrollSnapAlign: "start" }}
                   >
                     <Card 
@@ -178,7 +178,7 @@ export function FeaturedStylists() {
                       onClick={() => router.push(`/stylist/${stylist.id}`)}
                     >
                       <CardContent className="p-0 h-full">
-                        <div className="relative aspect-square md:aspect-[4/3]">
+                        <div className="relative aspect-[4/3]">
                           <img
                             src={getStylistImage(stylist)}
                             alt={businessName}
