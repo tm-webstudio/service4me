@@ -42,7 +42,7 @@ export function useStylists() {
           const apiData = await apiResponse.json()
 
           if (apiData.success && apiData.data && apiData.data.length > 0) {
-            const transformedData = apiData.data.map(stylist => ({
+            const transformedData = apiData.data.map((stylist: any) => ({
               id: stylist.id,
               business_name: stylist.business_name,
               bio: stylist.bio,
@@ -115,7 +115,7 @@ export function useStylists() {
         // If we get here, no method worked
         throw new Error('No data available from any method')
 
-      } catch (err) {
+      } catch (err: any) {
         // Set error instead of showing dummy data
         setStylists([])
         setError(err?.message || 'Failed to load stylists')
