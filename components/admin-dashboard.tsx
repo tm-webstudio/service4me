@@ -91,6 +91,8 @@ export function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isAddingService, setIsAddingService] = useState(false)
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [hasFetchedStylists, setHasFetchedStylists] = useState(false)
 
   // Fetch all stylists for manage tab
   const fetchAllStylists = useCallback(async () => {
@@ -112,16 +114,19 @@ export function AdminDashboard() {
       }
 
       setAllStylists(data || [])
+      setHasFetchedStylists(true)
     } catch (err) {
     } finally {
       setLoadingStylists(false)
     }
   }, [])
 
-  // Load stylists when component mounts
+  // Load stylists when component mounts or when manage tab is accessed
   useEffect(() => {
-    fetchAllStylists()
-  }, [fetchAllStylists])
+    if (activeTab === 'manage' && !hasFetchedStylists) {
+      fetchAllStylists()
+    }
+  }, [activeTab, hasFetchedStylists, fetchAllStylists])
 
   // Filter stylists based on search and status
   const filteredStylists = allStylists.filter(stylist => {
@@ -162,6 +167,12 @@ export function AdminDashboard() {
   const [generatingAccountForStylist, setGeneratingAccountForStylist] = useState<string | null>(null)
   const [tableAccountCredentials, setTableAccountCredentials] = useState<{stylist_id: string, email: string, password: string} | null>(null)
   const [tableAccountError, setTableAccountError] = useState('')
+
+  // Delete stylist modal state
+  const [deletingStylist, setDeletingStylist] = useState<any | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+  const [deleteSuccess, setDeleteSuccess] = useState(false)
   
   // Portfolio upload hook for handling real file uploads
   const { uploadFiles, deleteImage, uploadProgress: portfolioProgress, isUploading: portfolioUploading, error: portfolioError } = usePortfolioUpload()
@@ -584,6 +595,54 @@ Please change your password after first login.`
     }
   }
 
+  // Open delete confirmation modal
+  const openDeleteModal = (stylist: any) => {
+    setDeletingStylist(stylist)
+    setDeleteError('')
+    setDeleteSuccess(false)
+  }
+
+  // Close delete modal
+  const closeDeleteModal = () => {
+    if (!isDeleting) {
+      setDeletingStylist(null)
+      setDeleteError('')
+      setDeleteSuccess(false)
+    }
+  }
+
+  // Delete stylist
+  const handleDeleteStylist = async () => {
+    if (!deletingStylist) return
+
+    setIsDeleting(true)
+    setDeleteError('')
+
+    try {
+      const { error } = await supabase
+        .from('stylist_profiles')
+        .delete()
+        .eq('id', deletingStylist.id)
+
+      if (error) throw error
+
+      // Update the local state to remove the deleted stylist
+      setAllStylists(prevStylists => prevStylists.filter(s => s.id !== deletingStylist.id))
+
+      setDeleteSuccess(true)
+
+      // Close modal after a brief delay to show success message
+      setTimeout(() => {
+        closeDeleteModal()
+      }, 1500)
+
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete stylist')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   // Copy table credentials to clipboard
   const copyTableCredentials = async (credentials: {stylist_id: string, email: string, password: string}) => {
     const stylist = allStylists.find(s => s.id === credentials.stylist_id)
@@ -936,7 +995,7 @@ Please change your password after first login.`
         </div>
       </div>
 
-      <Tabs defaultValue="dashboard" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-6 flex-wrap justify-start rounded-none w-full">
           <TabsTrigger
             value="dashboard"
@@ -1444,6 +1503,16 @@ Please change your password after first login.`
                                     <Edit className="w-3 h-3 mr-1" />
                                     Edit
                                   </Button>
+
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                    onClick={() => openDeleteModal(stylist)}
+                                  >
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                    Delete
+                                  </Button>
                                 </div>
                               </td>
                             </tr>
@@ -1517,6 +1586,80 @@ Please change your password after first login.`
                   <p className="text-xs text-gray-500 text-center">
                     Share these credentials with the stylist. They should change their password after first login.
                   </p>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Stylist Confirmation Modal */}
+          <Dialog open={!!deletingStylist} onOpenChange={(open) => {
+            if (!open) closeDeleteModal()
+          }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center">
+                  <Trash2 className="w-5 h-5 mr-2 text-red-600" />
+                  Delete Stylist
+                </DialogTitle>
+              </DialogHeader>
+              {deletingStylist && (
+                <div className="space-y-4">
+                  {!deleteSuccess ? (
+                    <>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-sm text-red-900 mb-2">
+                          Are you sure you want to delete <strong>{deletingStylist.business_name}</strong>?
+                        </p>
+                        <p className="text-xs text-red-700">
+                          This action cannot be undone. All stylist data, services, and portfolio images will be permanently deleted.
+                        </p>
+                      </div>
+
+                      {deleteError && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm text-red-600">{deleteError}</p>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleDeleteStylist}
+                          disabled={isDeleting}
+                          className="bg-red-600 hover:bg-red-700 flex-1"
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete Stylist
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={closeDeleteModal}
+                          disabled={isDeleting}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center text-green-900 mb-2">
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        <p className="font-medium">Stylist deleted successfully</p>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        {deletingStylist.business_name} has been removed from the system.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </DialogContent>

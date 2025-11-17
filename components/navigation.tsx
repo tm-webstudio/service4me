@@ -345,7 +345,7 @@ export function Navigation() {
                 </Link>
               )}
               {(!user || userProfile?.role !== 'stylist') && (
-                <Link href="/for-business">
+                <Link href="/list-business">
                   <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem]">
                     List Your Business
                   </Button>
@@ -356,7 +356,7 @@ export function Navigation() {
             {/* Mobile Actions */}
             <div className="md:hidden flex items-center justify-end space-x-3 col-span-2">
               {(!user || userProfile?.role !== 'stylist') && (
-                <Link href="/for-business">
+                <Link href="/list-business">
                   <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem] px-3">
                     List Your Business
                   </Button>
@@ -529,7 +529,7 @@ export function Navigation() {
                         </Link>
                       )}
                       {(!user || userProfile?.role !== 'stylist') && (
-                        <Link href="/for-business">
+                        <Link href="/list-business">
                           <Button
                             className="w-full bg-red-600 hover:bg-red-700 text-[0.825rem]"
                             onClick={() => setIsOpen(false)}
