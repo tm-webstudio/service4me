@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Star, Image as ImageIcon, X, Lightbulb, Check, ArrowRight } from "lucide-react"
+import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Star, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus } from "lucide-react"
 import { useRef, useCallback } from "react"
 
 const SPECIALTY_CATEGORIES = [
@@ -46,12 +46,17 @@ export function ListBusinessForm() {
     businessName: "",
     email: "",
     phone: "",
+    businessInstagram: "",
+    businessTiktok: "",
 
-    // Step 2: Location & Details
+    // Step 2: Business Details
     location: "",
+    businessType: "",
+    specialty: "",
     bio: "",
     experience: "",
-    specialties: [] as string[],
+    bookingLink: "",
+    acceptsSameDayAppointments: false,
 
     // Step 3: Photos
     // photos handled by galleryImages state
@@ -60,6 +65,11 @@ export function ListBusinessForm() {
     password: "",
     confirmPassword: "",
   })
+
+  // Services state
+  const [services, setServices] = useState<Array<{id: string, name: string, price: number, duration: number}>>([])
+  const [serviceForm, setServiceForm] = useState({ name: "", price: 0, duration: 60 })
+  const [isAddingService, setIsAddingService] = useState(false)
 
   const totalSteps = 4
   const progressPercentage = (currentStep / totalSteps) * 100
@@ -77,7 +87,7 @@ export function ListBusinessForm() {
         return
       }
     } else if (currentStep === 2) {
-      if (!formData.location || !formData.bio || formData.specialties.length === 0) {
+      if (!formData.businessType || !formData.location || !formData.bio || !formData.specialty) {
         setError("Please fill in all required fields")
         return
       }
@@ -92,13 +102,28 @@ export function ListBusinessForm() {
     setCurrentStep((prev) => Math.max(prev - 1, 1))
   }
 
-  const handleSpecialtyToggle = (specialty: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialties: prev.specialties.includes(specialty)
-        ? prev.specialties.filter(s => s !== specialty)
-        : [...prev.specialties, specialty]
-    }))
+  // Service handlers
+  const handleAddService = () => {
+    if (!serviceForm.name.trim() || serviceForm.price <= 0 || serviceForm.duration <= 0) {
+      setError("Please fill in all service details correctly")
+      return
+    }
+
+    const newService = {
+      id: Date.now().toString(),
+      name: serviceForm.name,
+      price: serviceForm.price,
+      duration: serviceForm.duration
+    }
+
+    setServices(prev => [...prev, newService])
+    setServiceForm({ name: "", price: 0, duration: 60 })
+    setIsAddingService(false)
+    setError("")
+  }
+
+  const handleRemoveService = (id: string) => {
+    setServices(prev => prev.filter(service => service.id !== id))
   }
 
   // Gallery handlers
@@ -206,10 +231,15 @@ export function ListBusinessForm() {
           full_name: `${formData.firstName} ${formData.lastName}`.trim(),
           phone: formData.phone,
           businessName: formData.businessName,
+          businessInstagram: formData.businessInstagram,
+          businessTiktok: formData.businessTiktok,
+          businessType: formData.businessType,
           location: formData.location,
+          specialty: formData.specialty,
           bio: formData.bio,
           experience: formData.experience,
-          specialties: formData.specialties
+          bookingLink: formData.bookingLink,
+          acceptsSameDayAppointments: formData.acceptsSameDayAppointments
         }
       )
 
@@ -271,10 +301,10 @@ export function ListBusinessForm() {
                 {/* Step 1: Basic Info */}
                 <div className="flex flex-col items-center flex-1 min-w-0">
                   <div className={`
-                    w-8 h-8 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center mb-2 transition-all
+                    w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mb-2 transition-all
                     ${currentStep >= 1
-                      ? 'bg-red-600 border-red-600'
-                      : 'bg-white border-gray-200'
+                      ? 'bg-red-600'
+                      : 'bg-white border-2 border-gray-200'
                     }
                   `}>
                     <User className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${currentStep >= 1 ? 'text-white' : 'text-gray-400'}`} />
@@ -285,33 +315,33 @@ export function ListBusinessForm() {
                   </p>
                 </div>
 
-                {/* Step 2: Location & Details */}
+                {/* Step 2: Business Details */}
                 <div className="flex flex-col items-center flex-1 min-w-0">
                   <div className={`
-                    w-8 h-8 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center mb-2 transition-all
+                    w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mb-2 transition-all
                     ${currentStep >= 2
-                      ? 'bg-red-600 border-red-600'
-                      : 'bg-white border-gray-200'
+                      ? 'bg-red-600'
+                      : 'bg-white border-2 border-gray-200'
                     }
                   `}>
-                    <Map className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${currentStep >= 2 ? 'text-white' : 'text-gray-400'}`} />
+                    <Briefcase className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${currentStep >= 2 ? 'text-white' : 'text-gray-400'}`} />
                   </div>
                   <p className={`text-xs font-normal text-center leading-tight ${currentStep >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>
-                    <span className="hidden sm:inline">Location & Details</span>
-                    <span className="sm:hidden">Location</span>
+                    <span className="hidden sm:inline">Business Details</span>
+                    <span className="sm:hidden">Business</span>
                   </p>
                 </div>
 
                 {/* Step 3: Photos */}
                 <div className="flex flex-col items-center flex-1 min-w-0">
                   <div className={`
-                    w-8 h-8 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center mb-2 transition-all
+                    w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mb-2 transition-all
                     ${currentStep >= 3
-                      ? 'bg-red-600 border-red-600'
-                      : 'bg-white border-gray-200'
+                      ? 'bg-red-600'
+                      : 'bg-white border-2 border-gray-200'
                     }
                   `}>
-                    <ImageIcon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${currentStep >= 3 ? 'text-white' : 'text-gray-400'}`} />
+                    <Camera className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${currentStep >= 3 ? 'text-white' : 'text-gray-400'}`} />
                   </div>
                   <p className={`text-xs font-normal text-center leading-tight ${currentStep >= 3 ? 'text-gray-900' : 'text-gray-400'}`}>
                     Photos
@@ -321,10 +351,10 @@ export function ListBusinessForm() {
                 {/* Step 4: Account Setup */}
                 <div className="flex flex-col items-center flex-1 min-w-0">
                   <div className={`
-                    w-8 h-8 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center mb-2 transition-all
+                    w-8 h-8 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mb-2 transition-all
                     ${currentStep >= 4
-                      ? 'bg-red-600 border-red-600'
-                      : 'bg-white border-gray-200'
+                      ? 'bg-red-600'
+                      : 'bg-white border-2 border-gray-200'
                     }
                   `}>
                     <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${currentStep >= 4 ? 'text-white' : 'text-gray-400'}`} />
@@ -343,18 +373,12 @@ export function ListBusinessForm() {
         <Card>
           <CardContent className="p-4 sm:p-6">
             <form onSubmit={handleSubmit}>
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
-
               {/* Step 1: Basic Information */}
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div className="flex items-center mb-6">
-                    <Home className="w-5 h-5 mr-2 text-red-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
+                    <Home className="w-4 h-4 mr-2 text-red-600" />
+                    <h2 className="text-base font-semibold text-gray-900">Basic Information</h2>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -367,7 +391,7 @@ export function ListBusinessForm() {
                         type="text"
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        placeholder="Enter first name"
+                        placeholder="John"
                         className="w-full"
                         required
                       />
@@ -382,143 +406,228 @@ export function ListBusinessForm() {
                         type="text"
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        placeholder="Enter last name"
+                        placeholder="Smith"
                         className="w-full"
                         required
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="businessName" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Business Name <span className="text-red-600">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="businessName"
-                        type="text"
-                        value={formData.businessName}
-                        onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                        placeholder="Enter business name"
-                        className="pl-10"
-                        required
-                      />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="businessName" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Business Name <span className="text-red-600">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          id="businessName"
+                          type="text"
+                          value={formData.businessName}
+                          onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                          placeholder="e.g., Glamour Hair Studio"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Email Address <span className="text-red-600">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="you@example.com"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Email Address <span className="text-red-600">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="Enter email address"
-                        className="pl-10"
-                        required
-                      />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Phone Number <span className="text-red-600">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          id="phone"
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="07123 456789"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Phone Number <span className="text-red-600">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="Enter phone number"
-                        className="pl-10"
-                        required
-                      />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="businessInstagram" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Business Instagram
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">@</span>
+                        <Input
+                          id="businessInstagram"
+                          type="text"
+                          value={formData.businessInstagram}
+                          onChange={(e) => setFormData({ ...formData, businessInstagram: e.target.value })}
+                          placeholder="yourbusiness"
+                          className="pl-8"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="businessTiktok" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Business TikTok
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">@</span>
+                        <Input
+                          id="businessTiktok"
+                          type="text"
+                          value={formData.businessTiktok}
+                          onChange={(e) => setFormData({ ...formData, businessTiktok: e.target.value })}
+                          placeholder="yourbusiness"
+                          className="pl-8"
+                        />
+                      </div>
                     </div>
                   </div>
+
+                  {/* Error Message for Step 1 */}
+                  {error && (
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Step 2: Location & Details */}
+              {/* Step 2: Business Details */}
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <div className="flex items-center mb-6">
-                    <Map className="w-5 h-5 mr-2 text-red-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Location & Details</h2>
+                    <Briefcase className="w-4 h-4 mr-2 text-red-600" />
+                    <h2 className="text-base font-semibold text-gray-900">Business Details</h2>
                   </div>
 
-                  <div>
-                    <Label htmlFor="location" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Postcode <span className="text-red-600">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Map className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="location"
-                        type="text"
-                        value={formData.location}
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value.toUpperCase() })}
-                        placeholder="SW1A 1AA"
-                        className="pl-10"
-                        maxLength={8}
-                        pattern="[A-Z]{1,2}[0-9]{1,2}[A-Z]?\s?[0-9][A-Z]{2}"
-                        title="Please enter a valid UK postcode (e.g., SW1A 1AA)"
-                        required
-                      />
+                  {/* Specialty & Location Type */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="specialty" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Specialty <span className="text-red-600">*</span>
+                      </Label>
+                      <Select value={formData.specialty} onValueChange={(value) => setFormData({ ...formData, specialty: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your specialty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SPECIALTY_CATEGORIES.map((specialty) => (
+                            <SelectItem key={specialty} value={specialty}>
+                              {specialty}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Enter a valid UK postcode</p>
+
+                    <div>
+                      <Label htmlFor="businessType" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Location Type <span className="text-red-600">*</span>
+                      </Label>
+                      <Select value={formData.businessType} onValueChange={(value) => setFormData({ ...formData, businessType: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="home-based">Home Based</SelectItem>
+                          <SelectItem value="studio-based">Studio Based</SelectItem>
+                          <SelectItem value="salon-based">Salon Based</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="bio" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Business Description <span className="text-red-600">*</span>
-                    </Label>
-                    <Textarea
-                      id="bio"
-                      value={formData.bio}
-                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                      placeholder="Describe your business and services..."
-                      className="min-h-[120px] resize-none"
-                      required
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Tell clients about your business and what makes you unique</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="bookingLink" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Booking Link
+                      </Label>
+                      <Input
+                        id="bookingLink"
+                        type="url"
+                        value={formData.bookingLink}
+                        onChange={(e) => setFormData({ ...formData, bookingLink: e.target.value })}
+                        placeholder="https://your-booking-site.com"
+                        className="w-full"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Add your booking page URL (e.g., Calendly, Square, etc.)</p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="location" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Postcode <span className="text-red-600">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Map className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          id="location"
+                          type="text"
+                          value={formData.location}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value.toUpperCase() })}
+                          placeholder="SW1A 1AA"
+                          className="pl-10"
+                          maxLength={8}
+                          pattern="[A-Z]{1,2}[0-9]{1,2}[A-Z]?\s?[0-9][A-Z]{2}"
+                          title="Please enter a valid UK postcode (e.g., SW1A 1AA)"
+                          required
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Enter a valid UK postcode</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="experience" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Years of Experience
-                    </Label>
-                    <Select value={formData.experience} onValueChange={(value) => setFormData({ ...formData, experience: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select years of experience" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0-2">0-2 years</SelectItem>
-                        <SelectItem value="3-5">3-5 years</SelectItem>
-                        <SelectItem value="6-10">6-10 years</SelectItem>
-                        <SelectItem value="10+">10+ years</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="experience" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Years of Experience
+                      </Label>
+                      <Select value={formData.experience} onValueChange={(value) => setFormData({ ...formData, experience: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select years of experience" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0-2">0-2 years</SelectItem>
+                          <SelectItem value="3-5">3-5 years</SelectItem>
+                          <SelectItem value="6-10">6-10 years</SelectItem>
+                          <SelectItem value="10+">10+ years</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                      Specialties <span className="text-red-600">*</span>
-                    </Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {SPECIALTY_CATEGORIES.map((specialty) => (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Accept Same-Day Appointments?
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
                         <div
-                          key={specialty}
-                          onClick={() => handleSpecialtyToggle(specialty)}
+                          onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: true })}
                           className={`
-                            border rounded-lg p-3 cursor-pointer transition-all
-                            ${formData.specialties.includes(specialty)
+                            border rounded-md px-3 py-2 cursor-pointer transition-all h-10 flex items-center
+                            ${formData.acceptsSameDayAppointments === true
                               ? 'border-red-600 bg-red-50 text-red-900'
                               : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                             }
@@ -527,24 +636,185 @@ export function ListBusinessForm() {
                           <div className="flex items-center">
                             <div className={`
                               w-4 h-4 rounded border mr-2 flex items-center justify-center
-                              ${formData.specialties.includes(specialty)
+                              ${formData.acceptsSameDayAppointments === true
                                 ? 'border-red-600 bg-red-600'
                                 : 'border-gray-300'
                               }
                             `}>
-                              {formData.specialties.includes(specialty) && (
+                              {formData.acceptsSameDayAppointments === true && (
                                 <CheckCircle className="w-3 h-3 text-white" />
                               )}
                             </div>
-                            <span className="text-sm font-medium">{specialty}</span>
+                            <span className="text-sm font-medium">Yes</span>
                           </div>
                         </div>
-                      ))}
+
+                        <div
+                          onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: false })}
+                          className={`
+                            border rounded-md px-3 py-2 cursor-pointer transition-all h-10 flex items-center
+                            ${formData.acceptsSameDayAppointments === false
+                              ? 'border-red-600 bg-red-50 text-red-900'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                            }
+                          `}
+                        >
+                          <div className="flex items-center">
+                            <div className={`
+                              w-4 h-4 rounded border mr-2 flex items-center justify-center
+                              ${formData.acceptsSameDayAppointments === false
+                                ? 'border-red-600 bg-red-600'
+                                : 'border-gray-300'
+                              }
+                            `}>
+                              {formData.acceptsSameDayAppointments === false && (
+                                <CheckCircle className="w-3 h-3 text-white" />
+                              )}
+                            </div>
+                            <span className="text-sm font-medium">No</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {formData.specialties.length === 0 && (
-                      <p className="text-xs text-gray-500 mt-2">Select at least one specialty</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bio" className="text-sm font-medium text-gray-700 mb-2 block">
+                      Profile Bio <span className="text-red-600">*</span>
+                    </Label>
+                    <Textarea
+                      id="bio"
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      placeholder="Tell clients about yourself and your services..."
+                      className="min-h-[120px] resize-none"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Share your story, expertise, and what makes you stand out</p>
+                  </div>
+
+                  {/* Services */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium text-gray-700">Services</Label>
+                      <Button
+                        type="button"
+                        onClick={() => setIsAddingService(true)}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 border-red-600 hover:bg-red-50"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Service
+                      </Button>
+                    </div>
+
+                    {/* Add Service Form */}
+                    {isAddingService && (
+                      <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="service-name" className="text-sm font-medium text-gray-700 mb-2 block">Service Name</Label>
+                            <Input
+                              id="service-name"
+                              value={serviceForm.name}
+                              onChange={(e) => setServiceForm(prev => ({ ...prev, name: e.target.value }))}
+                              placeholder="e.g., Box Braids, Silk Press"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="service-price" className="text-sm font-medium text-gray-700 mb-2 block">Price (£)</Label>
+                              <Input
+                                id="service-price"
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={serviceForm.price || ""}
+                                onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                                placeholder="100"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="service-duration" className="text-sm font-medium text-gray-700 mb-2 block">Duration (minutes)</Label>
+                              <Input
+                                id="service-duration"
+                                type="number"
+                                min="15"
+                                step="15"
+                                value={serviceForm.duration || ""}
+                                onChange={(e) => setServiceForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+                                placeholder="60"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              onClick={handleAddService}
+                              className="bg-red-600 hover:bg-red-700 flex-1"
+                              disabled={!serviceForm.name || serviceForm.price <= 0 || serviceForm.duration <= 0}
+                            >
+                              Add Service
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                setIsAddingService(false)
+                                setServiceForm({ name: "", price: 0, duration: 60 })
+                              }}
+                              variant="outline"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Services List */}
+                    {services.length > 0 && (
+                      <div className="space-y-2">
+                        {services.map((service) => (
+                          <div key={service.id} className="border rounded-lg p-3 bg-white hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-sm">{service.name}</h4>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-xs text-gray-600">{service.duration} min</span>
+                                  <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveService(service.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {services.length === 0 && !isAddingService && (
+                      <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-gray-300 rounded-lg">
+                        No services added yet. Click "Add Service" to get started.
+                      </p>
                     )}
                   </div>
+
+                  {/* Error Message for Step 2 */}
+                  {error && (
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -552,8 +822,8 @@ export function ListBusinessForm() {
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div className="flex items-center mb-6">
-                    <ImageIcon className="w-5 h-5 mr-2 text-red-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Photos</h2>
+                    <Camera className="w-4 h-4 mr-2 text-red-600" />
+                    <h2 className="text-base font-semibold text-gray-900">Photos</h2>
                   </div>
 
                   {/* Photo Count */}
@@ -668,6 +938,13 @@ export function ListBusinessForm() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Error Message for Step 3 */}
+                  {error && (
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -696,16 +973,13 @@ export function ListBusinessForm() {
                           <h4 className="text-xl font-semibold text-gray-900">{formData.businessName}, {formData.location}</h4>
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
-                          {formData.specialties.map((specialty, index) => (
-                            <span
-                              key={index}
-                              className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs"
-                            >
-                              {specialty}
+                        {formData.specialty && (
+                          <div className="flex flex-wrap gap-2">
+                            <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">
+                              {formData.specialty}
                             </span>
-                          ))}
-                        </div>
+                          </div>
+                        )}
 
                         <div className="space-y-1 text-sm text-gray-600">
                           <p><span className="font-medium">Contact:</span> {formData.firstName} {formData.lastName}</p>
@@ -729,8 +1003,8 @@ export function ListBusinessForm() {
                   {/* Create Account Section - At Bottom */}
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center mb-6">
-                      <Lock className="w-5 h-5 mr-2 text-red-600" />
-                      <h3 className="text-lg font-semibold text-gray-900">Create Your Account to Publish</h3>
+                      <Lock className="w-4 h-4 mr-2 text-red-600" />
+                      <h3 className="text-base font-semibold text-gray-900">Create Your Account to Publish</h3>
                     </div>
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -794,6 +1068,13 @@ export function ListBusinessForm() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Error Message for Step 4 */}
+                  {error && (
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </form>
