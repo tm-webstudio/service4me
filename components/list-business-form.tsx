@@ -362,22 +362,24 @@ export function ListBusinessForm() {
             </div>
 
             {/* Progress bar with integrated nodes */}
-            <div className="relative px-2 sm:px-6 md:px-8">
-              {/* Background line */}
-              <div className="absolute top-[14px] sm:top-4 left-0 right-0 h-2 sm:h-2.5 bg-gray-200 rounded-full" style={{ zIndex: 0 }} />
-
-              {/* Filled progress line */}
+            <div className="relative">
+              {/* Background line - extends beyond first and last icons */}
               <div
-                className="absolute top-[14px] sm:top-4 h-2 sm:h-2.5 bg-red-600 transition-all duration-300 rounded-full"
+                className="absolute top-3 sm:top-[11px] left-0 right-0 h-2 sm:h-2.5 bg-gray-200 rounded-full"
+                style={{ zIndex: 0 }}
+              />
+
+              {/* Filled progress line - starts from left edge */}
+              <div
+                className="absolute top-3 sm:top-[11px] left-0 h-2 sm:h-2.5 bg-red-600 transition-all duration-300 rounded-full"
                 style={{
-                  left: 0,
                   width: currentStep === 1
-                    ? '40px'
+                    ? '12.5%'
                     : currentStep === 2
-                    ? 'calc(33.33% + 20px)'
+                    ? '37.5%'
                     : currentStep === 3
-                    ? 'calc(66.66% - 28px)'
-                    : 'calc(100%)',
+                    ? '62.5%'
+                    : '100%',
                   zIndex: 1
                 }}
               />
