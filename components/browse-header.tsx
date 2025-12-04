@@ -11,7 +11,7 @@ interface BrowseHeaderProps {
 }
 
 const categoryDescriptions: Record<string, string> = {
-  "Wigs & Weaves": "Connect with professionals who excel in wig installations and weave applications",
+  "Wigs": "Connect with professionals who excel in wig installations and weave applications",
   Braids: "Discover skilled stylists specializing in protective braiding styles and creative patterns",
   Locs: "Find experts in loc maintenance, styling, and professional loc installation services",
   "Natural Hair": "Explore stylists dedicated to natural hair health, styling, and maintenance",

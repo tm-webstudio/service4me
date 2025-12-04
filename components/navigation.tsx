@@ -97,7 +97,7 @@ export function Navigation() {
   }
 
   const categories = [
-    { name: "Wigs & Weaves", image: "/images/wigs-weave.jpg", description: "Premium wigs and weave installations" },
+    { name: "Wigs", image: "/images/wigs-weave.jpg", description: "Premium wigs and weave installations" },
     { name: "Braids", image: "/images/braids.jpg", description: "Traditional and modern braiding styles" },
     { name: "Locs", image: "/images/locs.jpg", description: "Professional loc maintenance and styling" },
     { name: "Natural Hair", image: "/images/natural.jpg", description: "Natural hair care and styling" },

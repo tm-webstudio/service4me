@@ -11,16 +11,29 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Star, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus } from "lucide-react"
+import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Star, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save } from "lucide-react"
 import { useRef, useCallback } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 const SPECIALTY_CATEGORIES = [
-  "Wigs & Weaves",
+  "Wigs",
   "Braids",
   "Locs",
   "Natural Hair",
   "Bridal Hair",
   "Silk Press"
+]
+
+const ADDITIONAL_SERVICES = [
+  "Wigs",
+  "Braids",
+  "Locs",
+  "Natural Hair",
+  "Bridal Hair",
+  "Silk Press",
+  "Sew-Ins",
+  "Butterfly Locs",
+  "Ponytails"
 ]
 
 export function ListBusinessForm() {
@@ -66,10 +79,17 @@ export function ListBusinessForm() {
     confirmPassword: "",
   })
 
+  // Additional services state
+  const [additionalServices, setAdditionalServices] = useState<string[]>([])
+
   // Services state
-  const [services, setServices] = useState<Array<{id: string, name: string, price: number, duration: number}>>([])
+  const [services, setServices] = useState<Array<{id: string, name: string, price: number, duration: number, image_url?: string}>>([])
   const [serviceForm, setServiceForm] = useState({ name: "", price: 0, duration: 60 })
-  const [isAddingService, setIsAddingService] = useState(false)
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+  const [serviceImageFile, setServiceImageFile] = useState<File | null>(null)
+  const [serviceImagePreview, setServiceImagePreview] = useState<string>('')
+  const [isServiceDragOver, setIsServiceDragOver] = useState(false)
+  const serviceImageInputRef = useRef<HTMLInputElement>(null)
 
   const totalSteps = 4
   const progressPercentage = (currentStep / totalSteps) * 100
@@ -103,6 +123,59 @@ export function ListBusinessForm() {
   }
 
   // Service handlers
+  const openAddServiceModal = () => {
+    setServiceForm({ name: "", price: 0, duration: 60 })
+    setServiceImageFile(null)
+    setServiceImagePreview('')
+    setIsServiceDragOver(false)
+    setIsServiceModalOpen(true)
+  }
+
+  const handleServiceImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setServiceImageFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setServiceImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const triggerServiceImageSelect = () => {
+    serviceImageInputRef.current?.click()
+  }
+
+  const handleServiceDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsServiceDragOver(true)
+  }, [])
+
+  const handleServiceDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsServiceDragOver(false)
+  }, [])
+
+  const handleServiceDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsServiceDragOver(false)
+
+    const files = Array.from(e.dataTransfer.files).filter(file =>
+      file.type.startsWith('image/')
+    )
+
+    if (files.length > 0) {
+      const file = files[0]
+      setServiceImageFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setServiceImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }, [])
+
   const handleAddService = () => {
     if (!serviceForm.name.trim() || serviceForm.price <= 0 || serviceForm.duration <= 0) {
       setError("Please fill in all service details correctly")
@@ -113,17 +186,29 @@ export function ListBusinessForm() {
       id: Date.now().toString(),
       name: serviceForm.name,
       price: serviceForm.price,
-      duration: serviceForm.duration
+      duration: serviceForm.duration,
+      image_url: serviceImagePreview
     }
 
     setServices(prev => [...prev, newService])
     setServiceForm({ name: "", price: 0, duration: 60 })
-    setIsAddingService(false)
+    setServiceImageFile(null)
+    setServiceImagePreview('')
+    setIsServiceModalOpen(false)
     setError("")
   }
 
   const handleRemoveService = (id: string) => {
     setServices(prev => prev.filter(service => service.id !== id))
+  }
+
+  // Additional services handler
+  const toggleAdditionalService = (service: string) => {
+    setAdditionalServices(prev =>
+      prev.includes(service)
+        ? prev.filter(s => s !== service)
+        : [...prev, service]
+    )
   }
 
   // Gallery handlers
@@ -236,6 +321,7 @@ export function ListBusinessForm() {
           businessType: formData.businessType,
           location: formData.location,
           specialty: formData.specialty,
+          additionalServices: additionalServices,
           bio: formData.bio,
           experience: formData.experience,
           bookingLink: formData.bookingLink,
@@ -561,6 +647,31 @@ export function ListBusinessForm() {
                     </div>
                   </div>
 
+                  {/* Additional Services */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-1 block">
+                      Additional Services
+                    </Label>
+                    <p className="text-xs text-gray-500 mb-4">Select other services you provide apart from your specialty</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
+                      {ADDITIONAL_SERVICES.filter(category => category !== formData.specialty).map((service) => (
+                        <div
+                          key={service}
+                          onClick={() => toggleAdditionalService(service)}
+                          className="flex items-center cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={additionalServices.includes(service)}
+                            onChange={() => {}}
+                            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                          />
+                          <span className="ml-2 text-xs text-gray-700">{service}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <Label htmlFor="bookingLink" className="text-sm font-medium text-gray-700 mb-2 block">
@@ -622,57 +733,31 @@ export function ListBusinessForm() {
                       <Label className="text-sm font-medium text-gray-700 mb-2 block">
                         Accept Same-Day Appointments?
                       </Label>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center gap-6 h-10">
                         <div
                           onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: true })}
-                          className={`
-                            border rounded-md px-3 py-2 cursor-pointer transition-all h-10 flex items-center
-                            ${formData.acceptsSameDayAppointments === true
-                              ? 'border-red-600 bg-red-50 text-red-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                            }
-                          `}
+                          className="flex items-center cursor-pointer"
                         >
-                          <div className="flex items-center">
-                            <div className={`
-                              w-4 h-4 rounded border mr-2 flex items-center justify-center
-                              ${formData.acceptsSameDayAppointments === true
-                                ? 'border-red-600 bg-red-600'
-                                : 'border-gray-300'
-                              }
-                            `}>
-                              {formData.acceptsSameDayAppointments === true && (
-                                <CheckCircle className="w-3 h-3 text-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">Yes</span>
-                          </div>
+                          <input
+                            type="checkbox"
+                            checked={formData.acceptsSameDayAppointments === true}
+                            onChange={() => {}}
+                            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                          />
+                          <span className="ml-2 text-xs text-gray-700">Yes</span>
                         </div>
 
                         <div
                           onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: false })}
-                          className={`
-                            border rounded-md px-3 py-2 cursor-pointer transition-all h-10 flex items-center
-                            ${formData.acceptsSameDayAppointments === false
-                              ? 'border-red-600 bg-red-50 text-red-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                            }
-                          `}
+                          className="flex items-center cursor-pointer"
                         >
-                          <div className="flex items-center">
-                            <div className={`
-                              w-4 h-4 rounded border mr-2 flex items-center justify-center
-                              ${formData.acceptsSameDayAppointments === false
-                                ? 'border-red-600 bg-red-600'
-                                : 'border-gray-300'
-                              }
-                            `}>
-                              {formData.acceptsSameDayAppointments === false && (
-                                <CheckCircle className="w-3 h-3 text-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">No</span>
-                          </div>
+                          <input
+                            type="checkbox"
+                            checked={formData.acceptsSameDayAppointments === false}
+                            onChange={() => {}}
+                            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                          />
+                          <span className="ml-2 text-xs text-gray-700">No</span>
                         </div>
                       </div>
                     </div>
@@ -697,89 +782,184 @@ export function ListBusinessForm() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <Label className="text-sm font-medium text-gray-700">Services</Label>
-                      <Button
-                        type="button"
-                        onClick={() => setIsAddingService(true)}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 border-red-600 hover:bg-red-50"
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Add Service
-                      </Button>
+                      <Dialog open={isServiceModalOpen} onOpenChange={(open) => {
+                        setIsServiceModalOpen(open)
+                        if (!open) {
+                          setIsServiceDragOver(false)
+                        }
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button
+                            type="button"
+                            onClick={openAddServiceModal}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add Service
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Add New Service</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            {/* Service Image Upload */}
+                            <div>
+                              <Label>Service Image</Label>
+                              <div className="mt-2">
+                                {serviceImagePreview ? (
+                                  <div
+                                    className={`flex items-center gap-4 rounded-lg border-2 border-dashed transition-colors ${
+                                      isServiceDragOver ? 'border-red-400 bg-red-50' : 'border-transparent'
+                                    }`}
+                                    onDragOver={handleServiceDragOver}
+                                    onDragLeave={handleServiceDragLeave}
+                                    onDrop={handleServiceDrop}
+                                  >
+                                    <img
+                                      src={serviceImagePreview}
+                                      alt="Service preview"
+                                      className="w-32 aspect-square object-cover rounded-lg border"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={triggerServiceImageSelect}
+                                      className="bg-white/90 hover:bg-white"
+                                    >
+                                      <Upload className="w-3 h-3 mr-1" />
+                                      Change
+                                    </Button>
+                                    {isServiceDragOver && (
+                                      <div className="absolute inset-0 flex items-center justify-center bg-red-50/90 rounded-lg">
+                                        <p className="text-red-600 font-medium">Drop new image</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4">
+                                    <div
+                                      onDragOver={handleServiceDragOver}
+                                      onDragLeave={handleServiceDragLeave}
+                                      onDrop={handleServiceDrop}
+                                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                                        isServiceDragOver
+                                          ? 'border-red-400 bg-red-50'
+                                          : 'border-gray-300 hover:border-gray-400'
+                                      }`}
+                                    >
+                                      <Upload className={`w-8 h-8 mx-auto mb-2 ${
+                                        isServiceDragOver ? 'text-red-500' : 'text-gray-400'
+                                      }`} />
+                                      <p className={`text-sm mb-3 ${
+                                        isServiceDragOver ? 'text-red-600' : 'text-gray-500'
+                                      }`}>
+                                        {isServiceDragOver ? 'Drop image here' : 'Drag and drop an image here, or click the button below'}
+                                      </p>
+
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={triggerServiceImageSelect}
+                                        className="text-red-600 border-red-600 hover:bg-red-50"
+                                      >
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        Select Image
+                                      </Button>
+
+                                      <p className="text-xs text-gray-400 mt-3">JPG, PNG or GIF. Max 5MB.</p>
+                                    </div>
+                                  </div>
+                                )}
+                                <input
+                                  ref={serviceImageInputRef}
+                                  type="file"
+                                  accept="image/jpeg,image/jpg,image/png,image/gif"
+                                  onChange={handleServiceImageSelect}
+                                  className="hidden"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Service Name */}
+                            <div>
+                              <Label htmlFor="service-name">Service Name</Label>
+                              <Input
+                                id="service-name"
+                                value={serviceForm.name}
+                                onChange={(e) => setServiceForm(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder="e.g. Box Braids, Silk Press"
+                              />
+                            </div>
+
+                            {/* Price and Duration */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="service-price">Price (£)</Label>
+                                <Input
+                                  id="service-price"
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={serviceForm.price}
+                                  onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                                  placeholder="100"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="service-duration">Duration (minutes)</Label>
+                                <Input
+                                  id="service-duration"
+                                  type="number"
+                                  min="15"
+                                  step="15"
+                                  value={serviceForm.duration}
+                                  onChange={(e) => setServiceForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+                                  placeholder="60"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Modal Actions */}
+                            <div className="flex gap-2 pt-4">
+                              <Button
+                                type="button"
+                                onClick={handleAddService}
+                                className="bg-red-600 hover:bg-red-700 flex-1"
+                                disabled={!serviceForm.name || serviceForm.price <= 0 || serviceForm.duration <= 0}
+                              >
+                                <Save className="w-4 h-4 mr-2" />
+                                Add Service
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsServiceModalOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
-
-                    {/* Add Service Form */}
-                    {isAddingService && (
-                      <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="service-name" className="text-sm font-medium text-gray-700 mb-2 block">Service Name</Label>
-                            <Input
-                              id="service-name"
-                              value={serviceForm.name}
-                              onChange={(e) => setServiceForm(prev => ({ ...prev, name: e.target.value }))}
-                              placeholder="e.g., Box Braids, Silk Press"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="service-price" className="text-sm font-medium text-gray-700 mb-2 block">Price (£)</Label>
-                              <Input
-                                id="service-price"
-                                type="number"
-                                min="0"
-                                step="1"
-                                value={serviceForm.price || ""}
-                                onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                                placeholder="100"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="service-duration" className="text-sm font-medium text-gray-700 mb-2 block">Duration (minutes)</Label>
-                              <Input
-                                id="service-duration"
-                                type="number"
-                                min="15"
-                                step="15"
-                                value={serviceForm.duration || ""}
-                                onChange={(e) => setServiceForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
-                                placeholder="60"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              onClick={handleAddService}
-                              className="bg-red-600 hover:bg-red-700 flex-1"
-                              disabled={!serviceForm.name || serviceForm.price <= 0 || serviceForm.duration <= 0}
-                            >
-                              Add Service
-                            </Button>
-                            <Button
-                              type="button"
-                              onClick={() => {
-                                setIsAddingService(false)
-                                setServiceForm({ name: "", price: 0, duration: 60 })
-                              }}
-                              variant="outline"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Services List */}
                     {services.length > 0 && (
                       <div className="space-y-2">
                         {services.map((service) => (
                           <div key={service.id} className="border rounded-lg p-3 bg-white hover:bg-gray-50 transition-colors">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {service.image_url && (
+                                <img
+                                  src={service.image_url}
+                                  alt={service.name}
+                                  className="w-16 h-16 object-cover rounded-lg border flex-shrink-0"
+                                />
+                              )}
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-900 text-sm">{service.name}</h4>
                                 <div className="flex items-center gap-3 mt-1">
@@ -802,7 +982,7 @@ export function ListBusinessForm() {
                       </div>
                     )}
 
-                    {services.length === 0 && !isAddingService && (
+                    {services.length === 0 && (
                       <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-gray-300 rounded-lg">
                         No services added yet. Click "Add Service" to get started.
                       </p>
@@ -973,11 +1153,18 @@ export function ListBusinessForm() {
                           <h4 className="text-xl font-semibold text-gray-900">{formData.businessName}, {formData.location}</h4>
                         </div>
 
-                        {formData.specialty && (
+                        {(formData.specialty || additionalServices.length > 0) && (
                           <div className="flex flex-wrap gap-2">
-                            <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">
-                              {formData.specialty}
-                            </span>
+                            {formData.specialty && (
+                              <span className="inline-block bg-red-100 border border-red-300 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                {formData.specialty}
+                              </span>
+                            )}
+                            {additionalServices.map((service) => (
+                              <span key={service} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">
+                                {service}
+                              </span>
+                            ))}
                           </div>
                         )}
 

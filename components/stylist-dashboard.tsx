@@ -23,8 +23,8 @@ import { postcodeToAreaName } from "@/lib/postcode-utils"
 import { DashboardGallerySkeleton } from "@/components/ui/skeletons"
 
 const SPECIALTY_CATEGORIES = [
-  "Wigs & Weaves",
-  "Braids", 
+  "Wigs",
+  "Braids",
   "Locs",
   "Natural Hair",
   "Bridal Hair",

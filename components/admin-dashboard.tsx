@@ -19,8 +19,8 @@ import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 import { useAuth } from "@/hooks/use-auth"
 
 const SPECIALTY_CATEGORIES = [
-  "Wigs & Weaves",
-  "Braids", 
+  "Wigs",
+  "Braids",
   "Locs",
   "Natural Hair",
   "Bridal Hair",

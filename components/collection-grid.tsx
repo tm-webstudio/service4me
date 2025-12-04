@@ -3,7 +3,7 @@ import Link from "next/link"
 
 const categories = [
   {
-    name: "Wigs & Weaves",
+    name: "Wigs",
     image: "/images/wigs-weave-2.jpg",
     slug: "wigs-weaves",
     description: "Professional wig installations, weave applications, and hair extensions",

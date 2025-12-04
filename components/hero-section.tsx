@@ -111,7 +111,7 @@ export function HeroSection() {
               {[
                 "Braids In North London",
                 "Silk Press In East London",
-                "Wigs & Weaves In South London",
+                "Wigs In South London",
                 "Locs In West London",
                 "Natural Hair In Central London",
                 "Color & Highlights In Croydon",
@@ -124,7 +124,7 @@ export function HeroSection() {
                 // Duplicate for seamless loop
                 "Braids In North London",
                 "Silk Press In East London",
-                "Wigs & Weaves In South London",
+                "Wigs In South London",
                 "Locs In West London",
                 "Natural Hair In Central London",
                 "Color & Highlights In Croydon",
