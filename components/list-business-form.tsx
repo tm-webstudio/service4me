@@ -52,6 +52,11 @@ export function ListBusinessForm() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Logo state
+  const [logoImage, setLogoImage] = useState<{url: string, file?: File} | null>(null)
+  const [isLogoDragOver, setIsLogoDragOver] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
   const [formData, setFormData] = useState({
     // Step 1: Basic Info
     firstName: "",
@@ -86,6 +91,7 @@ export function ListBusinessForm() {
   const [services, setServices] = useState<Array<{id: string, name: string, price: number, duration: number, image_url?: string}>>([])
   const [serviceForm, setServiceForm] = useState({ name: "", price: 0, duration: 60 })
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null)
   const [serviceImageFile, setServiceImageFile] = useState<File | null>(null)
   const [serviceImagePreview, setServiceImagePreview] = useState<string>('')
   const [isServiceDragOver, setIsServiceDragOver] = useState(false)
@@ -124,9 +130,19 @@ export function ListBusinessForm() {
 
   // Service handlers
   const openAddServiceModal = () => {
+    setEditingServiceId(null)
     setServiceForm({ name: "", price: 0, duration: 60 })
     setServiceImageFile(null)
     setServiceImagePreview('')
+    setIsServiceDragOver(false)
+    setIsServiceModalOpen(true)
+  }
+
+  const openEditServiceModal = (service: {id: string, name: string, price: number, duration: number, image_url?: string}) => {
+    setEditingServiceId(service.id)
+    setServiceForm({ name: service.name, price: service.price, duration: service.duration })
+    setServiceImageFile(null)
+    setServiceImagePreview(service.image_url || '')
     setIsServiceDragOver(false)
     setIsServiceModalOpen(true)
   }
@@ -182,18 +198,29 @@ export function ListBusinessForm() {
       return
     }
 
-    const newService = {
-      id: Date.now().toString(),
-      name: serviceForm.name,
-      price: serviceForm.price,
-      duration: serviceForm.duration,
-      image_url: serviceImagePreview
+    if (editingServiceId) {
+      // Update existing service
+      setServices(prev => prev.map(service =>
+        service.id === editingServiceId
+          ? { ...service, name: serviceForm.name, price: serviceForm.price, duration: serviceForm.duration, image_url: serviceImagePreview }
+          : service
+      ))
+    } else {
+      // Add new service
+      const newService = {
+        id: Date.now().toString(),
+        name: serviceForm.name,
+        price: serviceForm.price,
+        duration: serviceForm.duration,
+        image_url: serviceImagePreview
+      }
+      setServices(prev => [...prev, newService])
     }
 
-    setServices(prev => [...prev, newService])
     setServiceForm({ name: "", price: 0, duration: 60 })
     setServiceImageFile(null)
     setServiceImagePreview('')
+    setEditingServiceId(null)
     setIsServiceModalOpen(false)
     setError("")
   }
@@ -209,6 +236,44 @@ export function ListBusinessForm() {
         ? prev.filter(s => s !== service)
         : [...prev, service]
     )
+  }
+
+  // Logo handlers
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setLogoImage({
+      url: URL.createObjectURL(file),
+      file
+    })
+  }
+
+  const handleLogoDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsLogoDragOver(false)
+
+    const file = e.dataTransfer.files[0]
+    if (!file || !file.type.startsWith('image/')) return
+
+    setLogoImage({
+      url: URL.createObjectURL(file),
+      file
+    })
+  }, [])
+
+  const handleLogoDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsLogoDragOver(true)
+  }, [])
+
+  const handleLogoDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsLogoDragOver(false)
+  }, [])
+
+  const handleRemoveLogo = () => {
+    setLogoImage(null)
   }
 
   // Gallery handlers
@@ -399,7 +464,7 @@ export function ListBusinessForm() {
                   </div>
                   <p className={`text-xs font-normal text-center leading-tight ${currentStep >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>
                     <span className="hidden sm:inline">Basic Info</span>
-                    <span className="sm:hidden">Basic<br/>Info</span>
+                    <span className="sm:hidden">Info</span>
                   </p>
                 </div>
 
@@ -804,7 +869,7 @@ export function ListBusinessForm() {
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                           <DialogHeader>
-                            <DialogTitle>Add New Service</DialogTitle>
+                            <DialogTitle>{editingServiceId ? 'Edit Service' : 'Add New Service'}</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4">
                             {/* Service Image Upload */}
@@ -906,22 +971,58 @@ export function ListBusinessForm() {
                                   type="number"
                                   min="0"
                                   step="1"
-                                  value={serviceForm.price}
-                                  onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                                  value={serviceForm.price || ''}
+                                  onChange={(e) => setServiceForm(prev => ({ ...prev, price: e.target.value === '' ? 0 : Number(e.target.value) }))}
                                   placeholder="100"
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="service-duration">Duration (minutes)</Label>
-                                <Input
-                                  id="service-duration"
-                                  type="number"
-                                  min="15"
-                                  step="15"
-                                  value={serviceForm.duration}
-                                  onChange={(e) => setServiceForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
-                                  placeholder="60"
-                                />
+                                <Label htmlFor="service-duration">Duration</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <Select
+                                      value={Math.floor(serviceForm.duration / 60).toString()}
+                                      onValueChange={(value) => setServiceForm(prev => ({
+                                        ...prev,
+                                        duration: (parseInt(value) * 60) + (prev.duration % 60)
+                                      }))}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Hours" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="0">0 hrs</SelectItem>
+                                        <SelectItem value="1">1 hr</SelectItem>
+                                        <SelectItem value="2">2 hrs</SelectItem>
+                                        <SelectItem value="3">3 hrs</SelectItem>
+                                        <SelectItem value="4">4 hrs</SelectItem>
+                                        <SelectItem value="5">5 hrs</SelectItem>
+                                        <SelectItem value="6">6 hrs</SelectItem>
+                                        <SelectItem value="7">7 hrs</SelectItem>
+                                        <SelectItem value="8">8 hrs</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Select
+                                      value={(serviceForm.duration % 60).toString()}
+                                      onValueChange={(value) => setServiceForm(prev => ({
+                                        ...prev,
+                                        duration: (Math.floor(prev.duration / 60) * 60) + parseInt(value)
+                                      }))}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Minutes" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="0">0 min</SelectItem>
+                                        <SelectItem value="15">15 min</SelectItem>
+                                        <SelectItem value="30">30 min</SelectItem>
+                                        <SelectItem value="45">45 min</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
@@ -934,7 +1035,7 @@ export function ListBusinessForm() {
                                 disabled={!serviceForm.name || serviceForm.price <= 0 || serviceForm.duration <= 0}
                               >
                                 <Save className="w-4 h-4 mr-2" />
-                                Add Service
+                                {editingServiceId ? 'Update Service' : 'Add Service'}
                               </Button>
                               <Button
                                 type="button"
@@ -959,10 +1060,11 @@ export function ListBusinessForm() {
                                 <img
                                   src={service.image_url}
                                   alt={service.name}
-                                  className="w-16 h-16 object-cover rounded-lg border flex-shrink-0"
+                                  className="w-16 h-16 object-cover rounded-lg border flex-shrink-0 cursor-pointer"
+                                  onClick={() => openEditServiceModal(service)}
                                 />
                               )}
-                              <div className="flex-1">
+                              <div className="flex-1 cursor-pointer" onClick={() => openEditServiceModal(service)}>
                                 <h4 className="font-semibold text-gray-900 text-sm">{service.name}</h4>
                                 <div className="flex items-center gap-3 mt-1">
                                   <span className="text-xs text-gray-600">{service.duration} min</span>
@@ -1006,6 +1108,76 @@ export function ListBusinessForm() {
                   <div className="flex items-center mb-6">
                     <Camera className="w-4 h-4 mr-2 text-red-600" />
                     <h2 className="text-base font-semibold text-gray-900">Photos</h2>
+                  </div>
+
+                  {/* Logo Upload */}
+                  <div className="mb-6">
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">Business Logo</h3>
+                    <p className="text-sm text-gray-500 mb-4">Upload your business logo (optional)</p>
+
+                    {logoImage ? (
+                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={logoImage.url}
+                            alt="Business logo"
+                            className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">Logo uploaded</p>
+                            <p className="text-xs text-gray-500 mt-1">Click below to change or remove</p>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => logoInputRef.current?.click()}
+                              >
+                                <Upload className="w-4 h-4 mr-1" />
+                                Change
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleRemoveLogo}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onDrop={handleLogoDrop}
+                        onDragOver={handleLogoDragOver}
+                        onDragLeave={handleLogoDragLeave}
+                        className={`
+                          border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
+                          ${isLogoDragOver ? 'border-red-600 bg-red-50' : 'border-gray-300 bg-white hover:border-gray-400'}
+                        `}
+                        onClick={() => logoInputRef.current?.click()}
+                      >
+                        <Upload className={`w-10 h-10 mx-auto mb-3 ${isLogoDragOver ? 'text-red-500' : 'text-gray-400'}`} />
+                        <p className={`text-sm font-medium mb-1 ${isLogoDragOver ? 'text-red-600' : 'text-gray-900'}`}>
+                          {isLogoDragOver ? 'Drop logo here' : 'Upload Business Logo'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Drag and drop or click to browse. PNG, JPG or GIF. Max 5MB.
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/gif"
+                      onChange={handleLogoSelect}
+                      className="hidden"
+                    />
                   </div>
 
                   {/* Photo Count */}
@@ -1137,10 +1309,10 @@ export function ListBusinessForm() {
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Summary</h3>
 
-                    <div className="flex gap-6">
+                    <div className="flex flex-col md:flex-row gap-6">
                       {/* Primary Image */}
                       {galleryImages.length > 0 && (
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 mx-auto md:mx-0">
                           <img
                             src={galleryImages.find(img => img.isPrimary)?.url || galleryImages[0].url}
                             alt="Business preview"
