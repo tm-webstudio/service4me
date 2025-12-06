@@ -48,7 +48,7 @@
     "input-otp": "latest",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.454.0",
-    "next": "15.2.4",
+    "next": "16.0.7",
     "next-themes": "latest",
     "playwright": "^1.54.2",
     "react": "^19",
