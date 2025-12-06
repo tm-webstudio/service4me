@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Star, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save } from "lucide-react"
+import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Star, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save, ClipboardList } from "lucide-react"
 import { useRef, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
@@ -74,7 +74,8 @@ export function ListBusinessForm() {
     bio: "",
     experience: "",
     bookingLink: "",
-    acceptsSameDayAppointments: false,
+    acceptsSameDayAppointments: null as boolean | null,
+    acceptsMobileAppointments: null as boolean | null,
 
     // Step 3: Photos
     // photos handled by galleryImages state
@@ -99,6 +100,13 @@ export function ListBusinessForm() {
 
   const totalSteps = 4
   const progressPercentage = (currentStep / totalSteps) * 100
+
+  // Reset scroll position on step change so each step starts at the top
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [currentStep])
 
   const handleNext = () => {
     // Validate current step before proceeding
@@ -390,7 +398,8 @@ export function ListBusinessForm() {
           bio: formData.bio,
           experience: formData.experience,
           bookingLink: formData.bookingLink,
-          acceptsSameDayAppointments: formData.acceptsSameDayAppointments
+          acceptsSameDayAppointments: formData.acceptsSameDayAppointments,
+          acceptsMobileAppointments: formData.acceptsMobileAppointments
         }
       )
 
@@ -415,15 +424,15 @@ export function ListBusinessForm() {
             <p className="text-xs sm:text-sm font-medium text-red-600 uppercase tracking-wide">Join Our Platform</p>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">List Your Business</h1>
-          <p className="text-sm sm:text-base text-gray-700">Connect with clients looking for your services</p>
+          <p className="text-sm sm:text-base text-gray-900">Connect with clients looking for your services</p>
         </div>
 
         {/* Progress Bar */}
         <Card className="mb-4">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-center justify-between mb-6">
-              <p className="text-sm font-medium text-gray-700">Step {currentStep} of {totalSteps}</p>
-              <p className="text-sm font-medium text-gray-700">{Math.round(progressPercentage)}% Complete</p>
+              <p className="text-sm font-medium text-gray-900">Step {currentStep} of {totalSteps}</p>
+              <p className="text-sm font-medium text-gray-900">{Math.round(progressPercentage)}% Complete</p>
             </div>
 
             {/* Progress bar with integrated nodes */}
@@ -536,7 +545,7 @@ export function ListBusinessForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="firstName" className="text-sm font-medium text-gray-900 mb-2 block">
                         First Name <span className="text-red-600">*</span>
                       </Label>
                       <Input
@@ -551,7 +560,7 @@ export function ListBusinessForm() {
                     </div>
 
                     <div>
-                      <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="lastName" className="text-sm font-medium text-gray-900 mb-2 block">
                         Last Name <span className="text-red-600">*</span>
                       </Label>
                       <Input
@@ -568,7 +577,7 @@ export function ListBusinessForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="businessName" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="businessName" className="text-sm font-medium text-gray-900 mb-2 block">
                         Business Name <span className="text-red-600">*</span>
                       </Label>
                       <div className="relative">
@@ -586,7 +595,7 @@ export function ListBusinessForm() {
                     </div>
 
                     <div>
-                      <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="email" className="text-sm font-medium text-gray-900 mb-2 block">
                         Email Address <span className="text-red-600">*</span>
                       </Label>
                       <div className="relative">
@@ -606,7 +615,7 @@ export function ListBusinessForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="phone" className="text-sm font-medium text-gray-900 mb-2 block">
                         Phone Number <span className="text-red-600">*</span>
                       </Label>
                       <div className="relative">
@@ -626,7 +635,7 @@ export function ListBusinessForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="businessInstagram" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="businessInstagram" className="text-sm font-medium text-gray-900 mb-2 block">
                         Business Instagram
                       </Label>
                       <div className="relative">
@@ -643,7 +652,7 @@ export function ListBusinessForm() {
                     </div>
 
                     <div>
-                      <Label htmlFor="businessTiktok" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="businessTiktok" className="text-sm font-medium text-gray-900 mb-2 block">
                         Business TikTok
                       </Label>
                       <div className="relative">
@@ -680,7 +689,7 @@ export function ListBusinessForm() {
                   {/* Specialty & Location Type */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="specialty" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="specialty" className="text-sm font-medium text-gray-900 mb-2 block">
                         Specialty <span className="text-red-600">*</span>
                       </Label>
                       <Select value={formData.specialty} onValueChange={(value) => setFormData({ ...formData, specialty: value })}>
@@ -698,7 +707,7 @@ export function ListBusinessForm() {
                     </div>
 
                     <div>
-                      <Label htmlFor="businessType" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="businessType" className="text-sm font-medium text-gray-900 mb-2 block">
                         Location Type <span className="text-red-600">*</span>
                       </Label>
                       <Select value={formData.businessType} onValueChange={(value) => setFormData({ ...formData, businessType: value })}>
@@ -716,10 +725,10 @@ export function ListBusinessForm() {
 
                   {/* Additional Services */}
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <Label className="text-sm font-medium text-gray-900 mb-1 block">
                       Additional Services
                     </Label>
-                    <p className="text-xs text-gray-500 mb-4">Select other services you provide apart from your specialty</p>
+                    <p className="text-xs text-gray-400 mb-4">Select other services you provide apart from your specialty</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
                       {ADDITIONAL_SERVICES.filter(category => category !== formData.specialty).map((service) => (
                         <div
@@ -731,9 +740,9 @@ export function ListBusinessForm() {
                             type="checkbox"
                             checked={additionalServices.includes(service)}
                             onChange={() => {}}
-                            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
                           />
-                          <span className="ml-2 text-xs text-gray-700">{service}</span>
+                          <span className="ml-2 text-[12.5px] text-gray-600">{service}</span>
                         </div>
                       ))}
                     </div>
@@ -741,7 +750,7 @@ export function ListBusinessForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="bookingLink" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="bookingLink" className="text-sm font-medium text-gray-900 mb-2 block">
                         Booking Link
                       </Label>
                       <Input
@@ -752,11 +761,11 @@ export function ListBusinessForm() {
                         placeholder="https://your-booking-site.com"
                         className="w-full"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Add your booking page URL (e.g., Calendly, Square, etc.)</p>
+                      <p className="text-xs text-gray-400 mt-1">Add your booking page URL (e.g., Calendly, Square, etc.)</p>
                     </div>
 
                     <div>
-                      <Label htmlFor="location" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="location" className="text-sm font-medium text-gray-900 mb-2 block">
                         Postcode <span className="text-red-600">*</span>
                       </Label>
                       <div className="relative">
@@ -774,13 +783,13 @@ export function ListBusinessForm() {
                           required
                         />
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Enter a valid UK postcode</p>
+                      <p className="text-xs text-gray-400 mt-1">Enter a valid UK postcode</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label htmlFor="experience" className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label htmlFor="experience" className="text-sm font-medium text-gray-900 mb-2 block">
                         Years of Experience
                       </Label>
                       <Select value={formData.experience} onValueChange={(value) => setFormData({ ...formData, experience: value })}>
@@ -797,7 +806,7 @@ export function ListBusinessForm() {
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label className="text-sm font-medium text-gray-900 mb-2 block">
                         Accept Same-Day Appointments?
                       </Label>
                       <div className="flex items-center gap-6 h-10">
@@ -809,9 +818,9 @@ export function ListBusinessForm() {
                             type="checkbox"
                             checked={formData.acceptsSameDayAppointments === true}
                             onChange={() => {}}
-                            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
                           />
-                          <span className="ml-2 text-xs text-gray-700">Yes</span>
+                          <span className="ml-2 text-[12.5px] text-gray-600">Yes</span>
                         </div>
 
                         <div
@@ -822,16 +831,51 @@ export function ListBusinessForm() {
                             type="checkbox"
                             checked={formData.acceptsSameDayAppointments === false}
                             onChange={() => {}}
-                            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
                           />
-                          <span className="ml-2 text-xs text-gray-700">No</span>
+                          <span className="ml-2 text-[12.5px] text-gray-600">No</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-900 mb-2 block">
+                        Offer Mobile Appointments?
+                      </Label>
+                      <div className="flex items-center gap-6 h-10">
+                        <div
+                          onClick={() => setFormData({ ...formData, acceptsMobileAppointments: true })}
+                          className="flex items-center cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.acceptsMobileAppointments === true}
+                            onChange={() => {}}
+                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                          />
+                          <span className="ml-2 text-[12.5px] text-gray-600">Yes</span>
+                        </div>
+
+                        <div
+                          onClick={() => setFormData({ ...formData, acceptsMobileAppointments: false })}
+                          className="flex items-center cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.acceptsMobileAppointments === false}
+                            onChange={() => {}}
+                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                          />
+                          <span className="ml-2 text-[12.5px] text-gray-600">No</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="bio" className="text-sm font-medium text-gray-700 mb-2 block">
+                    <Label htmlFor="bio" className="text-sm font-medium text-gray-900 mb-2 block">
                       Profile Bio <span className="text-red-600">*</span>
                     </Label>
                     <Textarea
@@ -842,13 +886,13 @@ export function ListBusinessForm() {
                       className="min-h-[120px] resize-none"
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-1">Share your story, expertise, and what makes you stand out</p>
+                    <p className="text-xs text-gray-400 mt-1">Share your story, expertise, and what makes you stand out</p>
                   </div>
 
                   {/* Services */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <Label className="text-sm font-medium text-gray-700">Services</Label>
+                      <Label className="text-sm font-medium text-gray-900">Services</Label>
                       <Dialog open={isServiceModalOpen} onOpenChange={(open) => {
                         setIsServiceModalOpen(open)
                         if (!open) {
@@ -944,7 +988,7 @@ export function ListBusinessForm() {
                                 <input
                                   ref={serviceImageInputRef}
                                   type="file"
-                                  accept="image/jpeg,image/jpg,image/png,image/gif"
+                                  accept="image/jpeg,image/jpg,image/png,image/gif,image/heic,image/heif"
                                   onChange={handleServiceImageSelect}
                                   className="hidden"
                                 />
@@ -1087,9 +1131,11 @@ export function ListBusinessForm() {
                     )}
 
                     {services.length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-gray-300 rounded-lg">
-                        No services added yet. Click "Add Service" to get started.
-                      </p>
+                      <div className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-1">
+                        <ClipboardList className="w-6 h-6 text-gray-400 mb-1" />
+                        <p className="text-sm font-semibold text-gray-800">Add Your Services</p>
+                        <p>Click "Add Service" to get started.</p>
+                      </div>
                     )}
                   </div>
 
@@ -1115,66 +1161,70 @@ export function ListBusinessForm() {
                     <h3 className="text-base font-semibold text-gray-900 mb-2">Business Logo</h3>
                     <p className="text-sm text-gray-500 mb-4">Upload your business logo (optional)</p>
 
-                    {logoImage ? (
-                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
-                        <div className="flex items-start gap-3">
+                    <div
+                      onDrop={handleLogoDrop}
+                      onDragOver={handleLogoDragOver}
+                      onDragLeave={handleLogoDragLeave}
+                      className={`flex items-start gap-4 sm:gap-6 p-4 sm:p-5 rounded-lg border bg-white transition-colors cursor-pointer ${
+                        isLogoDragOver ? "border-red-500 bg-red-50" : "border-gray-200"
+                      }`}
+                      onClick={() => logoInputRef.current?.click()}
+                    >
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {logoImage ? (
                           <img
                             src={logoImage.url}
                             alt="Business logo"
-                            className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">Logo uploaded</p>
-                            <p className="text-xs text-gray-500 mt-1">Click below to change or remove</p>
-                            <div className="flex flex-wrap gap-2 mt-3">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => logoInputRef.current?.click()}
-                              >
-                                <Upload className="w-4 h-4 mr-1" />
-                                Change
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleRemoveLogo}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Remove
-                              </Button>
-                            </div>
-                          </div>
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800">
+                          {logoImage ? "Logo uploaded" : "Add Business Logo"}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Drag a file here or use upload. PNG, JPG, GIF, HEIC. Max 5MB.
+                        </p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              logoInputRef.current?.click()
+                            }}
+                          >
+                            <Upload className="w-4 h-4 mr-1" />
+                            {logoImage ? "Replace logo" : "Upload logo"}
+                          </Button>
+                          {logoImage && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRemoveLogo()
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white h-9 w-9"
+                              aria-label="Remove logo"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
-                    ) : (
-                      <div
-                        onDrop={handleLogoDrop}
-                        onDragOver={handleLogoDragOver}
-                        onDragLeave={handleLogoDragLeave}
-                        className={`
-                          border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
-                          ${isLogoDragOver ? 'border-red-600 bg-red-50' : 'border-gray-300 bg-white hover:border-gray-400'}
-                        `}
-                        onClick={() => logoInputRef.current?.click()}
-                      >
-                        <Upload className={`w-10 h-10 mx-auto mb-3 ${isLogoDragOver ? 'text-red-500' : 'text-gray-400'}`} />
-                        <p className={`text-sm font-medium mb-1 ${isLogoDragOver ? 'text-red-600' : 'text-gray-900'}`}>
-                          {isLogoDragOver ? 'Drop logo here' : 'Upload Business Logo'}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Drag and drop or click to browse. PNG, JPG or GIF. Max 5MB.
-                        </p>
-                      </div>
-                    )}
+                    </div>
 
                     <input
                       ref={logoInputRef}
                       type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/gif"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/heic,image/heif"
                       onChange={handleLogoSelect}
                       className="hidden"
                     />
@@ -1245,14 +1295,6 @@ export function ListBusinessForm() {
                     </div>
                   )}
 
-                  {/* Tip */}
-                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
-                    <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-amber-900">
-                      Tip: The primary image will be shown first in your business listings
-                    </p>
-                  </div>
-
                   {/* Upload Area */}
                   <div
                     onDrop={handleDrop}
@@ -1268,19 +1310,20 @@ export function ListBusinessForm() {
                       ref={fileInputRef}
                       type="file"
                       multiple
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
                       onChange={handleFileSelect}
                       className="hidden"
                       disabled={galleryImages.length >= 10}
                     />
 
-                    <div className="flex flex-col items-center">
-                      <Upload className="w-12 h-12 text-gray-400 mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <div className="flex flex-col items-center text-center">
+                      <Upload className="w-7 h-7 text-gray-400 mb-3" />
+                      <h3 className="text-base font-semibold text-gray-800 mb-1">
                         Upload Portfolio Photos
                       </h3>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Drag and drop images here, or click to browse. Maximum 10 images, 10MB each. Supported formats: JPEG, PNG, WebP.
+                      <p className="text-sm text-gray-500 mb-3 space-y-1">
+                        <span className="block">Drop photos here or tap to add (10 max, 10MB each).</span>
+                        <span className="block">JPEG, PNG, WebP.</span>
                       </p>
                       <Button
                         type="button"
@@ -1335,7 +1378,7 @@ export function ListBusinessForm() {
                               </span>
                             )}
                             {additionalServices.map((service) => (
-                              <span key={service} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">
+                              <span key={service} className="inline-block bg-gray-50 border border-gray-200 text-gray-900 px-3 py-1 rounded-full text-xs">
                                 {service}
                               </span>
                             ))}
@@ -1377,7 +1420,7 @@ export function ListBusinessForm() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="password" className="text-sm font-medium text-gray-700 mb-2 block">
+                          <Label htmlFor="password" className="text-sm font-medium text-gray-900 mb-2 block">
                             Password <span className="text-red-600">*</span>
                           </Label>
                           <div className="relative">
@@ -1403,7 +1446,7 @@ export function ListBusinessForm() {
                         </div>
 
                         <div>
-                          <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 mb-2 block">
+                          <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-900 mb-2 block">
                             Confirm Password <span className="text-red-600">*</span>
                           </Label>
                           <div className="relative">
