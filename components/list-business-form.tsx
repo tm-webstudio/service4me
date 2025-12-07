@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Star, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save, ClipboardList } from "lucide-react"
+import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save, ClipboardList, GripVertical } from "lucide-react"
 import { useRef, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
@@ -50,7 +50,9 @@ export function ListBusinessForm() {
   const [galleryImages, setGalleryImages] = useState<Array<{url: string, file?: File, isPrimary: boolean}>>([])
   const [isDragOver, setIsDragOver] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [touchDragIndex, setTouchDragIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const galleryRef = useRef<HTMLDivElement>(null)
 
   // Logo state
   const [logoImage, setLogoImage] = useState<{url: string, file?: File} | null>(null)
@@ -335,34 +337,72 @@ export function ListBusinessForm() {
     })
   }
 
-  const handleSetPrimary = (index: number) => {
-    setGalleryImages(prev => prev.map((img, i) => ({
-      ...img,
-      isPrimary: i === index
-    })))
-  }
-
   const handleImageDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index)
     e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(index))
   }
 
   const handleImageDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
-    if (draggedIndex === null || draggedIndex === index) return
-
-    const newImages = [...galleryImages]
-    const draggedImage = newImages[draggedIndex]
-    newImages.splice(draggedIndex, 1)
-    newImages.splice(index, 0, draggedImage)
-
-    setGalleryImages(newImages)
-    setDraggedIndex(index)
+    e.dataTransfer.dropEffect = 'move'
   }
 
   const handleImageDragEnd = () => {
     setDraggedIndex(null)
   }
+
+  const handleImageDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex === null) return
+
+    // Ensure final order is applied when dropping
+    if (draggedIndex !== index) {
+      const newImages = [...galleryImages]
+      const [draggedImage] = newImages.splice(draggedIndex, 1)
+      newImages.splice(index, 0, draggedImage)
+      setGalleryImages(newImages)
+    }
+
+    setDraggedIndex(null)
+  }
+
+  // Touch event handlers for mobile drag and drop
+  const handleTouchStart = useCallback((index: number) => {
+    setTouchDragIndex(index)
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchDragIndex === null || !galleryRef.current) return
+
+    // Prevent scrolling while dragging
+    e.preventDefault()
+
+    const touch = e.touches[0]
+    const galleryItems = galleryRef.current.querySelectorAll('[data-gallery-item]')
+
+    galleryItems.forEach((item, index) => {
+      const rect = item.getBoundingClientRect()
+      if (
+        touch.clientX >= rect.left &&
+        touch.clientX <= rect.right &&
+        touch.clientY >= rect.top &&
+        touch.clientY <= rect.bottom &&
+        index !== touchDragIndex
+      ) {
+        // Swap images when dragging over a different item
+        const newImages = [...galleryImages]
+        const [draggedImage] = newImages.splice(touchDragIndex, 1)
+        newImages.splice(index, 0, draggedImage)
+        setGalleryImages(newImages)
+        setTouchDragIndex(index)
+      }
+    })
+  }, [touchDragIndex, galleryImages])
+
+  const handleTouchEnd = useCallback(() => {
+    setTouchDragIndex(null)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -787,88 +827,91 @@ export function ListBusinessForm() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label htmlFor="experience" className="text-sm font-medium text-gray-900 mb-2 block">
-                        Years of Experience
-                      </Label>
-                      <Select value={formData.experience} onValueChange={(value) => setFormData({ ...formData, experience: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select years of experience" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0-2">0-2 years</SelectItem>
-                          <SelectItem value="3-5">3-5 years</SelectItem>
-                          <SelectItem value="6-10">6-10 years</SelectItem>
-                          <SelectItem value="10+">10+ years</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-4 md:space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="experience" className="text-sm font-medium text-gray-900 mb-2 block">
+                          Year Started
+                        </Label>
+                        <Select value={formData.experience} onValueChange={(value) => setFormData({ ...formData, experience: value })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select year started" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 35 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                    <div>
-                      <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                        Accept Same-Day Appointments?
-                      </Label>
-                      <div className="flex items-center gap-6 h-10">
-                        <div
-                          onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: true })}
-                          className="flex items-center cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.acceptsSameDayAppointments === true}
-                            onChange={() => {}}
-                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
-                          />
-                          <span className="ml-2 text-[12.5px] text-gray-600">Yes</span>
-                        </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-900 mb-2 block">
+                          Accept Same-Day Appointments?
+                        </Label>
+                        <div className="flex items-center gap-6 h-10">
+                          <div
+                            onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: true })}
+                            className="flex items-center cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.acceptsSameDayAppointments === true}
+                              onChange={() => {}}
+                              className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                            />
+                            <span className="ml-2 text-[12.5px] text-gray-600">Yes</span>
+                          </div>
 
-                        <div
-                          onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: false })}
-                          className="flex items-center cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.acceptsSameDayAppointments === false}
-                            onChange={() => {}}
-                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
-                          />
-                          <span className="ml-2 text-[12.5px] text-gray-600">No</span>
+                          <div
+                            onClick={() => setFormData({ ...formData, acceptsSameDayAppointments: false })}
+                            className="flex items-center cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.acceptsSameDayAppointments === false}
+                              onChange={() => {}}
+                              className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                            />
+                            <span className="ml-2 text-[12.5px] text-gray-600">No</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                        Offer Mobile Appointments?
-                      </Label>
-                      <div className="flex items-center gap-6 h-10">
-                        <div
-                          onClick={() => setFormData({ ...formData, acceptsMobileAppointments: true })}
-                          className="flex items-center cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.acceptsMobileAppointments === true}
-                            onChange={() => {}}
-                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
-                          />
-                          <span className="ml-2 text-[12.5px] text-gray-600">Yes</span>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-900 mb-2 block">
+                          Offer Mobile Appointments?
+                        </Label>
+                        <div className="flex items-center gap-6 h-10">
+                          <div
+                            onClick={() => setFormData({ ...formData, acceptsMobileAppointments: true })}
+                            className="flex items-center cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.acceptsMobileAppointments === true}
+                              onChange={() => {}}
+                              className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                            />
+                            <span className="ml-2 text-[12.5px] text-gray-600">Yes</span>
+                          </div>
 
-                        <div
-                          onClick={() => setFormData({ ...formData, acceptsMobileAppointments: false })}
-                          className="flex items-center cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.acceptsMobileAppointments === false}
-                            onChange={() => {}}
-                            className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
-                          />
-                          <span className="ml-2 text-[12.5px] text-gray-600">No</span>
+                          <div
+                            onClick={() => setFormData({ ...formData, acceptsMobileAppointments: false })}
+                            className="flex items-center cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.acceptsMobileAppointments === false}
+                              onChange={() => {}}
+                              className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                            />
+                            <span className="ml-2 text-[12.5px] text-gray-600">No</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -905,13 +948,13 @@ export function ListBusinessForm() {
                             onClick={openAddServiceModal}
                             variant="outline"
                             size="sm"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            className="text-red-600 border-red-600 hover:bg-red-50 text-[12px] h-8 px-3"
                           >
-                            <Plus className="w-4 h-4 mr-1" />
+                            <Plus className="w-3 h-3 mr-1" />
                             Add Service
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-md">
+                        <DialogContent className="w-[92vw] max-w-md sm:w-full">
                           <DialogHeader>
                             <DialogTitle>{editingServiceId ? 'Edit Service' : 'Add New Service'}</DialogTitle>
                           </DialogHeader>
@@ -1198,23 +1241,24 @@ export function ListBusinessForm() {
                               e.stopPropagation()
                               logoInputRef.current?.click()
                             }}
+                            className="h-7 px-2 text-[10px] font-medium text-gray-600 bg-gray-50/90 hover:bg-gray-100 border border-gray-200 hover:border-gray-300 shadow-[0_1px_0_rgba(0,0,0,0.04)]"
                           >
-                            <Upload className="w-4 h-4 mr-1" />
+                            <Upload className="w-3 h-3 mr-1.5 text-gray-600" />
                             {logoImage ? "Replace logo" : "Upload logo"}
                           </Button>
                           {logoImage && (
                             <Button
                               type="button"
                               variant="destructive"
-                              size="icon"
+                              size="sm"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleRemoveLogo()
                               }}
-                              className="bg-red-600 hover:bg-red-700 text-white h-9 w-9"
+                              className="h-7 w-7 p-0 bg-red-600 hover:bg-red-700 text-white"
                               aria-label="Remove logo"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-3 h-3" />
                             </Button>
                           )}
                         </div>
@@ -1236,35 +1280,43 @@ export function ListBusinessForm() {
                       Portfolio Photos ({galleryImages.length}/10)
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      Drag to reorder • Click star to set as primary
+                      <span className="hidden sm:inline">Drag to reorder</span>
+                      <span className="sm:hidden">Hold and drag to reorder</span>
                     </p>
                   </div>
 
                   {/* Image Gallery */}
                   {galleryImages.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div
+                      ref={galleryRef}
+                      className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6"
+                    >
                       {galleryImages.map((image, index) => (
                         <div
                           key={index}
+                          data-gallery-item
                           draggable
                           onDragStart={(e) => handleImageDragStart(e, index)}
                           onDragOver={(e) => handleImageDragOver(e, index)}
+                          onDrop={(e) => handleImageDrop(e, index)}
                           onDragEnd={handleImageDragEnd}
-                          className="relative group cursor-move rounded-lg overflow-hidden aspect-[4/3] border-2 border-gray-200 hover:border-red-400 transition-all"
+                          onTouchStart={() => handleTouchStart(index)}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                          className={`relative group cursor-move rounded-lg overflow-hidden aspect-[4/3] border-2 transition-all duration-150 ${
+                            draggedIndex === index || touchDragIndex === index
+                              ? 'border-red-500 scale-[1.03] shadow-lg z-20 opacity-95'
+                              : draggedIndex !== null || touchDragIndex !== null
+                                ? 'border-gray-300 opacity-70'
+                                : 'border-gray-200 hover:border-red-400'
+                          }`}
                         >
                           <img
                             src={image.url}
                             alt={`Photo ${index + 1}`}
                             className="w-full h-full object-cover"
+                            draggable={false}
                           />
-
-                          {/* Primary Badge */}
-                          {image.isPrimary && (
-                            <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded flex items-center gap-1 text-xs font-medium">
-                              <Star className="w-3 h-3 fill-white" />
-                              Primary
-                            </div>
-                          )}
 
                           {/* Photo Label */}
                           <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs font-medium">
@@ -1272,22 +1324,26 @@ export function ListBusinessForm() {
                           </div>
 
                           {/* Hover Actions */}
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                             <button
                               type="button"
-                              onClick={() => handleSetPrimary(index)}
-                              className="bg-white text-gray-900 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                              title="Set as primary"
+                              draggable
+                              onDragStart={(e) => handleImageDragStart(e, index)}
+                              onDragOver={(e) => handleImageDragOver(e, index)}
+                              onDrop={(e) => handleImageDrop(e, index)}
+                              onDragEnd={handleImageDragEnd}
+                              className="bg-black/60 text-white p-1.5 rounded-sm hover:bg-black/80 transition-colors cursor-grab active:cursor-grabbing"
+                              title="Drag to reorder"
                             >
-                              <Star className={`w-4 h-4 ${image.isPrimary ? 'fill-orange-500 text-orange-500' : ''}`} />
+                              <GripVertical className="w-3.5 h-3.5" />
                             </button>
                             <button
                               type="button"
                               onClick={() => handleRemoveImage(index)}
-                              className="bg-white text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                              className="bg-red-600 text-white p-1.5 rounded-sm hover:bg-red-700 transition-colors"
                               title="Remove image"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -1301,7 +1357,7 @@ export function ListBusinessForm() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     className={`
-                      border-2 border-dashed rounded-lg p-8 text-center transition-colors
+                      border-2 border-dashed rounded-lg p-6 text-center transition-colors
                       ${isDragOver ? 'border-red-600 bg-red-50' : 'border-gray-300 bg-white'}
                       ${galleryImages.length >= 10 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     `}
@@ -1317,11 +1373,11 @@ export function ListBusinessForm() {
                     />
 
                     <div className="flex flex-col items-center text-center">
-                      <Upload className="w-7 h-7 text-gray-400 mb-3" />
-                      <h3 className="text-base font-semibold text-gray-800 mb-1">
+                      <Upload className="w-5 h-5 text-gray-400 mb-2" />
+                      <h3 className="text-sm font-semibold text-gray-800 mb-1">
                         Upload Portfolio Photos
                       </h3>
-                      <p className="text-sm text-gray-500 mb-3 space-y-1">
+                      <p className="text-xs text-gray-500 mb-3 space-y-1 leading-relaxed">
                         <span className="block">Drop photos here or tap to add (10 max, 10MB each).</span>
                         <span className="block">JPEG, PNG, WebP.</span>
                       </p>
@@ -1329,7 +1385,8 @@ export function ListBusinessForm() {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={galleryImages.length >= 10}
-                        className="bg-green-600 hover:bg-green-700"
+                        size="sm"
+                        className="h-8 px-3 text-[12px] font-semibold bg-green-600 hover:bg-green-700"
                       >
                         Choose Photos
                       </Button>
@@ -1352,50 +1409,42 @@ export function ListBusinessForm() {
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Summary</h3>
 
-                    <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                       {/* Primary Image */}
                       {galleryImages.length > 0 && (
-                        <div className="flex-shrink-0 mx-auto md:mx-0">
-                          <img
-                            src={galleryImages.find(img => img.isPrimary)?.url || galleryImages[0].url}
-                            alt="Business preview"
-                            className="w-48 h-48 object-cover rounded-lg border border-gray-200"
-                          />
+                        <div className="w-full md:w-48 md:flex-shrink-0">
+                          <div className="relative w-full aspect-[4/3]">
+                            <img
+                              src={galleryImages.find(img => img.isPrimary)?.url || galleryImages[0].url}
+                              alt="Business preview"
+                              className="absolute inset-0 w-full h-full object-cover rounded-lg border border-gray-200"
+                            />
+                          </div>
                         </div>
                       )}
 
                       {/* Business Info */}
                       <div className="flex-1 space-y-3">
                         <div>
-                          <h4 className="text-xl font-semibold text-gray-900">{formData.businessName}, {formData.location}</h4>
-                        </div>
-
-                        {(formData.specialty || additionalServices.length > 0) && (
-                          <div className="flex flex-wrap gap-2">
-                            {formData.specialty && (
-                              <span className="inline-block bg-red-100 border border-red-300 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                {formData.specialty}
-                              </span>
-                            )}
-                            {additionalServices.map((service) => (
-                              <span key={service} className="inline-block bg-gray-50 border border-gray-200 text-gray-900 px-3 py-1 rounded-full text-xs">
-                                {service}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="space-y-1 text-sm text-gray-600">
-                          <p><span className="font-medium">Contact:</span> {formData.firstName} {formData.lastName}</p>
-                          <p><span className="font-medium">Email:</span> {formData.email}</p>
-                          <p><span className="font-medium">Phone:</span> {formData.phone}</p>
-                          {formData.experience && (
-                            <p><span className="font-medium">Experience:</span> {formData.experience} years</p>
+                          <h4 className="text-xl font-semibold text-gray-900">{formData.businessName}</h4>
+                          {formData.location && (
+                            <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+                              <Map className="w-3.5 h-3.5" />
+                              <span>{formData.location}</span>
+                            </div>
                           )}
                         </div>
 
+                        {formData.specialty && (
+                          <div>
+                            <span className="inline-block bg-gray-100 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">
+                              {formData.specialty} Specialist
+                            </span>
+                          </div>
+                        )}
+
                         {formData.bio && (
-                          <div className="pt-2 border-t border-gray-100">
+                          <div className="pt-3 border-t border-gray-100">
                             <p className="text-sm font-medium text-gray-900 mb-1">Description:</p>
                             <p className="text-sm text-gray-600">{formData.bio}</p>
                           </div>
@@ -1406,15 +1455,14 @@ export function ListBusinessForm() {
 
                   {/* Create Account Section - At Bottom */}
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center mb-6">
+                    <div className="flex items-center mb-4">
                       <Lock className="w-4 h-4 mr-2 text-red-600" />
                       <h3 className="text-base font-semibold text-gray-900">Create Your Account to Publish</h3>
                     </div>
 
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                      <p className="text-sm text-blue-900">
-                        Create a secure password to protect your account. You'll use your email and password to sign in.
-                      </p>
+                    <div className="flex items-center justify-center gap-2 mb-6 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <span className="text-sm text-gray-500">Signing up as</span>
+                      <span className="text-sm font-medium text-gray-900">{formData.email}</span>
                     </div>
 
                     <div className="space-y-4">
