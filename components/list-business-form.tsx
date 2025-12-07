@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -404,6 +405,33 @@ export function ListBusinessForm() {
     setTouchDragIndex(null)
   }, [])
 
+  // Helper function to upload image to Supabase Storage
+  const uploadImage = async (file: File, path: string): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      const fullPath = `${path}/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('stylist-images')
+        .upload(fullPath, file)
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError)
+        return null
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('stylist-images')
+        .getPublicUrl(fullPath)
+
+      return publicUrl
+    } catch (error) {
+      console.error('Upload error:', error)
+      return null
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -421,35 +449,141 @@ export function ListBusinessForm() {
     setLoading(true)
 
     try {
-      const result = await signUp(
-        formData.email,
-        formData.password,
-        "stylist",
-        {
-          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-          phone: formData.phone,
-          businessName: formData.businessName,
-          businessInstagram: formData.businessInstagram,
-          businessTiktok: formData.businessTiktok,
-          businessType: formData.businessType,
-          location: formData.location,
-          specialty: formData.specialty,
-          additionalServices: additionalServices,
-          bio: formData.bio,
-          experience: formData.experience,
-          bookingLink: formData.bookingLink,
-          acceptsSameDayAppointments: formData.acceptsSameDayAppointments,
-          acceptsMobileAppointments: formData.acceptsMobileAppointments
+      // Generate a temporary ID for the profile folder
+      const tempId = `temp-${Date.now()}`
+
+      // Step 1: Upload portfolio images
+      const uploadedPortfolioUrls: string[] = []
+      for (const image of galleryImages) {
+        if (image.file) {
+          const url = await uploadImage(image.file, `portfolio/${tempId}`)
+          if (url) uploadedPortfolioUrls.push(url)
+        } else if (image.url && !image.url.startsWith('blob:')) {
+          uploadedPortfolioUrls.push(image.url)
         }
-      )
-
-      console.log("Stylist signup result:", result)
-
-      if (result.user) {
-        router.push("/dashboard/stylist")
       }
+
+      // Step 2: Upload logo if exists
+      let uploadedLogoUrl: string | null = null
+      if (logoImage?.file) {
+        uploadedLogoUrl = await uploadImage(logoImage.file, `logos/${tempId}`)
+      }
+
+      // Step 3: Create stylist profile FIRST (without user_id)
+      // The trigger will link it when the user is created
+      const { data: profileData, error: profileError } = await supabase
+        .from('stylist_profiles')
+        .insert({
+          // Basic info
+          business_name: formData.businessName,
+          contact_email: formData.email,
+          phone: formData.phone,
+          instagram_handle: formData.businessInstagram || null,
+          tiktok_handle: formData.businessTiktok || null,
+
+          // Business details
+          location: formData.location,
+          business_type: formData.businessType || null,
+          primary_specialty: formData.specialty,
+          specialties: formData.specialty ? [formData.specialty] : [],
+          additional_services: additionalServices,
+          bio: formData.bio,
+          year_started: formData.experience ? parseInt(formData.experience) : null,
+          booking_link: formData.bookingLink || null,
+          accepts_same_day: formData.acceptsSameDayAppointments ?? false,
+          accepts_mobile: formData.acceptsMobileAppointments ?? false,
+
+          // Images
+          portfolio_images: uploadedPortfolioUrls,
+          logo_url: uploadedLogoUrl,
+
+          // Status
+          verification_status: 'pending_verification',
+          submitted_at: new Date().toISOString(),
+          is_active: false, // Not active until approved
+          is_verified: false,
+
+          // Defaults
+          rating: 0,
+          total_reviews: 0,
+          average_rating: 0,
+          review_count: 0
+        })
+        .select()
+        .single()
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+        throw new Error('Failed to create business profile. Please try again.')
+      }
+
+      // Step 4: Create auth user - the trigger will link the profile
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            role: 'stylist',
+            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+            phone: formData.phone,
+            profile_id: profileData.id
+          }
+        }
+      })
+
+      if (authError) {
+        // If auth fails, delete the profile we just created
+        await supabase.from('stylist_profiles').delete().eq('id', profileData.id)
+        throw new Error(authError.message)
+      }
+
+      if (!authData.user) {
+        await supabase.from('stylist_profiles').delete().eq('id', profileData.id)
+        throw new Error('Failed to create user account')
+      }
+
+      // Step 5: Create users table entry (this triggers the profile linking)
+      const { error: userError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: formData.email,
+          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+          role: 'stylist',
+          phone: formData.phone
+        })
+
+      if (userError && userError.code !== '23505') { // Ignore duplicate key errors
+        console.error('User creation error:', userError)
+      }
+
+      // Step 6: Create services if any
+      if (services.length > 0 && profileData.id) {
+        for (const service of services) {
+          // Upload service image if exists
+          let serviceImageUrl: string | null = null
+          if (service.image_url && service.image_url.startsWith('blob:')) {
+            // Find the corresponding file from serviceImageFile state (need to handle this)
+          } else {
+            serviceImageUrl = service.image_url || null
+          }
+
+          await supabase.from('services').insert({
+            stylist_id: profileData.id,
+            name: service.name,
+            price: service.price,
+            duration: service.duration,
+            image_url: serviceImageUrl
+          })
+        }
+      }
+
+      // Step 7: Redirect to success page
+      router.push("/list-business/success")
+
     } catch (err: any) {
-      setError(err.message || "Failed to create account")
+      console.error('Submission error:', err)
+      setError(err.message || "Failed to create account. Please try again.")
     } finally {
       setLoading(false)
     }

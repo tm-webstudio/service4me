@@ -27,65 +27,28 @@ const SPECIALTY_CATEGORIES = [
   "Silk Press"
 ]
 
-// Mock data for pending stylists
-const pendingStylists = [
-  {
-    id: 1,
-    name: "Zara Mitchell",
-    businessName: "Natural Beauty Studio",
-    email: "zara.mitchell@email.com",
-    phone: "+44 7123 456789",
-    location: "North London",
-    specialties: ["Natural Hair", "Protective Styles"],
-    experience: "8 years",
-    bio: "Specializing in natural hair care and protective styling. I believe in enhancing your natural beauty while maintaining hair health.",
-    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop",
-    status: "pending",
-  },
-  {
-    id: 2,
-    name: "Amara Okafor",
-    businessName: "Braids & Beyond",
-    email: "amara.okafor@email.com",
-    phone: "+44 7987 654321",
-    location: "South London",
-    specialties: ["Braids", "Twists"],
-    experience: "6 years",
-    bio: "Expert in intricate braiding techniques and twist styles. Creating beautiful, long-lasting protective styles for all hair types.",
-    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop",
-    status: "pending",
-  },
-  {
-    id: 3,
-    name: "Keisha Williams",
-    businessName: "Loc Love Salon",
-    email: "keisha.williams@email.com",
-    phone: "+44 7456 123789",
-    location: "East London",
-    specialties: ["Locs", "Maintenance"],
-    experience: "10 years",
-    bio: "Loc specialist with over a decade of experience. From starter locs to maintenance and styling, I've got you covered.",
-    image: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&h=300&fit=crop",
-    status: "pending",
-  },
-  {
-    id: 4,
-    name: "Nia Thompson",
-    businessName: "Silk & Shine",
-    email: "nia.thompson@email.com",
-    phone: "+44 7789 456123",
-    location: "West London",
-    specialties: ["Silk Press", "Blowouts"],
-    experience: "7 years",
-    bio: "Master of the silk press technique. Achieving smooth, sleek styles while maintaining hair health and integrity.",
-    image: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop",
-    status: "pending",
-  },
-]
+// Interface for pending stylists from database
+interface PendingStylist {
+  id: string
+  business_name: string
+  contact_email: string
+  phone: string
+  location: string
+  specialties: string[]
+  primary_specialty: string
+  year_started: number | null
+  bio: string
+  portfolio_images: string[]
+  logo_url: string | null
+  verification_status: string
+  submitted_at: string
+  user_id: string | null
+}
 
 export function AdminDashboard() {
   const { user } = useAuth()
-  const [stylists, setStylists] = useState(pendingStylists)
+  const [stylists, setStylists] = useState<PendingStylist[]>([])
+  const [loadingPendingStylists, setLoadingPendingStylists] = useState(true)
   const [allStylists, setAllStylists] = useState<any[]>([])
   const [loadingStylists, setLoadingStylists] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -93,6 +56,36 @@ export function AdminDashboard() {
   const [isAddingService, setIsAddingService] = useState(false)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [hasFetchedStylists, setHasFetchedStylists] = useState(false)
+  const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+
+  // Fetch pending verification stylists
+  const fetchPendingStylists = useCallback(async () => {
+    setLoadingPendingStylists(true)
+    try {
+      const { data, error } = await supabase
+        .from('stylist_profiles')
+        .select('*')
+        .eq('verification_status', 'pending_verification')
+        .order('submitted_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching pending stylists:', error)
+        return
+      }
+
+      setStylists(data || [])
+    } catch (err) {
+      console.error('Error fetching pending stylists:', err)
+    } finally {
+      setLoadingPendingStylists(false)
+    }
+  }, [])
+
+  // Load pending stylists on mount
+  useEffect(() => {
+    fetchPendingStylists()
+  }, [fetchPendingStylists])
 
   // Fetch all stylists for manage tab
   const fetchAllStylists = useCallback(async () => {
@@ -255,14 +248,59 @@ export function AdminDashboard() {
     }
   }, [user?.id])
 
-  const handleApprove = (id: number) => {
-    setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
-    // In a real app, this would make an API call to approve the stylist
+  const handleApprove = async (id: string) => {
+    setApprovingId(id)
+    try {
+      const { error } = await supabase
+        .from('stylist_profiles')
+        .update({
+          verification_status: 'approved',
+          is_active: true,
+          is_verified: true
+        })
+        .eq('id', id)
+
+      if (error) {
+        console.error('Error approving stylist:', error)
+        return
+      }
+
+      // Remove from pending list
+      setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
+      // Refresh all stylists if already loaded
+      if (hasFetchedStylists) {
+        fetchAllStylists()
+      }
+    } catch (err) {
+      console.error('Error approving stylist:', err)
+    } finally {
+      setApprovingId(null)
+    }
   }
 
-  const handleReject = (id: number) => {
-    setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
-    // In a real app, this would make an API call to reject the stylist
+  const handleReject = async (id: string) => {
+    setRejectingId(id)
+    try {
+      const { error } = await supabase
+        .from('stylist_profiles')
+        .update({
+          verification_status: 'rejected',
+          is_active: false
+        })
+        .eq('id', id)
+
+      if (error) {
+        console.error('Error rejecting stylist:', error)
+        return
+      }
+
+      // Remove from pending list
+      setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
+    } catch (err) {
+      console.error('Error rejecting stylist:', err)
+    } finally {
+      setRejectingId(null)
+    }
   }
 
   const setSpecialty = (specialty: string) => {
@@ -1125,6 +1163,7 @@ Please change your password after first login.`
                       'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop'
                     ]
                     const placeholderImage = placeholderImages[index % placeholderImages.length]
+                    const displayImage = stylist.portfolio_images?.[0] || stylist.logo_url || placeholderImage
 
                     return (
                       <div key={stylist.id} className="flex-none w-[280px]">
@@ -1132,30 +1171,40 @@ Please change your password after first login.`
                           <CardContent className="p-0 h-full">
                             <div className="relative aspect-square md:aspect-[4/3]">
                               <img
-                                src={stylist.image || placeholderImage}
-                                alt={stylist.businessName}
+                                src={displayImage}
+                                alt={stylist.business_name}
                                 className="w-full h-full object-cover rounded-t-lg"
                               />
                               <div className="absolute top-3 right-3 flex gap-2">
                                 <Button
                                   size="icon"
                                   className="bg-green-600 hover:bg-green-700 h-9 w-9 shadow-md rounded-md"
+                                  disabled={approvingId === stylist.id}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     handleApprove(stylist.id)
                                   }}
                                 >
-                                  <Check className="h-5 w-5" strokeWidth={3} />
+                                  {approvingId === stylist.id ? (
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                  ) : (
+                                    <Check className="h-5 w-5" strokeWidth={3} />
+                                  )}
                                 </Button>
                                 <Button
                                   size="icon"
                                   className="bg-red-600 hover:bg-red-700 h-9 w-9 shadow-md rounded-md"
+                                  disabled={rejectingId === stylist.id}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     handleReject(stylist.id)
                                   }}
                                 >
-                                  <X className="h-5 w-5" strokeWidth={3} />
+                                  {rejectingId === stylist.id ? (
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                  ) : (
+                                    <X className="h-5 w-5" strokeWidth={3} />
+                                  )}
                                 </Button>
                               </div>
                               <Badge className="absolute top-3 left-3 bg-orange-600 hover:bg-orange-700">
@@ -1165,7 +1214,7 @@ Please change your password after first login.`
 
                             <div className="p-4">
                               <div className="flex items-center justify-between mb-2">
-                                <h3 className="font-semibold text-lg text-gray-900">{stylist.businessName}</h3>
+                                <h3 className="font-semibold text-lg text-gray-900">{stylist.business_name}</h3>
                                 <div className="flex items-center gap-1">
                                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                   <span className="font-medium text-gray-700 text-sm">New</span>
@@ -1180,7 +1229,7 @@ Please change your password after first login.`
 
                               <div className="mb-3">
                                 <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
-                                  {stylist.specialties[0] ? `${stylist.specialties[0]} Specialist` : 'Hair Specialist'}
+                                  {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]} Specialist` : 'Hair Specialist'}
                                 </span>
                               </div>
                             </div>
@@ -1219,36 +1268,47 @@ Please change your password after first login.`
                       'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop'
                     ]
                     const placeholderImage = placeholderImages[index % placeholderImages.length]
+                    const displayImage = stylist.portfolio_images?.[0] || stylist.logo_url || placeholderImage
 
                     return (
                     <Card key={stylist.id} className="group cursor-pointer hover:shadow-sm transition-shadow h-full">
                       <CardContent className="p-0 h-full">
                         <div className="relative aspect-square md:aspect-[4/3]">
                           <img
-                            src={stylist.image || placeholderImage}
-                            alt={stylist.businessName}
+                            src={displayImage}
+                            alt={stylist.business_name}
                             className="w-full h-full object-cover rounded-t-lg"
                           />
                           <div className="absolute top-3 right-3 flex gap-2">
                             <Button
                               size="icon"
                               className="bg-green-600 hover:bg-green-700 h-9 w-9 shadow-md rounded-md"
+                              disabled={approvingId === stylist.id}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleApprove(stylist.id)
                               }}
                             >
-                              <Check className="h-5 w-5" strokeWidth={3} />
+                              {approvingId === stylist.id ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <Check className="h-5 w-5" strokeWidth={3} />
+                              )}
                             </Button>
                             <Button
                               size="icon"
                               className="bg-red-600 hover:bg-red-700 h-9 w-9 shadow-md rounded-md"
+                              disabled={rejectingId === stylist.id}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleReject(stylist.id)
                               }}
                             >
-                              <X className="h-5 w-5" strokeWidth={3} />
+                              {rejectingId === stylist.id ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <X className="h-5 w-5" strokeWidth={3} />
+                              )}
                             </Button>
                           </div>
                           <Badge className="absolute top-3 left-3 bg-orange-600 hover:bg-orange-700">
@@ -1258,7 +1318,7 @@ Please change your password after first login.`
 
                         <div className="p-4">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold text-lg text-gray-900">{stylist.businessName}</h3>
+                            <h3 className="font-semibold text-lg text-gray-900">{stylist.business_name}</h3>
                             <div className="flex items-center gap-1">
                               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                               <span className="font-medium text-gray-700 text-sm">New</span>
@@ -1273,7 +1333,7 @@ Please change your password after first login.`
 
                           <div className="mb-3">
                             <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
-                              {stylist.specialties[0] ? `${stylist.specialties[0]} Specialist` : 'Hair Specialist'}
+                              {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]} Specialist` : 'Hair Specialist'}
                             </span>
                           </div>
                         </div>
