@@ -35,15 +35,17 @@ interface Review {
 interface ReviewsDisplayProps {
   stylistId: string
   onEditReview?: (review: Review) => void
+  onLeaveReview?: () => void
   refreshTrigger?: number
   onReviewDeleted?: () => void
 }
 
 const REVIEWS_PER_PAGE = 6
 
-export function ReviewsDisplay({ 
-  stylistId, 
+export function ReviewsDisplay({
+  stylistId,
   onEditReview,
+  onLeaveReview,
   refreshTrigger,
   onReviewDeleted
 }: ReviewsDisplayProps) {
@@ -208,13 +210,15 @@ export function ReviewsDisplay({
           <MessageSquare className="h-8 w-8 text-gray-400 mx-auto mb-2" />
           <h3 className="text-base font-medium text-gray-900 mb-1">No reviews yet</h3>
           <p className="text-sm text-gray-500 mb-4">Be the first to leave a review for this stylist!</p>
-          <Button
-            onClick={() => setShowReviewForm(true)}
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-[12px] h-8 px-3"
-          >
-            Leave a Review
-          </Button>
+          {onLeaveReview && (
+            <Button
+              onClick={onLeaveReview}
+              size="sm"
+              className="bg-red-600 hover:bg-red-700 text-[12px] h-8 px-3"
+            >
+              Leave a Review
+            </Button>
+          )}
         </CardContent>
       </Card>
     )
