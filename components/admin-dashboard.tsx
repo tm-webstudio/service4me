@@ -19,6 +19,7 @@ import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 import { useAuth } from "@/hooks/use-auth"
 import { formatDistanceToNow, format } from "date-fns"
 import { BusinessFormFields, BusinessFormData, ServiceItem, initialBusinessFormData } from "@/components/business-form-fields"
+import { cn } from "@/lib/utils"
 
 const SPECIALTY_CATEGORIES = [
   "Wigs",
@@ -40,6 +41,14 @@ const ADDITIONAL_SERVICES = [
   "Butterfly Locs",
   "Ponytails"
 ]
+
+const SmallCtaButton = ({ className, ...props }: React.ComponentProps<typeof Button>) => (
+  <Button
+    size="sm"
+    className={cn("h-8 px-3 text-[12px]", className)}
+    {...props}
+  />
+)
 
 // Interface for pending stylists from database
 interface PendingStylist {
@@ -1305,24 +1314,24 @@ Please change your password after first login.`
   const disableGenerateLogin = !createdStylist || generatingAccount || loginAlreadyGenerated
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-lg px-6 py-8 mb-8">
+      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-6 sm:mb-8">
         <div className="space-y-2">
           <p className="text-xs font-semibold tracking-wider text-red-600 uppercase">
             Admin Dashboard
           </p>
-          <h1 className="text-4xl font-bold text-gray-900">
-            Platform Management
+          <h1 className="text-xl sm:text-3xl font-medium text-gray-900">
+            System Administration
           </h1>
-          <p className="text-base text-red-700/80 mt-3">
+          <p className="text-sm sm:text-base text-red-700/80 mt-3">
             Manage stylists, services, and platform operations
           </p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-6 flex-wrap justify-start rounded-none w-full">
+        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-4 sm:gap-6 flex-nowrap overflow-x-auto whitespace-nowrap justify-start rounded-none w-full -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <TabsTrigger
             value="dashboard"
             className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
@@ -1354,15 +1363,15 @@ Please change your password after first login.`
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 overflow-x-auto md:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {/* Total Stylists */}
-            <Card>
+            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Stylists</CardTitle>
                 <User className="h-4 w-4 text-gray-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{allStylists.length}</div>
+                <div className="text-xl sm:text-2xl font-bold">{allStylists.length}</div>
                 <p className="text-xs text-gray-500 mt-1">
                   {allStylists.filter(s => s.user_id).length} with accounts
                 </p>
@@ -1370,13 +1379,13 @@ Please change your password after first login.`
             </Card>
 
             {/* Active Stylists */}
-            <Card>
+            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
                 <UserCheck className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{allStylists.filter(s => s.user_id).length}</div>
+                <div className="text-xl sm:text-2xl font-bold">{allStylists.filter(s => s.user_id).length}</div>
                 <p className="text-xs text-gray-500 mt-1">
                   Stylists with active accounts
                 </p>
@@ -1384,13 +1393,13 @@ Please change your password after first login.`
             </Card>
 
             {/* No Account */}
-            <Card>
+            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">No Account</CardTitle>
                 <UserX className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{allStylists.filter(s => !s.user_id).length}</div>
+                <div className="text-xl sm:text-2xl font-bold">{allStylists.filter(s => !s.user_id).length}</div>
                 <p className="text-xs text-gray-500 mt-1">
                   Stylists without accounts
                 </p>
@@ -1398,15 +1407,36 @@ Please change your password after first login.`
             </Card>
 
             {/* Pending */}
-            <Card>
+            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
                 <Clock className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stylists.length}</div>
+                <div className="text-xl sm:text-2xl font-bold">{stylists.length}</div>
                 <p className="text-xs text-gray-500 mt-1">
                   Applications awaiting verification
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* New Stylists (30 days) */}
+            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+                <Calendar className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl sm:text-2xl font-bold">
+                  {allStylists.filter(s => {
+                    if (!s.created_at) return false
+                    const created = new Date(s.created_at).getTime()
+                    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+                    return created >= thirtyDaysAgo
+                  }).length}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Profiles created in the last 30 days
                 </p>
               </CardContent>
             </Card>
@@ -1416,22 +1446,21 @@ Please change your password after first login.`
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Pending Verification</CardTitle>
+                <CardTitle className="text-base sm:text-xl">Pending Verification</CardTitle>
                 <CardDescription>Stylists awaiting approval</CardDescription>
               </div>
               {stylists.length > 0 && (
-                <Button
+                <SmallCtaButton
                   variant="outline"
-                  size="sm"
                   className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
                   onClick={() => {
                     // Switch to pending tab
-                    const pendingTab = document.querySelector('[value="pending"]') as HTMLElement
+                    const pendingTab = document.querySelector('[value=\"pending\"]') as HTMLElement
                     if (pendingTab) pendingTab.click()
                   }}
                 >
                   View All
-                </Button>
+                </SmallCtaButton>
               )}
             </CardHeader>
             <CardContent>
@@ -1547,7 +1576,7 @@ Please change your password after first login.`
         <TabsContent value="pending" className="space-y-6">
           <Card>
             <CardHeader className="p-4 sm:p-6">
-              <CardTitle>Stylists Awaiting Verification</CardTitle>
+              <CardTitle className="text-base sm:text-xl">Stylists Awaiting Verification</CardTitle>
               <CardDescription>Review and approve or reject stylist applications</CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
@@ -1666,18 +1695,18 @@ Please change your password after first login.`
         <TabsContent value="manage" className="space-y-6">
           <Card>
             <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle>Manage Stylists</CardTitle>
+                  <CardTitle className="text-base sm:text-xl">Manage Stylists</CardTitle>
                   <CardDescription>View and manage all stylist profiles and their account status</CardDescription>
                 </div>
-                <Button 
+                <SmallCtaButton 
                   onClick={() => window.location.href = '#create'}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-1" />
                   Add New Stylist
-                </Button>
+                </SmallCtaButton>
               </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
@@ -2044,8 +2073,7 @@ Please change your password after first login.`
             <CardHeader className="p-4 sm:p-6">
               <div className="flex items-start justify-between flex-wrap gap-3">
                 <div>
-                  <CardTitle className="flex items-center">
-                    <Settings className="w-5 h-5 mr-2 text-red-600" />
+                  <CardTitle className="text-base sm:text-xl">
                     {isEditMode ? 'Edit Stylist Profile' : 'Create Stylist Profile'}
                   </CardTitle>
                   <CardDescription className="mt-1">

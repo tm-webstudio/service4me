@@ -151,7 +151,7 @@ export function ClientDashboard() {
   // Show loading state
   if (authLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </div>
@@ -162,17 +162,17 @@ export function ClientDashboard() {
   // User is authenticated and is a client - show dashboard
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg px-6 py-8 mb-8">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-6 sm:mb-8">
         <div className="space-y-2">
           <p className="text-xs font-semibold tracking-wider text-blue-600 uppercase">
             Client Dashboard
           </p>
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-3xl font-medium text-gray-900">
             Welcome back, {userProfile?.full_name || 'Client'}!
           </h1>
-          <p className="text-base text-blue-700/80 mt-3 flex items-center gap-2">
+          <p className="text-sm sm:text-base text-blue-700/80 mt-3 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             Member since {getMemberSince()}
           </p>
@@ -180,7 +180,7 @@ export function ClientDashboard() {
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-6 flex-wrap justify-start rounded-none w-full">
+        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-4 sm:gap-6 flex-nowrap overflow-x-auto whitespace-nowrap justify-start rounded-none w-full -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <TabsTrigger
             value="dashboard"
             className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
@@ -200,7 +200,7 @@ export function ClientDashboard() {
         <TabsContent value="dashboard" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Overview</CardTitle>
+              <CardTitle className="text-base sm:text-xl">Overview</CardTitle>
               <CardDescription>Your activity and account summary</CardDescription>
             </CardHeader>
             <CardContent>
@@ -304,8 +304,7 @@ export function ClientDashboard() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
+                  <CardTitle className="text-base sm:text-xl">
                     My Reviews
                   </CardTitle>
                   <CardDescription>All your reviews and feedback</CardDescription>

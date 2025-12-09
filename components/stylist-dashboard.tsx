@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, ExternalLink, Settings, MessageSquare, Edit, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User } from "lucide-react"
+import { Star, ExternalLink, Settings, MessageSquare, Edit, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User, XCircle } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
@@ -317,7 +317,7 @@ export function StylistDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-red-600" />
           <span className="ml-2 text-gray-600">Loading your profile...</span>
@@ -328,7 +328,7 @@ export function StylistDashboard() {
   
   if (error && !profile) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="text-center py-20">
           <p className="text-red-600 mb-4">Error loading profile: {error}</p>
           <Button onClick={() => window.location.reload()} variant="outline">
@@ -341,7 +341,7 @@ export function StylistDashboard() {
   
   if (!profile) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="text-center py-20">
           <p className="text-gray-600 mb-4">No profile found.</p>
           <p className="text-sm text-gray-500">Please contact support if this error persists.</p>
@@ -364,9 +364,9 @@ export function StylistDashboard() {
   const getReviewCount = () => profile.review_count || 0
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 rounded-lg px-6 py-8 mb-8">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-6 sm:mb-8">
         <div className="space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-xs font-semibold tracking-wider text-green-600 uppercase">
@@ -376,44 +376,29 @@ export function StylistDashboard() {
               {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
             </Badge>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-3xl font-medium text-gray-900">
             Hello, {getBusinessName()}!
           </h1>
-          <div className="flex items-center flex-wrap gap-6 text-base text-green-700/80">
+          <div className="flex items-center flex-wrap gap-6 text-sm sm:text-base text-green-700/80">
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
               <span className="font-medium">{getRating() > 0 ? getRating().toFixed(1) : "New"}</span>
               <span>({getReviewCount()} reviews)</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="font-medium">Profile Status:</span>
-              <button
-                onClick={() => handleToggleActiveStatus(!profile?.is_active)}
-                disabled={saving}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                  (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-600' : 'bg-gray-400'
-                } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
-                  (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-              <span className="text-sm">{(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'Active' : 'Inactive'}</span>
-            </div>
           </div>
-          <div className="pt-2">
-            <Link href={`/stylist/${profile.id}`}>
-              <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 bg-transparent">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View Public Profile
-              </Button>
-            </Link>
-          </div>
-        </div>
+      <div className="pt-2">
+        <Link href={`/stylist/${profile.id}`}>
+          <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 bg-transparent">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            View Public Profile
+          </Button>
+        </Link>
+      </div>
+    </div>
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-6 flex-wrap justify-start rounded-none w-full">
+        <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-4 sm:gap-6 flex-nowrap overflow-x-auto whitespace-nowrap justify-start rounded-none w-full -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <TabsTrigger
             value="dashboard"
             className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
@@ -426,14 +411,14 @@ export function StylistDashboard() {
             className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
           >
             <User className="w-4 h-4" />
-            Profile
+            Edit Profile
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Overview</CardTitle>
+              <CardTitle className="text-base sm:text-xl">Overview</CardTitle>
               <CardDescription>Your business performance and activity</CardDescription>
             </CardHeader>
             <CardContent>
@@ -474,23 +459,40 @@ export function StylistDashboard() {
           <div className="space-y-6">
           <Card className="mb-5">
             <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <CardTitle className="flex items-center">
-                    <Settings className="w-5 h-5 mr-2 text-red-600" />
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <CardTitle className="text-base sm:text-xl">
                     Profile Information
                   </CardTitle>
                   <CardDescription className="mt-1">Use the shared form layout to update your business info, photos, and contact details.</CardDescription>
+                  <div className="flex items-center gap-2 text-sm mt-2">
+                    <span className="font-medium text-gray-900 whitespace-nowrap">Profile Status:</span>
+                    <button
+                      onClick={() => handleToggleActiveStatus(!profile?.is_active)}
+                      disabled={saving}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                        (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-600' : 'bg-gray-400'
+                      } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                        (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                    <span className="text-sm">{(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'Active' : 'Inactive'}</span>
+                  </div>
                 </div>
-                <Button
-                  onClick={() => setIsEditing(!isEditing)}
-                  variant={isEditing ? "outline" : "default"}
-                  className={isEditing ? "" : "bg-red-600 hover:bg-red-700"}
-                  disabled={saving}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  {isEditing ? "Cancel" : "Edit Profile"}
-                </Button>
+                <div className="flex sm:ml-auto">
+                  <Button
+                    onClick={() => setIsEditing(!isEditing)}
+                    variant={isEditing ? "outline" : "default"}
+                    size="sm"
+                    className={isEditing ? "h-8 px-3 text-[12px]" : "h-8 px-3 text-[12px] bg-red-600 hover:bg-red-700"}
+                    disabled={saving}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    {isEditing ? "Cancel" : "Edit Profile"}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 space-y-5">
@@ -545,31 +547,11 @@ export function StylistDashboard() {
                 </div>
               )}
 
-              {isEditing && (
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="bg-red-600 hover:bg-red-700 flex-1"
-                  >
-                    {saving ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                    ) : (
-                      <><Save className="w-4 h-4 mr-2" />Save Changes</>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={handleCancel}
-                    variant="outline"
-                    disabled={saving}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-
               {error && (
-                <p className="text-red-600 text-sm">{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
+                  <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
               )}
 
               {uploadError && (
@@ -580,6 +562,44 @@ export function StylistDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {isEditing && (
+            <Card>
+              <CardHeader className="p-4 sm:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <CardTitle className="text-base sm:text-xl">
+                      Save Changes
+                    </CardTitle>
+                    <CardDescription className="mt-1">Save your profile updates or cancel to discard changes.</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleCancel}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-[12px]"
+                      disabled={saving}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={saving}
+                      size="sm"
+                      className="h-8 px-3 text-[12px] bg-red-600 hover:bg-red-700"
+                    >
+                      {saving ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                      ) : (
+                        <><Save className="w-4 h-4 mr-2" />Save Changes</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          )}
 
           </div>
         </TabsContent>
