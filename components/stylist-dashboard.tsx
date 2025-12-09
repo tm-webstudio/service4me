@@ -5,113 +5,175 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Switch } from "@/components/ui/switch"
-import { Star, Upload, ExternalLink, Settings, MessageSquare, Plus, Edit, Trash2, Scissors, Loader2, Save, X, AlertCircle, Clock, DollarSign, ImageIcon, LayoutDashboard, User } from "lucide-react"
+import { Star, ExternalLink, Settings, MessageSquare, Edit, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 import { useServices } from "@/hooks/use-services"
-import { useServiceImageUpload } from "@/hooks/use-service-image-upload"
 import { postcodeToAreaName } from "@/lib/postcode-utils"
-import { DashboardGallerySkeleton } from "@/components/ui/skeletons"
-
-const SPECIALTY_CATEGORIES = [
-  "Wigs",
-  "Braids",
-  "Locs",
-  "Natural Hair",
-  "Bridal Hair",
-  "Silk Press"
-]
+import { BusinessFormFields, BusinessFormData, ServiceItem, initialBusinessFormData } from "@/components/business-form-fields"
 
 export function StylistDashboard() {
   const { user } = useAuth()
   const { profile, loading, saving, error, updateProfile, updatePortfolioImages } = useStylistProfileEditor()
   const { uploadFiles, deleteImage, uploadProgress, isUploading, error: uploadError } = usePortfolioUpload()
-  const { services, loading: servicesLoading, saving: servicesSaving, error: servicesError, addService, updateService, deleteService } = useServices()
-  const { uploadServiceImage, uploading: imageUploading } = useServiceImageUpload()
+  const { services, addService, updateService, deleteService, refreshServices } = useServices()
   const [isEditing, setIsEditing] = useState(false)
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
-  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [localGalleryImages, setLocalGalleryImages] = useState<string[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadInProgressRef = useRef(false)
-  
-  // Initialize local gallery with profile images when profile loads
+  const [profileFormData, setProfileFormData] = useState<BusinessFormData>(initialBusinessFormData)
+  const [additionalServices, setAdditionalServices] = useState<string[]>([])
+  const [logoImage, setLogoImage] = useState<string>('')
+  const [formServices, setFormServices] = useState<ServiceItem[]>([])
+
+  // Track gallery mutations while ensuring unsaved flag is set
+  const updateGalleryImages = useCallback((updater: React.SetStateAction<string[]>) => {
+    setLocalGalleryImages(prev => {
+      const next = typeof updater === 'function' ? (updater as (prev: string[]) => string[])(prev) : updater
+      setHasUnsavedChanges(true)
+      return next
+    })
+  }, [])
+
+  // Sync form state when profile loads
   useEffect(() => {
-    if (profile?.portfolio_images) {
-      // Only update local gallery if it's empty or if we have unsaved changes that need syncing
-      if (localGalleryImages.length === 0 && !hasUnsavedChanges) {
-        setLocalGalleryImages(profile.portfolio_images)
+    if (!profile) return
+
+    const resolvedYearStarted = profile.year_started
+      ? String(profile.year_started)
+      : profile.years_experience
+        ? String(new Date().getFullYear() - profile.years_experience)
+        : ''
+
+    setProfileFormData({
+      first_name: profile.first_name || '',
+      last_name: profile.last_name || '',
+      business_name: profile.business_name || '',
+      contact_email: profile.contact_email || '',
+      phone: profile.phone || '',
+      instagram_handle: profile.instagram_handle || '',
+      tiktok_handle: profile.tiktok_handle || '',
+      location: profile.location || '',
+      business_type: profile.business_type || '',
+      specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
+      bio: profile.bio || '',
+      year_started: resolvedYearStarted,
+      booking_link: profile.booking_link || '',
+      accepts_same_day: profile.accepts_same_day ?? null,
+      accepts_mobile: profile.accepts_mobile ?? null,
+    })
+
+    if (!hasUnsavedChanges) {
+        setLocalGalleryImages(profile.portfolio_images || [])
       }
-    }
-  }, [profile?.portfolio_images, hasUnsavedChanges]) // Watch both portfolio images and unsaved changes
-  
-  // Services state
-  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
-  const [editingService, setEditingService] = useState<any>(null)
-  const [serviceForm, setServiceForm] = useState({
-    name: '',
-    price: 0,
-    duration: 60
-  })
-  const [serviceImageFile, setServiceImageFile] = useState<File | null>(null)
-  const [serviceImagePreview, setServiceImagePreview] = useState<string>('')
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
-  const [isServiceDragOver, setIsServiceDragOver] = useState(false)
-  const serviceImageInputRef = useRef<HTMLInputElement>(null)
-  
-  // Form state for editing
-  const [formData, setFormData] = useState({
-    business_name: '',
-    bio: '',
-    location: '',
-    specialties: '',
-    years_experience: 0,
-    booking_link: '',
-    phone: '',
-    contact_email: '',
-    instagram_handle: '',
-    tiktok_handle: ''
-  })
-  
-  // Update form data when profile loads
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        business_name: profile.business_name || '',
-        bio: profile.bio || '',
-        location: profile.location || '',
-        specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
-        years_experience: profile.years_experience || 0,
-        booking_link: profile.booking_link || '',
-        phone: profile.phone || '',
-        contact_email: profile.contact_email || '',
-        instagram_handle: profile.instagram_handle || '',
-        tiktok_handle: profile.tiktok_handle || ''
-      })
-    }
+
+    setLogoImage(profile.logo_url || '')
+    setAdditionalServices(profile.additional_services || [])
+    setLocalGalleryImages(profile.portfolio_images || [])
+    setHasUnsavedChanges(false)
   }, [profile])
+
+  useEffect(() => {
+    setFormServices((services || []).map(s => ({
+      id: s.id,
+      name: s.name,
+      price: s.price,
+      duration: s.duration,
+      image_url: s.image_url
+    })))
+  }, [services])
   
   const handleSave = async () => {
     if (!profile) return
     
     try {
-      // Convert single specialty to array for backend
+      const yearStartedNumber = profileFormData.year_started ? Number(profileFormData.year_started) : null
+      const years_experience = yearStartedNumber
+        ? Math.max(0, new Date().getFullYear() - yearStartedNumber)
+        : profile.years_experience || 0
+
       const updateData = {
-        ...formData,
-        specialties: formData.specialties ? [formData.specialties] : []
+        first_name: profileFormData.first_name,
+        last_name: profileFormData.last_name,
+        business_name: profileFormData.business_name,
+        bio: profileFormData.bio,
+        location: profileFormData.location,
+        specialties: profileFormData.specialties ? [profileFormData.specialties] : [],
+        booking_link: profileFormData.booking_link,
+        phone: profileFormData.phone,
+        contact_email: profileFormData.contact_email,
+        instagram_handle: profileFormData.instagram_handle,
+        tiktok_handle: profileFormData.tiktok_handle,
+        business_type: profileFormData.business_type,
+        accepts_same_day: profileFormData.accepts_same_day,
+        accepts_mobile: profileFormData.accepts_mobile,
+        year_started: yearStartedNumber,
+        years_experience,
+        logo_url: logoImage,
+        additional_services: additionalServices,
       }
+
       await updateProfile(updateData)
+
+      if (hasUnsavedChanges) {
+        const originalImages = profile?.portfolio_images || []
+        const imagesToDelete = originalImages.filter(img => !localGalleryImages.includes(img))
+
+        if (imagesToDelete.length > 0) {
+          for (const imageUrl of imagesToDelete) {
+            try {
+              await deleteImage(imageUrl)
+            } catch (err) {
+            }
+          }
+        }
+
+        await updatePortfolioImages(localGalleryImages)
+        setHasUnsavedChanges(false)
+      }
+
+      const existingById = new Map(services.map(s => [s.id, s]))
+      const formById = new Map(formServices.map(s => [s.id, s]))
+
+      const servicesToDelete = services.filter(s => !formById.has(s.id))
+      const servicesToAdd = formServices.filter(s => !existingById.has(s.id))
+      const servicesToUpdate = formServices.filter(s => {
+        const existing = existingById.get(s.id)
+        if (!existing) return false
+        return (
+          existing.name !== s.name ||
+          existing.price !== s.price ||
+          existing.duration !== s.duration ||
+          (existing.image_url || '') !== (s.image_url || '')
+        )
+      })
+
+      for (const svc of servicesToDelete) {
+        await deleteService(svc.id)
+      }
+
+      for (const svc of servicesToAdd) {
+        await addService({
+          name: svc.name,
+          price: svc.price,
+          duration: svc.duration,
+          image_url: svc.image_url
+        })
+      }
+
+      for (const svc of servicesToUpdate) {
+        await updateService(svc.id, {
+          name: svc.name,
+          price: svc.price,
+          duration: svc.duration,
+          image_url: svc.image_url
+        })
+      }
+
+      await refreshServices()
+
       setIsEditing(false)
     } catch (err) {
     }
@@ -119,36 +181,44 @@ export function StylistDashboard() {
   
   const handleCancel = () => {
     if (profile) {
-      setFormData({
+      const resetYearStarted = profile.year_started
+        ? String(profile.year_started)
+        : profile.years_experience
+          ? String(new Date().getFullYear() - profile.years_experience)
+          : ''
+
+      setProfileFormData({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
         business_name: profile.business_name || '',
-        bio: profile.bio || '',
-        location: profile.location || '',
-        specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
-        years_experience: profile.years_experience || 0,
-        booking_link: profile.booking_link || '',
-        phone: profile.phone || '',
         contact_email: profile.contact_email || '',
+        phone: profile.phone || '',
         instagram_handle: profile.instagram_handle || '',
-        tiktok_handle: profile.tiktok_handle || ''
+        tiktok_handle: profile.tiktok_handle || '',
+        location: profile.location || '',
+        business_type: profile.business_type || '',
+        specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
+        bio: profile.bio || '',
+        year_started: resetYearStarted,
+        booking_link: profile.booking_link || '',
+        accepts_same_day: profile.accepts_same_day ?? null,
+        accepts_mobile: profile.accepts_mobile ?? null,
       })
+      setLogoImage(profile.logo_url || '')
+      setAdditionalServices(profile.additional_services || [])
+      setLocalGalleryImages(profile.portfolio_images || [])
+      setHasUnsavedChanges(false)
     }
     setIsEditing(false)
   }
   
-  const setSpecialty = (specialty: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialties: specialty
-    }))
-  }
-
   // Image upload handlers
-  const handleImageUpload = useCallback(async (files: FileList | File[]) => {
+  const handleImageUpload = useCallback(async (files: FileList | File[]): Promise<string[]> => {
     // Prevent duplicate uploads using ref
     if (uploadInProgressRef.current) {
-      return
+      return []
     }
-    
+
     // Set upload in progress
     uploadInProgressRef.current = true
 
@@ -162,13 +232,13 @@ export function StylistDashboard() {
         currentImageCount = currentImages.length
         return currentImages // Return unchanged
       })
-      
+
       const totalImages = currentImageCount + filesArray.length
-      
+
       if (totalImages > 20) {
         alert(`Cannot upload ${filesArray.length} images. Maximum 20 images allowed. You currently have ${currentImageCount} images.`)
         uploadInProgressRef.current = false // Reset flag
-        return
+        return []
       }
 
       // Upload files
@@ -176,134 +246,24 @@ export function StylistDashboard() {
 
       if (uploadedUrls.length > 0) {
         // Add uploaded URLs to existing images
+        setHasUnsavedChanges(true)
         setLocalGalleryImages(prevImages => {
           const updatedImages = [...prevImages, ...uploadedUrls]
 
           return updatedImages
         })
-        setHasUnsavedChanges(true)
       }
+
+      return uploadedUrls
 
     } catch (err) {
       alert('Failed to upload images. Please try again.')
+      return []
     } finally {
       // Clear upload in progress flag
       uploadInProgressRef.current = false
     }
   }, [uploadFiles])
-
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (files && files.length > 0) {
-      handleImageUpload(files)
-      // Reset the file input so users can select the same files again if needed
-      if (event.target) {
-        event.target.value = ''
-      }
-    }
-  }, [handleImageUpload])
-
-  const handleImageDelete = useCallback(async (imageUrl: string, index: number) => {
-    if (!localGalleryImages.length) return
-
-    try {
-      const updatedImages = localGalleryImages.filter((_, i) => i !== index)
-      setLocalGalleryImages(updatedImages) // Update local state only
-      setHasUnsavedChanges(true) // Mark as having unsaved changes
-    } catch (err) {
-    }
-  }, [localGalleryImages])
-
-  // Drag and drop handlers
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    
-    const files = Array.from(e.dataTransfer.files).filter(file => 
-      file.type.startsWith('image/')
-    )
-    
-    if (files.length > 0) {
-      handleImageUpload(files)
-    }
-  }, [handleImageUpload])
-
-  const triggerFileSelect = useCallback(() => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    }
-  }, [])
-
-  // Ensure file input is properly configured
-  useEffect(() => {
-    if (fileInputRef.current) {
-      const input = fileInputRef.current
-      // Force set attributes to ensure Chrome compatibility
-      input.setAttribute('multiple', 'true')
-      input.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/gif')
-    }
-  }, [profile])
-
-
-  // Gallery reorder handlers
-  const handleImageDragStart = useCallback((e: React.DragEvent, index: number) => {
-    setDraggedImageIndex(index)
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', index.toString())
-  }, [])
-
-  const handleImageDragOver = useCallback((e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOverImageIndex(index)
-  }, [])
-
-  const handleImageDragLeave = useCallback(() => {
-    setDragOverImageIndex(null)
-  }, [])
-
-  const handleImageDrop = useCallback(async (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault()
-    setDragOverImageIndex(null)
-    
-    if (draggedImageIndex === null || draggedImageIndex === dropIndex || !localGalleryImages.length) {
-      setDraggedImageIndex(null)
-      return
-    }
-
-    try {
-      const images = [...localGalleryImages]
-      const draggedImage = images[draggedImageIndex]
-      
-      // Remove the dragged image from its original position
-      images.splice(draggedImageIndex, 1)
-      
-      // Insert at new position (adjust index if needed)
-      const adjustedDropIndex = draggedImageIndex < dropIndex ? dropIndex - 1 : dropIndex
-      images.splice(adjustedDropIndex, 0, draggedImage)
-
-      setLocalGalleryImages(images) // Update local state only
-      setHasUnsavedChanges(true) // Mark as having unsaved changes
-    } catch (err) {
-    } finally {
-      setDraggedImageIndex(null)
-    }
-  }, [draggedImageIndex, localGalleryImages])
-
-  const handleImageDragEnd = useCallback(() => {
-    setDraggedImageIndex(null)
-    setDragOverImageIndex(null)
-  }, [])
 
   // Local state for optimistic UI updates
   const [optimisticActive, setOptimisticActive] = useState<boolean | null>(null)
@@ -355,156 +315,6 @@ export function StylistDashboard() {
     }
   }, [localGalleryImages, profile?.portfolio_images, updatePortfolioImages, deleteImage, hasUnsavedChanges])
 
-  // Service management functions
-  const openAddServiceModal = () => {
-    setEditingService(null)
-    setServiceForm({
-      name: '',
-      price: 0,
-      duration: 60
-    })
-    setServiceImageFile(null)
-    setServiceImagePreview('')
-    setIsServiceDragOver(false)
-    setIsServiceModalOpen(true)
-  }
-
-  const openEditServiceModal = (service: any) => {
-    setEditingService(service)
-    setServiceForm({
-      name: service.name,
-      price: service.price,
-      duration: service.duration
-    })
-    setServiceImageFile(null)
-    setServiceImagePreview(service.image_url || '')
-    setIsServiceDragOver(false)
-    setIsServiceModalOpen(true)
-  }
-
-  const handleServiceImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setServiceImageFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setServiceImagePreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const triggerServiceImageSelect = () => {
-    serviceImageInputRef.current?.click()
-  }
-
-  // Service image drag and drop handlers
-  const handleServiceDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsServiceDragOver(true)
-  }, [])
-
-  const handleServiceDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsServiceDragOver(false)
-  }, [])
-
-  const handleServiceDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsServiceDragOver(false)
-    
-    const files = Array.from(e.dataTransfer.files).filter(file => 
-      file.type.startsWith('image/')
-    )
-    
-    if (files.length > 0) {
-      // Take only the first image file
-      const file = files[0]
-      setServiceImageFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setServiceImagePreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }, [])
-
-  const validateServiceForm = () => {
-    if (!serviceForm.name.trim()) {
-      alert('Service name is required')
-      return false
-    }
-    if (serviceForm.price <= 0) {
-      alert('Price must be greater than 0')
-      return false
-    }
-    if (serviceForm.duration <= 0) {
-      alert('Duration must be greater than 0')
-      return false
-    }
-    return true
-  }
-
-  const handleSaveService = async () => {
-    if (!validateServiceForm()) {
-      return
-    }
-
-    try {
-      let imageUrl: string | null = serviceImagePreview
-
-      // Upload new image if a file is selected
-      if (serviceImageFile) {
-        imageUrl = await uploadServiceImage(serviceImageFile)
-      }
-
-      const serviceData = {
-        name: serviceForm.name,
-        price: serviceForm.price,
-        duration: serviceForm.duration,
-        image_url: imageUrl || undefined
-      }
-
-      if (editingService) {
-        await updateService(editingService.id, serviceData)
-      } else {
-        const result = await addService(serviceData)
-      }
-
-      setIsServiceModalOpen(false)
-      setServiceImageFile(null)
-      setServiceImagePreview('')
-      setIsServiceDragOver(false)
-    } catch (err) {
-      alert(`Failed to save service: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    }
-  }
-
-  const handleDeleteService = (serviceId: string) => {
-    setShowDeleteConfirm(serviceId)
-  }
-
-  const confirmDeleteService = async (serviceId: string) => {
-    try {
-      await deleteService(serviceId)
-      setShowDeleteConfirm(null)
-    } catch (err) {
-      alert('Failed to delete service. Please try again.')
-    }
-  }
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    if (hours > 0 && mins > 0) {
-      return `${hours}h ${mins}m`
-    } else if (hours > 0) {
-      return `${hours}h`
-    } else {
-      return `${mins}m`
-    }
-  }
-  
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -552,8 +362,6 @@ export function StylistDashboard() {
   }
   const getRating = () => profile.average_rating || 0
   const getReviewCount = () => profile.review_count || 0
-  const getSpecialties = () => profile.specialties || []
-  const getExperience = () => profile.years_experience || 0
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -654,7 +462,7 @@ export function StylistDashboard() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Specialties</p>
-                    <p className="text-2xl font-bold text-gray-900">{formData.specialties ? 1 : 0}</p>
+                    <p className="text-2xl font-bold text-gray-900">{profile.specialties?.length || (profileFormData.specialties ? 1 : 0)}</p>
                   </div>
                 </div>
               </div>
@@ -663,776 +471,117 @@ export function StylistDashboard() {
         </TabsContent>
 
         <TabsContent value="profile" className="space-y-6">
-      {/* Profile Information Card */}
-      <Card className="mb-5">
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <Settings className="w-5 h-5 mr-2 text-red-600" />
-              Profile Information
-            </CardTitle>
-            <Button 
-              onClick={() => setIsEditing(!isEditing)}
-              variant={isEditing ? "outline" : "default"}
-              className={isEditing ? "" : "bg-red-600 hover:bg-red-700"}
-              disabled={saving}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              {isEditing ? "Cancel" : "Edit Profile"}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className={`${isEditing ? 'space-y-8' : 'space-y-10'} p-4 sm:p-6`}>
-          {/* 1. LOGO SECTION */}
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Logo</h3>
-            <div className="flex items-center space-x-4">
-              <Avatar className="w-16 h-16">
-                <AvatarImage src={`/placeholder.svg?height=100&width=100&text=${encodeURIComponent(getBusinessName())}`} />
-                <AvatarFallback>{getBusinessName().split(" ").map((n) => n[0]).join("")}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-sm mb-2"
-                  onClick={() => {
-                    // Placeholder function - will be implemented when connected to file upload
-                  }}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Change Photo
-                </Button>
-                <p className="text-xs text-gray-400">JPG, PNG or GIF. Max 5MB.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 2. TWO COLUMN LAYOUT */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Basic Information */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Basic Information</h3>
-              <div className="space-y-5">
-                {/* Business Name */}
+          <div className="space-y-6">
+          <Card className="mb-5">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Business Name <span className="text-red-500">*</span></label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.business_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
-                      placeholder="Your business name"
-                    />
-                  ) : (
-                    <p className="text-gray-900 font-medium">{getBusinessName()}</p>
-                  )}
+                  <CardTitle className="flex items-center">
+                    <Settings className="w-5 h-5 mr-2 text-red-600" />
+                    Profile Information
+                  </CardTitle>
+                  <CardDescription className="mt-1">Use the shared form layout to update your business info, photos, and contact details.</CardDescription>
                 </div>
-
-                {/* Location */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>
-                    {isEditing ? "Postcode" : "Location"}
-                  </label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.location}
-                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value.toUpperCase() }))}
-                      placeholder="SW1A 1AA"
-                      maxLength={8}
-                      pattern="[A-Z]{1,2}[0-9]{1,2}[A-Z]?\s?[0-9][A-Z]{2}"
-                      title="Please enter a valid UK postcode (e.g., SW1A 1AA)"
-                    />
-                  ) : (
-                    <p className="text-gray-900 font-medium">{getLocation()}</p>
-                  )}
-                </div>
-
-                {/* Specialties */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Specialty <span className="text-red-500">*</span></label>
-                  {isEditing ? (
-                    <Select
-                      value={formData.specialties}
-                      onValueChange={setSpecialty}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your specialty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SPECIALTY_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="text-gray-900 font-medium">
-                      {formData.specialties || 'No specialty selected'}
-                    </p>
-                  )}
-                </div>
-
-                {/* Bio */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Bio <span className="text-red-500">*</span></label>
-                  {isEditing ? (
-                    <Textarea
-                      value={formData.bio}
-                      onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                      placeholder="Tell clients about yourself and your services..."
-                      rows={4}
-                      className="resize-none"
-                    />
-                  ) : (
-                    <p className="text-gray-700 leading-relaxed">{getBio()}</p>
-                  )}
-                </div>
-
-                {/* Experience and Rate */}
-                {isEditing && (
-                  <div>
-                    <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Years of Experience</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.years_experience}
-                      onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
-                      placeholder="Years"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right Column - Contact Details */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Details</h3>
-              <div className="space-y-5">
-                {/* Booking Link */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Booking Link</label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.booking_link}
-                      onChange={(e) => setFormData(prev => ({ ...prev, booking_link: e.target.value }))}
-                      placeholder="https://your-booking-site.com"
-                      type="url"
-                    />
-                  ) : (
-                    <p className="text-gray-700">
-                      {profile.booking_link || 'No booking link added'}
-                    </p>
-                  )}
-                </div>
-
-                {/* Phone Number */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Phone Number</label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Your phone number"
-                      type="tel"
-                    />
-                  ) : (
-                    <p className="text-gray-700">
-                      {profile.phone || 'No phone number added'}
-                    </p>
-                  )}
-                </div>
-
-                {/* Contact Email */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Contact Email</label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.contact_email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
-                      placeholder="contact@yourbusiness.com"
-                      type="email"
-                    />
-                  ) : (
-                    <p className="text-gray-700">
-                      {profile.contact_email || 'No contact email added'}
-                    </p>
-                  )}
-                </div>
-
-                {/* Instagram Handle */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>Instagram</label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.instagram_handle}
-                      onChange={(e) => setFormData(prev => ({ ...prev, instagram_handle: e.target.value }))}
-                      placeholder="@yourusername"
-                    />
-                  ) : (
-                    <p className="text-gray-700">
-                      {profile.instagram_handle || 'No Instagram handle added'}
-                    </p>
-                  )}
-                </div>
-
-                {/* TikTok Handle */}
-                <div>
-                  <label className={`text-sm font-medium text-gray-700 ${isEditing ? 'mb-2' : 'mb-3'} block`}>TikTok</label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.tiktok_handle}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tiktok_handle: e.target.value }))}
-                      placeholder="@yourusername"
-                    />
-                  ) : (
-                    <p className="text-gray-700">
-                      {profile.tiktok_handle || 'No TikTok handle added'}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Save/Cancel buttons */}
-          {isEditing && (
-            <div className="flex gap-2 pt-4">
-              <Button 
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-red-600 hover:bg-red-700 flex-1"
-              >
-                {saving ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                ) : (
-                  <><Save className="w-4 h-4 mr-2" />Save Changes</>
-                )}
-              </Button>
-              <Button 
-                onClick={handleCancel}
-                variant="outline"
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-            </div>
-          )}
-
-          {error && (
-            <p className="text-red-600 text-sm">{error}</p>
-          )}
-        </CardContent>
-      </Card>
-
-        {/* Gallery Settings Card */}
-        <Card className="mb-5">
-          <CardHeader className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center">
-                <Upload className="w-5 h-5 mr-2 text-red-600" />
-                Gallery Settings
-              </CardTitle>
-              {hasUnsavedChanges && (
                 <Button
-                  onClick={handleSaveGallery}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => setIsEditing(!isEditing)}
+                  variant={isEditing ? "outline" : "default"}
+                  className={isEditing ? "" : "bg-red-600 hover:bg-red-700"}
+                  disabled={saving}
                 >
-                  <Save className="w-3 h-3 mr-1" />
-                  Save Gallery
+                  <Edit className="w-4 h-4 mr-2" />
+                  {isEditing ? "Cancel" : "Edit Profile"}
                 </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6 p-4 sm:p-6">
-            {/* Upload Progress */}
-            {uploadProgress.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-semibold text-gray-900">Upload Progress</h4>
-                {uploadProgress.map((progress, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium truncate max-w-48">{progress.file.name}</span>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        progress.status === 'success' ? 'bg-green-100 text-green-800' :
-                        progress.status === 'error' ? 'bg-red-100 text-red-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {progress.status === 'success' ? 'Complete' :
-                         progress.status === 'error' ? 'Failed' :
-                         'Uploading'}
-                      </span>
-                    </div>
-                    {progress.status === 'uploading' && (
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${progress.progress}%` }}
-                        />
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 space-y-5">
+              <div className={`${isEditing ? "" : "pointer-events-none opacity-60"} max-w-3xl`}>
+                <BusinessFormFields
+                  formData={profileFormData}
+                  setFormData={setProfileFormData}
+                  additionalServices={additionalServices}
+                  setAdditionalServices={setAdditionalServices}
+                  logoImage={logoImage}
+                  setLogoImage={setLogoImage}
+                  galleryImages={localGalleryImages}
+                  setGalleryImages={updateGalleryImages}
+                  services={formServices}
+                  setServices={setFormServices}
+                  isUploading={isUploading}
+                  onUploadImages={handleImageUpload}
+                  showServices={true}
+                />
+              </div>
+
+              {uploadProgress.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-gray-900">Upload Progress</h4>
+                  {uploadProgress.map((progress, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium truncate max-w-48">{progress.file.name}</span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          progress.status === 'success' ? 'bg-green-100 text-green-800' :
+                          progress.status === 'error' ? 'bg-red-100 text-red-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {progress.status === 'success' ? 'Complete' :
+                          progress.status === 'error' ? 'Failed' :
+                          'Uploading'}
+                        </span>
                       </div>
-                    )}
-                    {progress.status === 'error' && progress.error && (
-                      <p className="text-xs text-red-600 mt-1">{progress.error}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Upload Errors */}
-            {uploadError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-red-800">{uploadError}</p>
-              </div>
-            )}
-
-            {/* Current Gallery */}
-            <div>
-              <div className="mb-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-gray-900">
-                    Current Gallery ({localGalleryImages.length || 0}/20)
-                  </h4>
-                  {localGalleryImages.length > 0 && (
-                    <p className="text-xs text-gray-500 hidden sm:block">Drag images to reorder</p>
-                  )}
-                </div>
-                {localGalleryImages.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-1 sm:hidden">Drag images to reorder</p>
-                )}
-              </div>
-              <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
-                {loading && !profile ? (
-                  <div className="col-span-3">
-                    <DashboardGallerySkeleton />
-                  </div>
-                ) : localGalleryImages.length ? (
-                  localGalleryImages.map((imageUrl, index) => (
-                    <div 
-                      key={`${imageUrl}-${index}`} 
-                      className={`relative group aspect-square rounded-lg overflow-hidden cursor-move transition-all duration-200 ${
-                        draggedImageIndex === index ? 'opacity-50 scale-95' : ''
-                      } ${
-                        dragOverImageIndex === index ? 'ring-2 ring-red-400 scale-105' : ''
-                      }`}
-                      draggable
-                      onDragStart={(e) => handleImageDragStart(e, index)}
-                      onDragOver={(e) => handleImageDragOver(e, index)}
-                      onDragLeave={handleImageDragLeave}
-                      onDrop={(e) => handleImageDrop(e, index)}
-                      onDragEnd={handleImageDragEnd}
-                      title="Drag to reorder"
-                    >
-                      <img 
-                        src={imageUrl}
-                        alt={`Gallery image ${index + 1}`}
-                        className="w-full h-full object-cover bg-gray-200 pointer-events-none"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = `/placeholder.svg?height=200&width=200&text=Error`
-                        }}
-                      />
-                      {/* Delete button on hover */}
-                      <button 
-                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700 z-10"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleImageDelete(imageUrl, index)
-                        }}
-                        disabled={isUploading || saving}
-                        title="Delete image"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                      {/* Drag handle indicator */}
-                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        #{index + 1}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-span-3 text-center py-8 text-gray-500">
-                    <ImageIcon className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm">No images uploaded yet</p>
-                    <p className="text-xs">Start building your portfolio by uploading images below</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Add New Images */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Add New Images</h4>
-              
-              {/* Unified drag and drop area with button inside */}
-              <div 
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  isDragOver 
-                    ? 'border-red-400 bg-red-50' 
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragOver ? 'text-red-500' : 'text-gray-400'}`} />
-                <h5 className="text-lg font-medium text-gray-900 mb-2">
-                  {isDragOver ? 'Drop your images here' : 'Select Gallery Images'}
-                </h5>
-                <p className="text-sm text-gray-500 mb-4">
-                  {isDragOver 
-                    ? 'Release to stage your images for preview' 
-                    : 'Drag and drop images here, or click the button below to preview before uploading'
-                  }
-                </p>
-                
-                {/* Clean file upload button */}
-                <label 
-                  htmlFor="portfolio-file-input"
-                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 py-2 text-red-600 border-red-600 hover:bg-red-50 cursor-pointer ${
-                    (isUploading || saving || localGalleryImages.length >= 20) 
-                      ? 'opacity-50 cursor-not-allowed pointer-events-none' 
-                      : ''
-                  }`}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Select Images
-                    </>
-                  )}
-                </label>
-                
-                <p className="text-xs text-gray-400 mt-3">
-                  <span className="font-medium text-gray-600">Tip:</span> Images will be staged for preview first. Hold Ctrl (Windows) or Cmd (Mac) to select multiple files at once.<br/>
-                  JPG, PNG or GIF. Max 5MB per image. Up to 20 images total.
-                </p>
-              </div>
-              
-              {/* Clean hidden file input */}
-              <input
-                id="portfolio-file-input"
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/jpg,image/png,image/gif"
-                onChange={handleFileSelect}
-                className="hidden"
-                multiple
-              />
-            </div>
-
-            {/* Gallery Tips */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h5 className="font-medium text-blue-900 mb-2">Gallery Tips</h5>
-              <ul className="text-xs text-blue-800 space-y-1">
-                <li>• Upload high-quality images of your best work</li>
-                <li>• Show variety in your styles and techniques</li>
-                <li>• Include before and after photos when possible</li>
-                <li>• Keep images well-lit and professionally shot</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-
-      {/* Services Management */}
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <Scissors className="w-5 h-5 mr-2 text-red-600" />
-              Services
-            </CardTitle>
-            <Dialog open={isServiceModalOpen} onOpenChange={(open) => {
-              setIsServiceModalOpen(open)
-              if (!open) {
-                setIsServiceDragOver(false)
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button 
-                  onClick={openAddServiceModal}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Service
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingService ? 'Edit Service' : 'Add New Service'}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {/* Service Image Upload */}
-                  <div>
-                    <Label>Service Image</Label>
-                    <div className="mt-2">
-                      {serviceImagePreview ? (
-                        <div 
-                          className={`flex items-center gap-4 rounded-lg border-2 border-dashed transition-colors ${
-                            isServiceDragOver ? 'border-red-400 bg-red-50' : 'border-transparent'
-                          }`}
-                          onDragOver={handleServiceDragOver}
-                          onDragLeave={handleServiceDragLeave}
-                          onDrop={handleServiceDrop}
-                        >
-                          <img
-                            src={serviceImagePreview}
-                            alt="Service preview"
-                            className="w-32 aspect-square object-cover rounded-lg border"
+                      {progress.status === 'uploading' && (
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${progress.progress}%` }}
                           />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={triggerServiceImageSelect}
-                            className="bg-white/90 hover:bg-white"
-                          >
-                            <Upload className="w-3 h-3 mr-1" />
-                            Change
-                          </Button>
-                          {isServiceDragOver && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-red-50/90 rounded-lg">
-                              <p className="text-red-600 font-medium">Drop new image</p>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div 
-                            onDragOver={handleServiceDragOver}
-                            onDragLeave={handleServiceDragLeave}
-                            onDrop={handleServiceDrop}
-                            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                              isServiceDragOver 
-                                ? 'border-red-400 bg-red-50' 
-                                : 'border-gray-300 hover:border-gray-400'
-                            }`}
-                          >
-                            <Upload className={`w-8 h-8 mx-auto mb-2 ${
-                              isServiceDragOver ? 'text-red-500' : 'text-gray-400'
-                            }`} />
-                            <p className={`text-sm mb-3 ${
-                              isServiceDragOver ? 'text-red-600' : 'text-gray-500'
-                            }`}>
-                              {isServiceDragOver ? 'Drop image here' : 'Drag and drop an image here, or click the button below'}
-                            </p>
-                            
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={triggerServiceImageSelect}
-                              className="text-red-600 border-red-600 hover:bg-red-50"
-                            >
-                              <Upload className="w-4 h-4 mr-2" />
-                              Select Image
-                            </Button>
-                            
-                            <p className="text-xs text-gray-400 mt-3">JPG, PNG or GIF. Max 5MB.</p>
-                          </div>
                         </div>
                       )}
-                      <input
-                        ref={serviceImageInputRef}
-                        type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/gif"
-                        onChange={handleServiceImageSelect}
-                        className="hidden"
-                      />
+                      {progress.status === 'error' && progress.error && (
+                        <p className="text-xs text-red-600 mt-1">{progress.error}</p>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Service Name */}
-                  <div>
-                    <Label htmlFor="service-name">Service Name</Label>
-                    <Input
-                      id="service-name"
-                      value={serviceForm.name}
-                      onChange={(e) => setServiceForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g. Box Braids, Silk Press"
-                    />
-                  </div>
-
-                  {/* Price and Duration */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="service-price">Price (£)</Label>
-                      <Input
-                        id="service-price"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={serviceForm.price}
-                        onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                        placeholder="100"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="service-duration">Duration (minutes)</Label>
-                      <Input
-                        id="service-duration"
-                        type="number"
-                        min="15"
-                        step="15"
-                        value={serviceForm.duration}
-                        onChange={(e) => setServiceForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
-                        placeholder="60"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Modal Actions */}
-                  <div className="flex gap-2 pt-4">
-                    <Button 
-                      onClick={handleSaveService}
-                      className="bg-red-600 hover:bg-red-700 flex-1"
-                      disabled={!serviceForm.name || serviceForm.price <= 0 || serviceForm.duration <= 0}
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      {editingService ? 'Update Service' : 'Add Service'}
-                    </Button>
-                    <Button 
-                      onClick={() => setIsServiceModalOpen(false)}
-                      variant="outline"
-                      disabled={false}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              </DialogContent>
-            </Dialog>
+              )}
+
+              {isEditing && (
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="bg-red-600 hover:bg-red-700 flex-1"
+                  >
+                    {saving ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                    ) : (
+                      <><Save className="w-4 h-4 mr-2" />Save Changes</>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+
+              {error && (
+                <p className="text-red-600 text-sm">{error}</p>
+              )}
+
+              {uploadError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-800">{uploadError}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           </div>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          {servicesError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start space-x-2">
-              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-red-800">{servicesError}</p>
-            </div>
-          )}
-          
-          {servicesLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-red-600" />
-              <span className="ml-2 text-gray-600">Loading services...</span>
-            </div>
-          ) : services.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.map((service) => (
-                <div key={service.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    {/* Service Image - 1:1 aspect ratio */}
-                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                      <img
-                        src={service.image_url || '/placeholder.svg?height=200&width=200&text=Service'}
-                        alt={service.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = '/placeholder.svg?height=200&width=200&text=Service'
-                        }}
-                      />
-                    </div>
-
-                    {/* Service Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <h4 className="font-semibold text-gray-900 text-base">{service.name}</h4>
-                        {/* Service Actions */}
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditServiceModal(service)}
-                            className="h-6 w-6 p-0"
-                            disabled={servicesSaving}
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteService(service.id)}
-                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            disabled={servicesSaving}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center text-gray-500">
-                        <span className="text-sm">{formatDuration(service.duration)}</span>
-                      </div>
-                      
-                      <div className="flex items-center text-gray-500">
-                        <span className="font-medium text-gray-700 text-sm">£{service.price}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Scissors className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Services Added</h3>
-              <p className="text-gray-500 mb-4">Start by adding your first service to showcase what you offer.</p>
-              <Button 
-                onClick={openAddServiceModal}
-                className="bg-red-600 hover:bg-red-700"
-                disabled={servicesSaving}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Service
-              </Button>
-            </div>
-          )}
-
-          {/* Delete Confirmation Dialog */}
-          {showDeleteConfirm && (
-            <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
-              <DialogContent className="max-w-sm">
-                <DialogHeader>
-                  <DialogTitle>Delete Service</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">Are you sure you want to delete this service? This action cannot be undone.</p>
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      onClick={() => confirmDeleteService(showDeleteConfirm)}
-                      className="bg-red-600 hover:bg-red-700 flex-1"
-                      disabled={servicesSaving}
-                    >
-                      {servicesSaving ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>
-                      ) : (
-                        'Delete Service'
-                      )}
-                    </Button>
-                    <Button 
-                      onClick={() => setShowDeleteConfirm(null)}
-                      variant="outline"
-                      disabled={servicesSaving}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </CardContent>
-      </Card>
         </TabsContent>
       </Tabs>
     </div>

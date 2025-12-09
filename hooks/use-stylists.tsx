@@ -23,6 +23,15 @@ export interface StylistProfile {
   instagram_handle?: string
   tiktok_handle?: string
   portfolio_images?: string[]
+  // Additional fields for form editing
+  first_name?: string
+  last_name?: string
+  business_type?: string
+  year_started?: number | null
+  accepts_same_day?: boolean | null
+  accepts_mobile?: boolean | null
+  logo_url?: string
+  additional_services?: string[]
 }
 
 export function useStylists() {

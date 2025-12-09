@@ -12,11 +12,13 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check } from "lucide-react"
+import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check, Eye, Mail, Phone, Calendar, Briefcase } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 import { useAuth } from "@/hooks/use-auth"
+import { formatDistanceToNow, format } from "date-fns"
+import { BusinessFormFields, BusinessFormData, ServiceItem, initialBusinessFormData } from "@/components/business-form-fields"
 
 const SPECIALTY_CATEGORIES = [
   "Wigs",
@@ -25,6 +27,18 @@ const SPECIALTY_CATEGORIES = [
   "Natural Hair",
   "Bridal Hair",
   "Silk Press"
+]
+
+const ADDITIONAL_SERVICES = [
+  "Wigs",
+  "Braids",
+  "Locs",
+  "Natural Hair",
+  "Bridal Hair",
+  "Silk Press",
+  "Sew-Ins",
+  "Butterfly Locs",
+  "Ponytails"
 ]
 
 // Interface for pending stylists from database
@@ -43,6 +57,13 @@ interface PendingStylist {
   verification_status: string
   submitted_at: string
   user_id: string | null
+  booking_link: string | null
+  instagram_handle: string | null
+  tiktok_handle: string | null
+  business_type: string | null
+  accepts_same_day: boolean | null
+  accepts_mobile: boolean | null
+  additional_services: string[] | null
 }
 
 export function AdminDashboard() {
@@ -58,6 +79,13 @@ export function AdminDashboard() {
   const [hasFetchedStylists, setHasFetchedStylists] = useState(false)
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [selectedStylist, setSelectedStylist] = useState<PendingStylist | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
+
+  // Edit mode state
+  const [editingStylistId, setEditingStylistId] = useState<string | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [loadingEditData, setLoadingEditData] = useState(false)
 
   // Fetch pending verification stylists
   const fetchPendingStylists = useCallback(async () => {
@@ -184,19 +212,17 @@ export function AdminDashboard() {
   const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   
-  // Form state for creating new stylist - matches stylist dashboard form
-  const [formData, setFormData] = useState({
-    business_name: '',
-    bio: '',
-    location: '',
-    specialties: '',
-    years_experience: 0,
-    booking_link: '',
-    phone: '',
-    contact_email: '',
-    instagram_handle: '',
-    tiktok_handle: ''
-  })
+  // Form state for creating new stylist - uses shared type
+  const [formData, setFormData] = useState<BusinessFormData>(initialBusinessFormData)
+
+  // Additional services state
+  const [additionalServices, setAdditionalServices] = useState<string[]>([])
+
+  // Logo state
+  const [logoImage, setLogoImage] = useState<string>('')
+
+  // Services state for shared component
+  const [formServices, setFormServices] = useState<ServiceItem[]>([])
 
   // Admin upload function that uses authenticated user for RLS compliance
   const adminUploadFiles = useCallback(async (files: FileList | File[]): Promise<string[]> => {
@@ -256,7 +282,9 @@ export function AdminDashboard() {
         .update({
           verification_status: 'approved',
           is_active: true,
-          is_verified: true
+          is_verified: true,
+          verified_at: new Date().toISOString(),
+          verified_by: user?.id
         })
         .eq('id', id)
 
@@ -267,6 +295,11 @@ export function AdminDashboard() {
 
       // Remove from pending list
       setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
+      // Close details modal if open
+      if (selectedStylist?.id === id) {
+        setShowDetailsModal(false)
+        setSelectedStylist(null)
+      }
       // Refresh all stylists if already loaded
       if (hasFetchedStylists) {
         fetchAllStylists()
@@ -278,14 +311,17 @@ export function AdminDashboard() {
     }
   }
 
-  const handleReject = async (id: string) => {
+  const handleReject = async (id: string, reason?: string) => {
     setRejectingId(id)
     try {
       const { error } = await supabase
         .from('stylist_profiles')
         .update({
           verification_status: 'rejected',
-          is_active: false
+          is_active: false,
+          verified_at: new Date().toISOString(),
+          verified_by: user?.id,
+          rejection_reason: reason || null
         })
         .eq('id', id)
 
@@ -296,6 +332,11 @@ export function AdminDashboard() {
 
       // Remove from pending list
       setStylists((prev) => prev.filter((stylist) => stylist.id !== id))
+      // Close details modal if open
+      if (selectedStylist?.id === id) {
+        setShowDetailsModal(false)
+        setSelectedStylist(null)
+      }
     } catch (err) {
       console.error('Error rejecting stylist:', err)
     } finally {
@@ -303,89 +344,113 @@ export function AdminDashboard() {
     }
   }
 
-  const setSpecialty = (specialty: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialties: specialty
-    }))
+  // Helper to format submission date
+  const formatSubmittedDate = (dateString: string | null) => {
+    if (!dateString) return 'Unknown'
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true })
+    } catch {
+      return 'Unknown'
+    }
+  }
+
+  // Open details modal
+  const openDetailsModal = (stylist: PendingStylist) => {
+    setSelectedStylist(stylist)
+    setShowDetailsModal(true)
   }
 
   const handleSaveStylist = async () => {
     setError('')
     setSuccess('')
     setSaving(true)
-    
+
     // Clear any previous stylist state when starting a new profile creation
     setCreatedStylist(null)
     setAccountCredentials(null)
-    
+
     try {
       // Validate required fields
+      if (!formData.first_name.trim() || !formData.last_name.trim()) {
+        throw new Error('First name and last name are required')
+      }
+
       if (!formData.business_name.trim()) {
         throw new Error('Business name is required')
       }
-      
+
+      if (!formData.contact_email.trim()) {
+        throw new Error('Email is required')
+      }
+
+      if (!formData.phone.trim()) {
+        throw new Error('Phone number is required')
+      }
+
       if (!formData.location.trim()) {
         throw new Error('Postcode is required')
       }
-      
+
+      if (!formData.business_type) {
+        throw new Error('Please select a location type')
+      }
+
       if (!formData.specialties) {
         throw new Error('Please select a specialty')
       }
-      
+
       if (!formData.bio.trim()) {
         throw new Error('Bio is required')
       }
-      
+
       // Validate postcode format (basic UK postcode validation)
       const postcodeRegex = /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i
       if (!postcodeRegex.test(formData.location.trim())) {
         throw new Error('Please enter a valid UK postcode (e.g., SW1A 1AA)')
       }
-      
-      // Validate email format if provided
-      if (formData.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
+
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
         throw new Error('Please enter a valid email address')
       }
-      
+
       // Validate URL format if provided
       if (formData.booking_link && !formData.booking_link.startsWith('http')) {
         throw new Error('Booking link must start with http:// or https://')
-      }
-      
-      // Create stylist profile data
-      const profileData = {
-        ...formData,
-        specialties: formData.specialties ? [formData.specialties] : [],
-        is_active: true, // New profiles are immediately active and visible
-        is_verified: true // Admin-created profiles are pre-verified
       }
 
       // Use the actual uploaded image URLs
       const portfolioImages = galleryImages
 
-      // First create a temporary user_id (in real implementation, this would come from user creation)
-      // For now, we'll create the profile without a user_id and admin can link it later
+      // Create profile with pending verification status
       const { data, error: insertError } = await supabase
         .from('stylist_profiles')
         .insert([
           {
-            business_name: profileData.business_name,
-            bio: profileData.bio,
-            location: profileData.location,
-            specialties: profileData.specialties,
-            years_experience: profileData.years_experience,
-            booking_link: profileData.booking_link,
-            phone: profileData.phone,
-            contact_email: profileData.contact_email,
-            instagram_handle: profileData.instagram_handle,
-            tiktok_handle: profileData.tiktok_handle,
-            is_active: true,
-            is_verified: true,
+            business_name: formData.business_name,
+            bio: formData.bio,
+            location: formData.location.toUpperCase(),
+            specialties: formData.specialties ? [formData.specialties] : [],
+            primary_specialty: formData.specialties,
+            additional_services: additionalServices,
+            year_started: formData.year_started ? parseInt(formData.year_started) : null,
+            booking_link: formData.booking_link || null,
+            phone: formData.phone,
+            contact_email: formData.contact_email,
+            instagram_handle: formData.instagram_handle || null,
+            tiktok_handle: formData.tiktok_handle || null,
+            business_type: formData.business_type,
+            accepts_same_day: formData.accepts_same_day,
+            accepts_mobile: formData.accepts_mobile,
+            logo_url: logoImage || null,
             portfolio_images: portfolioImages,
+            // Set to pending verification
+            verification_status: 'pending_verification',
+            submitted_at: new Date().toISOString(),
+            is_active: false,
+            is_verified: false,
             rating: 0,
             total_reviews: 0
-            // user_id will be null for now - admin can link it when generating login
           }
         ])
         .select()
@@ -428,43 +493,38 @@ export function AdminDashboard() {
         }
       }
       
-      let successMessage = `Stylist profile created successfully! Business: ${formData.business_name}.`
-      
+      let successMessage = `Stylist profile created and added to pending verification! Business: ${formData.business_name}.`
+
       if (galleryImages.length > 0) {
-        successMessage += ` ${galleryImages.length} portfolio images have been uploaded and saved.`
+        successMessage += ` ${galleryImages.length} portfolio images saved.`
       }
-      
+
       if (mockServices.length > 0) {
         if (servicesSaveFailed) {
-          successMessage += ` ${mockServices.length} services were configured but could not be saved to database (${servicesFailReason}). Profile created successfully.`
+          successMessage += ` ${mockServices.length} services were configured but could not be saved to database (${servicesFailReason}).`
         } else {
-          successMessage += ` ${mockServices.length} services have been added to the profile.`
+          successMessage += ` ${mockServices.length} services added.`
         }
       }
-      
-      successMessage += ` You can now generate login credentials using the Account Access section.`
-      
+
+      successMessage += ` You can approve it from the Pending tab or generate login credentials below.`
+
       setSuccess(successMessage)
 
       // Store created stylist data for account generation
       setCreatedStylist(data[0])
       setAccountCredentials(null) // Reset any previous credentials
-      
+
+      // Refresh pending stylists list
+      fetchPendingStylists()
+
       // Reset form and clear all images
-      setFormData({
-        business_name: '',
-        bio: '',
-        location: '',
-        specialties: '',
-        years_experience: 0,
-        booking_link: '',
-        phone: '',
-        contact_email: '',
-        instagram_handle: '',
-        tiktok_handle: ''
-      })
-      
-      // Clear all uploaded images and services after successful profile creation
+      setFormData(initialBusinessFormData)
+
+      // Clear additional state
+      setAdditionalServices([])
+      setLogoImage('')
+      setFormServices([])
       setGalleryImages([])
       setProfilePhoto('')
       setServiceImageFile(null)
@@ -702,7 +762,239 @@ Please change your password after first login.`
     setTableAccountCredentials(null)
     setTableAccountError('')
   }
-  
+
+  // Load a stylist for editing
+  const loadStylistForEdit = async (stylist: any) => {
+    setLoadingEditData(true)
+    setError('')
+
+    try {
+      // Fetch services for this stylist
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select('*')
+        .eq('stylist_id', stylist.id)
+        .order('created_at', { ascending: false })
+
+      // Populate form with stylist data
+      const resolvedYearStarted = stylist.year_started
+        ? String(stylist.year_started)
+        : stylist.years_experience
+          ? String(new Date().getFullYear() - stylist.years_experience)
+          : ''
+
+      setFormData({
+        first_name: stylist.first_name || '',
+        last_name: stylist.last_name || '',
+        business_name: stylist.business_name || '',
+        contact_email: stylist.contact_email || '',
+        phone: stylist.phone || '',
+        instagram_handle: stylist.instagram_handle || '',
+        tiktok_handle: stylist.tiktok_handle || '',
+        location: stylist.location || '',
+        business_type: stylist.business_type || '',
+        specialties: (stylist.specialties && stylist.specialties.length > 0) ? stylist.specialties[0] : '',
+        bio: stylist.bio || '',
+        year_started: resolvedYearStarted,
+        booking_link: stylist.booking_link || '',
+        accepts_same_day: stylist.accepts_same_day ?? null,
+        accepts_mobile: stylist.accepts_mobile ?? null,
+      })
+
+      setAdditionalServices(stylist.additional_services || [])
+      setLogoImage(stylist.logo_url || '')
+      setGalleryImages(stylist.portfolio_images || [])
+
+      // Load services if available
+      if (servicesData && !servicesError) {
+        setMockServices(servicesData.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          price: s.price,
+          duration: s.duration,
+          image_url: s.image_url || ''
+        })))
+      } else {
+        setMockServices([])
+      }
+
+      // Set edit mode
+      setEditingStylistId(stylist.id)
+      setIsEditMode(true)
+      setActiveTab('create')
+
+    } catch (err: any) {
+      setError('Failed to load stylist data for editing')
+    } finally {
+      setLoadingEditData(false)
+    }
+  }
+
+  // Reset edit mode and clear form
+  const resetEditMode = () => {
+    setIsEditMode(false)
+    setEditingStylistId(null)
+    setFormData(initialBusinessFormData)
+    setAdditionalServices([])
+    setLogoImage('')
+    setGalleryImages([])
+    setMockServices([])
+    setError('')
+    setSuccess('')
+  }
+
+  // Update existing stylist
+  const handleUpdateStylist = async () => {
+    if (!editingStylistId) return
+
+    setError('')
+    setSuccess('')
+    setSaving(true)
+
+    try {
+      // Validate required fields
+      if (!formData.first_name.trim() || !formData.last_name.trim()) {
+        throw new Error('First name and last name are required')
+      }
+
+      if (!formData.business_name.trim()) {
+        throw new Error('Business name is required')
+      }
+
+      if (!formData.contact_email.trim()) {
+        throw new Error('Email is required')
+      }
+
+      if (!formData.phone.trim()) {
+        throw new Error('Phone number is required')
+      }
+
+      if (!formData.location.trim()) {
+        throw new Error('Postcode is required')
+      }
+
+      if (!formData.business_type) {
+        throw new Error('Please select a location type')
+      }
+
+      if (!formData.specialties) {
+        throw new Error('Please select a specialty')
+      }
+
+      if (!formData.bio.trim()) {
+        throw new Error('Bio is required')
+      }
+
+      // Validate postcode format (basic UK postcode validation)
+      const postcodeRegex = /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i
+      if (!postcodeRegex.test(formData.location.trim())) {
+        throw new Error('Please enter a valid UK postcode (e.g., SW1A 1AA)')
+      }
+
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
+        throw new Error('Please enter a valid email address')
+      }
+
+      // Validate URL format if provided
+      if (formData.booking_link && !formData.booking_link.startsWith('http')) {
+        throw new Error('Booking link must start with http:// or https://')
+      }
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('stylist_profiles')
+        .update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          business_name: formData.business_name,
+          bio: formData.bio,
+          location: formData.location.toUpperCase(),
+          specialties: formData.specialties ? [formData.specialties] : [],
+          primary_specialty: formData.specialties,
+          additional_services: additionalServices,
+          year_started: formData.year_started ? parseInt(formData.year_started) : null,
+          booking_link: formData.booking_link || null,
+          phone: formData.phone,
+          contact_email: formData.contact_email,
+          instagram_handle: formData.instagram_handle || null,
+          tiktok_handle: formData.tiktok_handle || null,
+          business_type: formData.business_type,
+          accepts_same_day: formData.accepts_same_day,
+          accepts_mobile: formData.accepts_mobile,
+          logo_url: logoImage || null,
+          portfolio_images: galleryImages,
+        })
+        .eq('id', editingStylistId)
+
+      if (updateError) {
+        throw new Error(`Database error: ${updateError.message || updateError.details || 'Unknown database error'}`)
+      }
+
+      // Update services
+      // First get existing services
+      const { data: existingServices } = await supabase
+        .from('services')
+        .select('id')
+        .eq('stylist_id', editingStylistId)
+
+      const existingIds = new Set((existingServices || []).map(s => s.id))
+      const newServiceIds = new Set(mockServices.map(s => s.id))
+
+      // Delete removed services
+      const toDelete = [...existingIds].filter(id => !newServiceIds.has(id))
+      if (toDelete.length > 0) {
+        await supabase
+          .from('services')
+          .delete()
+          .in('id', toDelete)
+      }
+
+      // Update or insert services
+      for (const service of mockServices) {
+        if (existingIds.has(service.id)) {
+          // Update existing service
+          await supabase
+            .from('services')
+            .update({
+              name: service.name,
+              price: service.price,
+              duration: service.duration,
+              image_url: service.image_url || null
+            })
+            .eq('id', service.id)
+        } else {
+          // Insert new service
+          await supabase
+            .from('services')
+            .insert({
+              stylist_id: editingStylistId,
+              name: service.name,
+              price: service.price,
+              duration: service.duration,
+              image_url: service.image_url || null
+            })
+        }
+      }
+
+      setSuccess(`Stylist profile "${formData.business_name}" updated successfully!`)
+
+      // Refresh stylists list
+      fetchAllStylists()
+
+      // Reset edit mode after short delay to show success message
+      setTimeout(() => {
+        resetEditMode()
+        setActiveTab('manage')
+      }, 1500)
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to update stylist profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Service state - similar to stylist dashboard
   const [serviceForm, setServiceForm] = useState({
     name: '',
@@ -995,18 +1287,10 @@ Please change your password after first login.`
   }, [])
 
   const handleCancel = () => {
-    setFormData({
-      business_name: '',
-      bio: '',
-      location: '',
-      specialties: '',
-      years_experience: 0,
-      booking_link: '',
-      phone: '',
-      contact_email: '',
-      instagram_handle: '',
-      tiktok_handle: ''
-    })
+    setFormData(initialBusinessFormData)
+    setAdditionalServices([])
+    setLogoImage('')
+    setFormServices([])
     setError('')
     setSuccess('')
     // Also reset image state
@@ -1015,6 +1299,10 @@ Please change your password after first login.`
     setServiceImageFile(null)
     setServiceImagePreview('')
   }
+
+  const hasCreatedProfile = !!createdStylist
+  const loginAlreadyGenerated = !!accountCredentials
+  const disableGenerateLogin = !createdStylist || generatingAccount || loginAlreadyGenerated
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1060,8 +1348,8 @@ Please change your password after first login.`
             value="create"
             className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
-            Create Stylist
+            {isEditMode ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {isEditMode ? 'Edit Stylist' : 'Create Stylist'}
           </TabsTrigger>
         </TabsList>
 
@@ -1214,23 +1502,35 @@ Please change your password after first login.`
 
                             <div className="p-4">
                               <div className="flex items-center justify-between mb-2">
-                                <h3 className="font-semibold text-lg text-gray-900">{stylist.business_name}</h3>
-                                <div className="flex items-center gap-1">
-                                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                  <span className="font-medium text-gray-700 text-sm">New</span>
-                                  <span className="text-gray-500 text-sm">(0)</span>
-                                </div>
+                                <h3 className="font-semibold text-lg text-gray-900 truncate">{stylist.business_name}</h3>
                               </div>
 
-                              <div className="flex items-center text-gray-600 mb-3">
-                                <MapPin className="w-4 h-4 mr-1" />
-                                <span className="text-sm">{stylist.location}</span>
+                              <div className="flex items-center text-gray-600 mb-2">
+                                <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                                <span className="text-sm truncate">{stylist.location}</span>
                               </div>
 
-                              <div className="mb-3">
-                                <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
-                                  {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]} Specialist` : 'Hair Specialist'}
+                              <div className="flex items-center text-gray-500 mb-3">
+                                <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
+                                <span className="text-xs">Submitted {formatSubmittedDate(stylist.submitted_at)}</span>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
+                                  {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]}` : 'Hair'}
                                 </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    openDetailsModal(stylist)
+                                  }}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  Details
+                                </Button>
                               </div>
                             </div>
                           </CardContent>
@@ -1318,23 +1618,40 @@ Please change your password after first login.`
 
                         <div className="p-4">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold text-lg text-gray-900">{stylist.business_name}</h3>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="font-medium text-gray-700 text-sm">New</span>
-                              <span className="text-gray-500 text-sm">(0)</span>
-                            </div>
+                            <h3 className="font-semibold text-lg text-gray-900 truncate">{stylist.business_name}</h3>
                           </div>
 
-                          <div className="flex items-center text-gray-600 mb-3">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            <span className="text-sm">{stylist.location}</span>
+                          <div className="flex items-center text-gray-600 mb-2">
+                            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                            <span className="text-sm truncate">{stylist.location}</span>
                           </div>
 
-                          <div className="mb-3">
-                            <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
-                              {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]} Specialist` : 'Hair Specialist'}
+                          <div className="flex items-center text-gray-500 mb-2">
+                            <Mail className="w-4 h-4 mr-1 flex-shrink-0" />
+                            <span className="text-xs truncate">{stylist.contact_email}</span>
+                          </div>
+
+                          <div className="flex items-center text-gray-500 mb-3">
+                            <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
+                            <span className="text-xs">Submitted {formatSubmittedDate(stylist.submitted_at)}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
+                              {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]}` : 'Hair'}
                             </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openDetailsModal(stylist)
+                              }}
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              Details
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -1450,7 +1767,10 @@ Please change your password after first login.`
                             <tr key={stylist.id} className="hover:bg-gray-50">
                               {/* Stylist Info */}
                               <td className="p-4">
-                                <div className="flex items-center space-x-3">
+                                <button
+                                  className="flex items-center space-x-3 text-left w-full hover:opacity-90 transition-opacity"
+                                  onClick={() => window.open(`/stylist/${stylist.id}`, '_blank')}
+                                >
                                   <Avatar className="w-10 h-10">
                                     <AvatarImage src={stylist.portfolio_images?.[0]} />
                                     <AvatarFallback>
@@ -1465,7 +1785,7 @@ Please change your password after first login.`
                                       {stylist.specialties?.[0] || 'No specialty'}
                                     </div>
                                   </div>
-                                </div>
+                                </button>
                               </td>
 
                               {/* Contact */}
@@ -1541,26 +1861,18 @@ Please change your password after first login.`
                                       Reset Password
                                     </Button>
                                   )}
-                                  
+
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      window.open(`/stylist/${stylist.id}`, '_blank')
-                                    }}
+                                    onClick={() => loadStylistForEdit(stylist)}
+                                    disabled={loadingEditData}
                                   >
-                                    <ExternalLink className="w-3 h-3 mr-1" />
-                                    View
-                                  </Button>
-                                  
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      alert('Edit functionality will be added to the Create tab')
-                                    }}
-                                  >
-                                    <Edit className="w-3 h-3 mr-1" />
+                                    {loadingEditData ? (
+                                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    ) : (
+                                      <Edit className="w-3 h-3 mr-1" />
+                                    )}
                                     Edit
                                   </Button>
 
@@ -1727,756 +2039,439 @@ Please change your password after first login.`
         </TabsContent>
 
         <TabsContent value="create" className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start space-x-2">
-              <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex items-start space-x-2">
-              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-green-800">{success}</p>
-            </div>
-          )}
-
-          {/* Profile Information Card */}
-          <Card className="mb-5">
+          {/* Container styled like profile tab */}
+          <Card className="shadow-sm">
             <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center">
-                  <Settings className="w-5 h-5 mr-2 text-red-600" />
-                  Profile Information
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-8 p-4 sm:p-6">
-              {/* 1. LOGO SECTION */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Logo</h3>
-                <div className="flex items-center space-x-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={`/placeholder.svg?height=100&width=100&text=${encodeURIComponent(formData.business_name || 'Business')}`} />
-                    <AvatarFallback>{(formData.business_name || 'Business').split(" ").map((n) => n[0]).join("")}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-sm mb-2"
-                      onClick={triggerProfilePhotoSelect}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Change Photo
-                    </Button>
-                    <input
-                      ref={profilePhotoInputRef}
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/gif"
-                      onChange={handleProfilePhotoSelect}
-                      className="hidden"
-                    />
-                    <p className="text-xs text-gray-400">JPG, PNG or GIF. Max 5MB.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. TWO COLUMN LAYOUT */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Column - Basic Information */}
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Basic Information</h3>
-                  <div className="space-y-5">
-                    {/* Business Name */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Business Name <span className="text-red-500">*</span></label>
-                      <Input
-                        value={formData.business_name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
-                        placeholder="Your business name"
-                      />
-                    </div>
-
-                    {/* Location */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Postcode <span className="text-red-500">*</span></label>
-                      <Input
-                        value={formData.location}
-                        onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value.toUpperCase() }))}
-                        placeholder="SW1A 1AA"
-                        maxLength={8}
-                        pattern="[A-Z]{1,2}[0-9]{1,2}[A-Z]?\s?[0-9][A-Z]{2}"
-                        title="Please enter a valid UK postcode (e.g., SW1A 1AA)"
-                      />
-                    </div>
-
-                    {/* Specialties */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Specialty <span className="text-red-500">*</span></label>
-                      <Select
-                        value={formData.specialties}
-                        onValueChange={setSpecialty}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your specialty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SPECIALTY_CATEGORIES.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Bio */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Bio <span className="text-red-500">*</span></label>
-                      <Textarea
-                        value={formData.bio}
-                        onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                        placeholder="Tell clients about yourself and your services..."
-                        rows={4}
-                        className="resize-none"
-                      />
-                    </div>
-
-                    {/* Experience */}
-                    <div>
-                      <label htmlFor="experience" className="text-sm font-medium text-gray-700 mb-2 block">Years of Experience</label>
-                      <Input
-                        id="experience"
-                        type="number"
-                        min="0"
-                        value={formData.years_experience}
-                        onChange={(e) => setFormData(prev => ({ ...prev, years_experience: parseInt(e.target.value) || 0 }))}
-                        placeholder="Years"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column - Contact Details */}
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Details</h3>
-                  <div className="space-y-5">
-                    {/* Booking Link */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Booking Link</label>
-                      <Input
-                        value={formData.booking_link}
-                        onChange={(e) => setFormData(prev => ({ ...prev, booking_link: e.target.value }))}
-                        placeholder="https://your-booking-site.com"
-                        type="url"
-                      />
-                    </div>
-
-                    {/* Phone Number */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Phone Number</label>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="Your phone number"
-                        type="tel"
-                      />
-                    </div>
-
-                    {/* Contact Email */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Contact Email</label>
-                      <Input
-                        value={formData.contact_email}
-                        onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
-                        placeholder="contact@yourbusiness.com"
-                        type="email"
-                      />
-                    </div>
-
-                    {/* Instagram Handle */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Instagram</label>
-                      <Input
-                        value={formData.instagram_handle}
-                        onChange={(e) => setFormData(prev => ({ ...prev, instagram_handle: e.target.value }))}
-                        placeholder="@yourusername"
-                      />
-                    </div>
-
-                    {/* TikTok Handle */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">TikTok</label>
-                      <Input
-                        value={formData.tiktok_handle}
-                        onChange={(e) => setFormData(prev => ({ ...prev, tiktok_handle: e.target.value }))}
-                        placeholder="@yourusername"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-          </CardContent>
-        </Card>
-
-          {/* Gallery Settings Card */}
-          <Card className="mb-5">
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center">
-                  <Upload className="w-5 h-5 mr-2 text-red-600" />
-                  Gallery Settings
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6 p-4 sm:p-6">
-              {/* Current Gallery */}
-              <div>
-                <div className="mb-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-gray-900">
-                      Current Gallery ({galleryImages.length}/20)
-                    </h4>
-                    {galleryImages.length > 0 && (
-                      <p className="text-xs text-gray-500 hidden sm:block">Drag images to reorder</p>
-                    )}
-                  </div>
-                  {galleryImages.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-1 sm:hidden">Drag images to reorder</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
-                  {galleryImages.length === 0 ? (
-                    <div className="col-span-3 lg:col-span-5 text-center py-8 text-gray-500">
-                      <Image className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm">No images uploaded yet</p>
-                      <p className="text-xs">Start building your portfolio by uploading images below</p>
-                    </div>
-                  ) : (
-                    galleryImages.map((imageUrl, index) => (
-                      <div 
-                        key={`${imageUrl}-${index}`} 
-                        className={`relative group aspect-square rounded-lg overflow-hidden cursor-move transition-all duration-200 ${
-                          draggedImageIndex === index ? 'opacity-50 scale-95' : ''
-                        } ${
-                          dragOverImageIndex === index ? 'ring-2 ring-red-400 scale-105' : ''
-                        }`}
-                        draggable
-                        onDragStart={(e) => handleImageDragStart(e, index)}
-                        onDragOver={(e) => handleImageDragOver(e, index)}
-                        onDrop={(e) => handleImageDrop(e, index)}
-                        onDragEnd={handleImageDragEnd}
-                      >
-                        <img 
-                          src={imageUrl}
-                          alt={`Gallery image ${index + 1}`}
-                          className="w-full h-full object-cover bg-gray-200 pointer-events-none"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200" />
-                        
-                        {/* Position indicator */}
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                          {index + 1}
-                        </div>
-                        
-                        {/* Delete button */}
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleRemoveGalleryImage(index)
-                          }}
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Add New Images */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Add New Images</h4>
-                
-                <div 
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                    isDragOver 
-                      ? 'border-red-400 bg-red-50' 
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragOver ? 'text-red-500' : 'text-gray-400'}`} />
-                  <h5 className="text-lg font-medium text-gray-900 mb-2">
-                    {isDragOver ? 'Drop images here' : 'Select Gallery Images'}
-                  </h5>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Drag and drop images here, or click the button below to select files
-                  </p>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={triggerGalleryFileSelect}
-                    disabled={isUploading}
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Select Images
-                      </>
-                    )}
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/gif"
-                    multiple
-                    onChange={handleGalleryFileSelect}
-                    className="hidden"
-                  />
-                  
-                  <p className="text-xs text-gray-400 mt-3">
-                    <span className="font-medium text-gray-600">Tip:</span> Hold Ctrl (Windows) or Cmd (Mac) to select multiple files at once.<br/>
-                    JPG, PNG or GIF. Max 5MB each. Up to 20 images total.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Services Card */}
-          <Card>
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between flex-wrap gap-3">
                 <div>
                   <CardTitle className="flex items-center">
-                    <Scissors className="w-5 h-5 mr-2 text-red-600" />
-                    Services
+                    <Settings className="w-5 h-5 mr-2 text-red-600" />
+                    {isEditMode ? 'Edit Stylist Profile' : 'Create Stylist Profile'}
                   </CardTitle>
+                  <CardDescription className="mt-1">
+                    {isEditMode
+                      ? `Editing profile for ${formData.business_name || 'stylist'}. Make changes and save.`
+                      : 'Use the shared form layout to add a new stylist listing.'
+                    }
+                  </CardDescription>
                 </div>
-                <Dialog open={isServiceModalOpen} onOpenChange={(open) => {
-                  setIsServiceModalOpen(open)
-                  if (!open) {
-                    setIsServiceDragOver(false)
-                  }
-                }}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      onClick={openAddServiceModal}
-                      size="sm"
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Service
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {editingService ? 'Edit Service' : 'Add New Service'}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      {/* Service Image Upload */}
-                      <div>
-                        <Label>Service Image</Label>
-                        <div className="mt-2">
-                          {serviceImagePreview ? (
-                            <div 
-                              className={`flex items-center gap-4 rounded-lg border-2 border-dashed transition-colors ${
-                                isServiceDragOver ? 'border-red-400 bg-red-50' : 'border-transparent'
-                              }`}
-                              onDragOver={handleServiceDragOver}
-                              onDragLeave={handleServiceDragLeave}
-                              onDrop={handleServiceDrop}
-                            >
-                              <img
-                                src={serviceImagePreview}
-                                alt="Service preview"
-                                className="w-32 aspect-square object-cover rounded-lg border"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={triggerServiceImageSelect}
-                                className="bg-white/90 hover:bg-white"
-                              >
-                                <Upload className="w-3 h-3 mr-1" />
-                                Change
-                              </Button>
-                              {isServiceDragOver && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-red-50/90 rounded-lg">
-                                  <p className="text-red-600 font-medium">Drop new image</p>
-                                </div>
-                              )}
-                            </div>
+                {isEditMode && (
+                  <Button
+                    variant="outline"
+                    onClick={resetEditMode}
+                    disabled={saving}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel Edit
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
+                  <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start space-x-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-green-800">{success}</p>
+                </div>
+              )}
+
+              <div className="max-w-3xl">
+                <BusinessFormFields
+                  formData={formData}
+                  setFormData={setFormData}
+                  additionalServices={additionalServices}
+                  setAdditionalServices={setAdditionalServices}
+                  logoImage={logoImage}
+                  setLogoImage={setLogoImage}
+                  galleryImages={galleryImages}
+                  setGalleryImages={setGalleryImages}
+                  services={formServices}
+                  setServices={setFormServices}
+                  isUploading={isUploading}
+                  onUploadImages={adminUploadFiles}
+                  showServices={true}
+                />
+              </div>
+
+              {/* Account Access Section */}
+              <Card className="mt-2 max-w-3xl">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex items-center text-base">
+                    <Key className="w-4 h-4 mr-2 text-red-600" />
+                    {isEditMode ? 'Save Changes' : 'Account Access'}
+                </CardTitle>
+                  <CardDescription>
+                    {isEditMode
+                      ? 'Save your changes to update this stylist profile'
+                      : 'Create stylist profile and generate login credentials'
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
+                  {/* Edit Mode - Save Button */}
+                  {isEditMode ? (
+                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="font-medium text-blue-900">Edit Mode Active</h4>
+                          <p className="text-sm text-blue-700 mt-1">
+                            Editing profile for <strong>{formData.business_name || 'stylist'}</strong>
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          Editing
+                        </Badge>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Button
+                          onClick={handleUpdateStylist}
+                          disabled={saving}
+                          className="bg-blue-600 hover:bg-blue-700 w-full"
+                        >
+                          {saving ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
                           ) : (
-                            <div 
-                              onDragOver={handleServiceDragOver}
-                              onDragLeave={handleServiceDragLeave}
-                              onDrop={handleServiceDrop}
-                              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                                isServiceDragOver 
-                                  ? 'border-red-400 bg-red-50' 
-                                  : 'border-gray-300 hover:border-gray-400'
-                              }`}
-                            >
-                              <Upload className={`w-8 h-8 mx-auto mb-2 ${
-                                isServiceDragOver ? 'text-red-500' : 'text-gray-400'
-                              }`} />
-                              <p className={`text-sm mb-3 ${
-                                isServiceDragOver ? 'text-red-600' : 'text-gray-500'
-                              }`}>
-                                {isServiceDragOver ? 'Drop image here' : 'Drag and drop an image here, or click the button below'}
-                              </p>
-                              
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={triggerServiceImageSelect}
-                                className="text-red-600 border-red-600 hover:bg-red-50"
-                              >
-                                <Upload className="w-4 h-4 mr-2" />
-                                Select Image
-                              </Button>
-                              
-                              <p className="text-xs text-gray-400 mt-3">JPG, PNG or GIF. Max 5MB.</p>
-                            </div>
+                            <><Save className="w-4 h-4 mr-2" />Save Changes</>
                           )}
-                          <input
-                            ref={serviceImageInputRef}
-                            type="file"
-                            accept="image/jpeg,image/jpg,image/png,image/gif"
-                            onChange={handleServiceImageSelect}
-                            className="hidden"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Service Name */}
-                      <div>
-                        <Label htmlFor="service-name">Service Name</Label>
-                        <Input
-                          id="service-name"
-                          value={serviceForm.name}
-                          onChange={(e) => setServiceForm(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="e.g. Box Braids, Silk Press"
-                        />
-                      </div>
-
-                      {/* Price and Duration */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="service-price">Price (£)</Label>
-                          <Input
-                            id="service-price"
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={serviceForm.price}
-                            onChange={(e) => setServiceForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
-                            placeholder="100"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="service-duration">Duration (minutes)</Label>
-                          <Input
-                            id="service-duration"
-                            type="number"
-                            min="15"
-                            step="15"
-                            value={serviceForm.duration}
-                            onChange={(e) => setServiceForm(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
-                            placeholder="60"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Modal Actions */}
-                      <div className="flex gap-2 pt-4">
-                        <Button 
-                          onClick={handleSaveService}
-                          className="bg-red-600 hover:bg-red-700 flex-1"
-                          disabled={!serviceForm.name || serviceForm.price <= 0 || serviceForm.duration <= 0}
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {editingService ? 'Update Service' : 'Add Service'}
                         </Button>
-                        <Button 
-                          onClick={() => setIsServiceModalOpen(false)}
+                        <Button
+                          type="button"
                           variant="outline"
-                          disabled={false}
+                          className="w-full"
+                          onClick={resetEditMode}
+                          disabled={saving}
                         >
+                          <X className="w-4 h-4 mr-2" />
                           Cancel
                         </Button>
                       </div>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-              {mockServices.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {mockServices.map((service) => (
-                    <div key={service.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start gap-3">
-                        {/* Service Image - 1:1 aspect ratio */}
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                          <img
-                            src={service.image_url || '/placeholder.svg?height=200&width=200&text=Service'}
-                            alt={service.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.src = '/placeholder.svg?height=200&width=200&text=Service'
-                            }}
-                          />
+                  ) : !createdStylist ? (
+                    <div className="bg-gray-50 rounded-lg p-4 border">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="font-medium text-gray-900">Profile Status</h4>
+                          <p className="text-sm text-gray-500 mt-1">Complete the form above to create a new stylist profile</p>
                         </div>
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                          Not Created
+                        </Badge>
+                      </div>
 
-                        {/* Service Details */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <h4 className="font-semibold text-gray-900 text-base">{service.name}</h4>
-                            {/* Service Actions */}
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditServiceModal(service)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Edit className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteService(service.id)}
-                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
+                      {/* Action Buttons */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Button
+                          onClick={handleSaveStylist}
+                          disabled={saving}
+                          className="bg-red-600 hover:bg-red-700 w-full"
+                        >
+                          {saving ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>
+                          ) : (
+                            <><Save className="w-4 h-4 mr-2" />Create Profile</>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled
+                          variant="outline"
+                          className="w-full bg-gray-100 text-gray-400 border-gray-200 hover:bg-gray-100"
+                        >
+                          <User className="w-4 h-4 mr-2 text-gray-300" />
+                          Generate Login Account
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="font-medium text-green-900 flex items-center">
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Profile Created - Pending Verification
+                          </h4>
+                          <p className="text-sm text-green-700 mt-1">
+                            Business: {createdStylist.business_name}
+                          </p>
+                        </div>
+                        <Badge className="bg-orange-100 text-orange-800">
+                          Pending
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          disabled
+                          variant="outline"
+                          className="w-full bg-white text-green-800 border-green-200"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                          Profile Created
+                        </Button>
+                        <Button
+                          onClick={handleGenerateAccount}
+                          disabled={disableGenerateLogin}
+                          className={`w-full ${disableGenerateLogin ? 'bg-gray-200 text-gray-500 hover:bg-gray-200' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                        >
+                          {generatingAccount ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</>
+                          ) : (
+                            <><Key className="w-4 h-4 mr-2" />Generate Login Account</>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Account Status - only shown when creating new stylist */}
+                  {!isEditMode && createdStylist && (
+                    <div className={`rounded-lg p-4 border ${
+                      accountCredentials
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-yellow-50 border-yellow-200'
+                    }`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className={`font-medium ${
+                          accountCredentials ? 'text-green-900' : 'text-yellow-900'
+                        }`}>
+                          Login Account Status
+                        </h4>
+                        <Badge variant="secondary" className={
+                          accountCredentials
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }>
+                          {accountCredentials ? 'Account Created' : 'No login account'}
+                        </Badge>
+                      </div>
+
+                      {accountCredentials ? (
+                        <div className="bg-white rounded border p-3">
+                          <h5 className="font-medium text-sm mb-2">Login Credentials</h5>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium">Email:</span> {accountCredentials.email}
+                            </div>
+                            <div>
+                              <span className="font-medium">Temporary Password:</span>
+                              <code className="ml-1 px-1 bg-gray-100 rounded text-xs">{accountCredentials.password}</code>
                             </div>
                           </div>
-                          
-                          <div className="flex items-center text-gray-500">
-                            <span className="text-sm">{formatDuration(service.duration)}</span>
+
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              onClick={copyCredentials}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                            >
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy Credentials
+                            </Button>
+                            <Button
+                              onClick={resetCreationState}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Create Another
+                            </Button>
                           </div>
-                          
-                          <div className="mt-2">
-                            <span className="text-lg font-semibold text-gray-900">£{service.price}</span>
-                          </div>
+
+                          <p className="text-xs text-gray-500 mt-2">
+                            Share these credentials with the stylist. They should change their password after first login.
+                          </p>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Scissors className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm">No services added yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Account Access Section */}
-          <Card>
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="flex items-center">
-                <User className="w-5 h-5 mr-2 text-red-600" />
-                Account Access
-              </CardTitle>
-              <CardDescription>
-                Create stylist profile and generate login credentials
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 sm:p-6">
-              {/* Profile Status */}
-              {!createdStylist ? (
-                <div className="bg-gray-50 rounded-lg p-4 border">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h4 className="font-medium text-gray-900">Profile Status</h4>
-                      <p className="text-sm text-gray-500 mt-1">Complete the form above to create a new stylist profile</p>
-                    </div>
-                    <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-                      Not Created
-                    </Badge>
-                  </div>
-                  
-                  {/* Action Buttons Section */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {/* Create Profile Button */}
-                    <Button 
-                      onClick={handleSaveStylist}
-                      disabled={saving}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      {saving ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating Profile...</>
                       ) : (
-                        <><Save className="w-4 h-4 mr-2" />Create Stylist Profile</>
-                      )}
-                    </Button>
-
-                    {/* Generate Account Button */}
-                    <Button 
-                      onClick={handleGenerateAccount}
-                      disabled={!createdStylist || generatingAccount}
-                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                      {generatingAccount ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Account...</>
-                      ) : (
-                        <><User className="w-4 h-4 mr-2" />Generate Login Account</>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h4 className="font-medium text-green-900 flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Profile Created Successfully
-                      </h4>
-                      <p className="text-sm text-green-700 mt-1">
-                        Business: {createdStylist.business_name}
-                      </p>
-                      <p className="text-sm text-green-700">
-                        Email: {createdStylist.contact_email}
-                      </p>
-                    </div>
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      ✅ Created
-                    </Badge>
-                  </div>
-                  
-                  {/* Action Buttons Section */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {/* Create Profile Button */}
-                    <Button 
-                      onClick={handleSaveStylist}
-                      disabled={saving}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      {saving ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating Profile...</>
-                      ) : (
-                        <><Save className="w-4 h-4 mr-2" />Create Stylist Profile</>
-                      )}
-                    </Button>
-
-                    {/* Generate Account Button */}
-                    <Button 
-                      onClick={handleGenerateAccount}
-                      disabled={!createdStylist || generatingAccount}
-                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                      {generatingAccount ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Account...</>
-                      ) : (
-                        <><User className="w-4 h-4 mr-2" />Generate Login Account</>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Account Status */}
-              {createdStylist && (
-                  <div className={`rounded-lg p-4 border ${
-                    accountCredentials 
-                      ? 'bg-green-50 border-green-200' 
-                      : 'bg-yellow-50 border-yellow-200'
-                  }`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className={`font-medium ${
-                        accountCredentials ? 'text-green-900' : 'text-yellow-900'
-                      }`}>
-                        Login Account Status
-                      </h4>
-                      <Badge variant="secondary" className={
-                        accountCredentials 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }>
-                        {accountCredentials ? '✅ Account Created' : 'No login account'}
-                      </Badge>
-                    </div>
-
-                    {accountCredentials ? (
-                      <div className="bg-white rounded border p-3">
-                        <h5 className="font-medium text-sm mb-2">Login Credentials</h5>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="font-medium">Email:</span> {accountCredentials.email}
-                          </div>
-                          <div>
-                            <span className="font-medium">Temporary Password:</span> 
-                            <code className="ml-1 px-1 bg-gray-100 rounded text-xs">{accountCredentials.password}</code>
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-2 mt-3">
-                          <Button 
-                            onClick={copyCredentials}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                          >
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copy Credentials
-                          </Button>
-                          <Button 
-                            onClick={resetCreationState}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Create Another
-                          </Button>
-                        </div>
-                        
-                        <p className="text-xs text-gray-500 mt-2">
-                          Share these credentials with the stylist. They should change their password after first login.
+                        <p className="text-sm text-yellow-700">
+                          Click "Generate Login" button above to create login credentials for this stylist.
                         </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-yellow-700">
-                        Click "Generate Login Account" button above to create login credentials for this stylist.
-                      </p>
-                    )}
+                      )}
 
-                    {accountError && (
-                      <div className="bg-red-50 border border-red-200 rounded p-3 mt-3">
-                        <p className="text-sm text-red-600">{accountError}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      {accountError && (
+                        <div className="bg-red-50 border border-red-200 rounded p-3 mt-3">
+                          <p className="text-sm text-red-600">{accountError}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </CardContent>
           </Card>
 
         </TabsContent>
       </Tabs>
+
+      {/* Stylist Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Application Details</span>
+              <Badge className="bg-orange-600 hover:bg-orange-700 ml-2">Pending Verification</Badge>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedStylist && (
+            <div className="space-y-6">
+              {/* Portfolio Images */}
+              {selectedStylist.portfolio_images && selectedStylist.portfolio_images.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Portfolio</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {selectedStylist.portfolio_images.slice(0, 6).map((img, idx) => (
+                      <div key={idx} className="aspect-square rounded-lg overflow-hidden">
+                        <img src={img} alt={`Portfolio ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Business Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Business Information</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <Briefcase className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{selectedStylist.business_name}</p>
+                        <p className="text-xs text-gray-500">{selectedStylist.business_type || 'Business'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <p className="text-sm text-gray-700">{selectedStylist.location}</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <p className="text-sm text-gray-700">
+                        {selectedStylist.year_started ? `Started in ${selectedStylist.year_started}` : 'Year not specified'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Contact Details</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <Mail className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <p className="text-sm text-gray-700">{selectedStylist.contact_email}</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Phone className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <p className="text-sm text-gray-700">{selectedStylist.phone || 'Not provided'}</p>
+                    </div>
+                    {selectedStylist.instagram_handle && (
+                      <div className="flex items-start gap-2">
+                        <ExternalLink className="w-4 h-4 text-gray-400 mt-0.5" />
+                        <p className="text-sm text-gray-700">@{selectedStylist.instagram_handle}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Specialties */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Specialties & Services</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedStylist.primary_specialty && (
+                    <Badge className="bg-red-100 text-red-700 hover:bg-red-200">
+                      {selectedStylist.primary_specialty} (Primary)
+                    </Badge>
+                  )}
+                  {selectedStylist.specialties?.filter(s => s !== selectedStylist.primary_specialty).map((specialty, idx) => (
+                    <Badge key={idx} variant="outline" className="text-gray-600">
+                      {specialty}
+                    </Badge>
+                  ))}
+                  {selectedStylist.additional_services?.map((service, idx) => (
+                    <Badge key={idx} variant="outline" className="text-gray-600">
+                      {service}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Features */}
+              <div className="flex flex-wrap gap-3">
+                {selectedStylist.accepts_same_day && (
+                  <div className="flex items-center gap-1 text-sm text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Same-day booking</span>
+                  </div>
+                )}
+                {selectedStylist.accepts_mobile && (
+                  <div className="flex items-center gap-1 text-sm text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Mobile services</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Bio */}
+              {selectedStylist.bio && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">About</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">{selectedStylist.bio}</p>
+                </div>
+              )}
+
+              {/* Submission Info */}
+              <div className="border-t pt-4">
+                <div className="flex items-center text-sm text-gray-500">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>Submitted {selectedStylist.submitted_at ? format(new Date(selectedStylist.submitted_at), 'PPP \'at\' p') : 'Unknown'}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={approvingId === selectedStylist.id}
+                  onClick={() => handleApprove(selectedStylist.id)}
+                >
+                  {approvingId === selectedStylist.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  )}
+                  Approve Listing
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  disabled={rejectingId === selectedStylist.id}
+                  onClick={() => handleReject(selectedStylist.id)}
+                >
+                  {rejectingId === selectedStylist.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <XCircle className="h-4 w-4 mr-2" />
+                  )}
+                  Reject Listing
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
