@@ -1801,7 +1801,7 @@ Please change your password after first login.`
                                   onClick={() => window.open(`/stylist/${stylist.id}`, '_blank')}
                                 >
                                   <Avatar className="w-10 h-10">
-                                    <AvatarImage src={stylist.portfolio_images?.[0]} />
+                                    <AvatarImage src={stylist.logo_url || stylist.portfolio_images?.[0]} className="object-cover" />
                                     <AvatarFallback>
                                       {stylist.business_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'S'}
                                     </AvatarFallback>

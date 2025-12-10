@@ -18,32 +18,39 @@ export async function GET(
   
   try {
     console.log('🔍 [API] Attempting to fetch stylist by ID from server-side...')
-    
+
+    // Don't filter by is_active here - let the frontend decide what to show
     const { data, error } = await supabase
       .from('stylist_profiles')
       .select('*')
       .eq('id', id)
-      .eq('is_active', true)
       .single()
 
     if (error) {
       console.log('❌ [API] Error fetching stylist by ID:', error)
+      // PGRST116 is the "no rows found" error from PostgREST
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Stylist not found', data: null, success: false },
+          { status: 404 }
+        )
+      }
       return NextResponse.json(
-        { error: error.message, data: null },
-        { status: error.code === 'PGRST116' ? 404 : 500 }
+        { error: error.message, data: null, success: false },
+        { status: 500 }
       )
     }
 
     if (!data) {
       console.log('❌ [API] Stylist not found for ID:', id)
       return NextResponse.json(
-        { error: 'Stylist not found', data: null },
+        { error: 'Stylist not found', data: null, success: false },
         { status: 404 }
       )
     }
 
-    console.log('✅ [API] Successfully fetched stylist:', data.business_name, 'for ID:', id)
-    
+    console.log('✅ [API] Successfully fetched stylist:', data.business_name, 'for ID:', id, 'is_active:', data.is_active)
+
     return NextResponse.json({
       data,
       success: true,

@@ -38,6 +38,8 @@ import {
   ChevronRight,
   X,
   Instagram,
+  Briefcase,
+  Car,
 } from "lucide-react"
 
 // TikTok icon component since it's not in lucide-react
@@ -188,6 +190,13 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
     return "Hair Specialist"
   }
   const getExperience = () => {
+    // Calculate years from year_started if available
+    if (stylist.year_started) {
+      const currentYear = new Date().getFullYear()
+      const years = currentYear - stylist.year_started
+      return years > 0 ? `${years} years` : "Less than a year"
+    }
+    // Fallback to years_experience field
     const years = stylist.years_experience || 0
     return years > 0 ? `${years} years` : "Experienced"
   }
@@ -286,6 +295,16 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
       <MapStylesImport />
+
+      {/* Inactive Profile Notice */}
+      {!stylist.is_active && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800 font-medium">
+            This stylist profile is currently inactive and may not appear in search results.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-5">
@@ -394,10 +413,24 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     <MapPin className="w-4 h-4 mr-1" />
                     <span>{displayData.location}</span>
                   </div>
-                  <div className="flex items-center text-gray-600 text-[15px]">
-                    <Award className="w-4 h-4 mr-1" />
-                    <span>{displayData.experience} experience</span>
-                  </div>
+                  {stylist.business_type && (
+                    <div className="flex items-center text-gray-600 text-[15px]">
+                      <Briefcase className="w-4 h-4 mr-1" />
+                      <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
+                    </div>
+                  )}
+                  {stylist.accepts_mobile && (
+                    <div className="flex items-center text-gray-600 text-[15px]">
+                      <Car className="w-4 h-4 mr-1" />
+                      <span>Mobile appointments</span>
+                    </div>
+                  )}
+                  {stylist.accepts_same_day && (
+                    <div className="flex items-center text-gray-600 text-[15px]">
+                      <Clock className="w-4 h-4 mr-1" />
+                      <span>Same day appointments</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop Layout - Row with bullets */}
@@ -416,15 +449,59 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     <MapPin className="w-4 h-4 mr-1" />
                     <span>{displayData.location}</span>
                   </div>
-                  <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center">
-                    <Award className="w-4 h-4 mr-1" />
-                    <span>{displayData.experience} experience</span>
-                  </div>
+                  {stylist.business_type && (
+                    <>
+                      <span className="mx-2 text-gray-400">•</span>
+                      <div className="flex items-center">
+                        <Briefcase className="w-4 h-4 mr-1" />
+                        <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
+                      </div>
+                    </>
+                  )}
+                  {stylist.accepts_mobile && (
+                    <>
+                      <span className="mx-2 text-gray-400">•</span>
+                      <div className="flex items-center">
+                        <Car className="w-4 h-4 mr-1" />
+                        <span>Mobile appointments</span>
+                      </div>
+                    </>
+                  )}
+                  {stylist.accepts_same_day && (
+                    <>
+                      <span className="mx-2 text-gray-400">•</span>
+                      <div className="flex items-center">
+                        <Clock className="w-4 h-4 mr-1" />
+                        <span>Same day appointments</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[14px]">
-                  {displayData.expertise}
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[14px] w-fit">
+                      {displayData.expertise}
+                    </div>
+                    <span className="hidden sm:inline text-gray-400">•</span>
+                    <div className="flex items-center text-gray-600 text-[15px]">
+                      <Award className="w-4 h-4 mr-1" />
+                      <span>{displayData.experience} experience</span>
+                    </div>
+                  </div>
+                  {stylist.additional_services && stylist.additional_services.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-200"></div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {stylist.additional_services.map((service, index) => (
+                          <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[12px]">
+                            {service}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -538,7 +615,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
               {/* Profile Card */}
               <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={stylist.portfolio_images?.[0]} />
+                  <AvatarImage src={stylist.logo_url || stylist.portfolio_images?.[0]} className="object-cover" />
                   <AvatarFallback className="bg-red-600/70 text-white font-semibold text-lg">
                     {displayData.businessName.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                   </AvatarFallback>

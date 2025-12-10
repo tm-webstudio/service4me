@@ -47,7 +47,13 @@ export function useStylist(id: string) {
               contact_email: apiData.data.contact_email,
               instagram_handle: apiData.data.instagram_handle,
               tiktok_handle: apiData.data.tiktok_handle,
-              portfolio_images: apiData.data.portfolio_images || []
+              portfolio_images: apiData.data.portfolio_images || [],
+              logo_url: apiData.data.logo_url,
+              additional_services: apiData.data.additional_services || [],
+              year_started: apiData.data.year_started,
+              business_type: apiData.data.business_type,
+              accepts_mobile: apiData.data.accepts_mobile,
+              accepts_same_day: apiData.data.accepts_same_day
             }
 
             setStylist(transformedData)
@@ -65,7 +71,6 @@ export function useStylist(id: string) {
           .from('stylist_profiles')
           .select('*')
           .eq('id', id)
-          .eq('is_active', true)
           .single()
 
         if (error) {
@@ -92,7 +97,13 @@ export function useStylist(id: string) {
             contact_email: data.contact_email,
             instagram_handle: data.instagram_handle,
             tiktok_handle: data.tiktok_handle,
-            portfolio_images: data.portfolio_images || []
+            portfolio_images: data.portfolio_images || [],
+            logo_url: data.logo_url,
+            additional_services: data.additional_services || [],
+            year_started: data.year_started,
+            business_type: data.business_type,
+            accepts_mobile: data.accepts_mobile,
+            accepts_same_day: data.accepts_same_day
           }
 
           setStylist(transformedData)

@@ -44,26 +44,29 @@ export function StylistLocationMap({ postcode, businessName, className = '' }: S
     try {
       const cleanPostcode = postcodeToGeocode.replace(/\s/g, '').toUpperCase()
       const response = await fetch(`https://api.postcodes.io/postcodes/${cleanPostcode}`)
-      
+
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error('Postcode not found')
+          console.warn(`Postcode not found: ${cleanPostcode}`)
+          return null
         }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        console.warn(`Geocoding failed with status ${response.status}`)
+        return null
       }
-      
+
       const data = await response.json()
-      
+
       if (data.status === 200 && data.result) {
         return {
           latitude: data.result.latitude,
           longitude: data.result.longitude
         }
       } else {
-        throw new Error('Invalid postcode or no data found')
+        console.warn('Invalid postcode response:', data)
+        return null
       }
     } catch (err) {
-      console.error('Geocoding error:', err)
+      console.warn('Geocoding error:', err)
       return null
     }
   }
@@ -86,11 +89,12 @@ export function StylistLocationMap({ postcode, businessName, className = '' }: S
           // Force map to re-render with new coordinates
           setMapKey(prev => prev + 1)
         } else {
-          setError('Unable to find location for this postcode')
+          setError('Location unavailable')
+          console.warn('Could not geocode postcode:', postcode)
         }
       } catch (err) {
-        setError('Failed to load map location')
-        console.error('Map loading error:', err)
+        setError('Location unavailable')
+        console.warn('Map loading error:', err)
       } finally {
         setLoading(false)
       }
