@@ -503,7 +503,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                 <div className="border-t border-gray-200"></div>
                 <div className="flex flex-wrap items-center gap-2">
                   {stylist.additional_services.map((service, index) => (
-                    <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 rounded-full text-[12px]">
+                    <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
                       {service}
                     </div>
                   ))}
@@ -515,7 +515,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-6 text-[15px]">{displayData.bio}</p>
+            <p className="text-gray-700 leading-relaxed mb-6 text-sm">{displayData.bio}</p>
 
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-4">
