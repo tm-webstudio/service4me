@@ -7,12 +7,12 @@ import { useStylist } from "@/hooks/use-stylist"
 import { useStylistServices } from "@/hooks/use-stylist-services"
 import { postcodeToAreaName, postcodeToAreaNameWithCode } from "@/lib/postcode-utils"
 import { StylistLocationMap, MapStylesImport } from "@/components/stylist-location-map"
-import { 
-  StylistProfileSkeleton, 
-  ServicesSkeleton, 
-  LocationCardSkeleton, 
-  ContactCardSkeleton, 
-  ReviewsSkeleton 
+import {
+  StylistProfileSkeleton,
+  ServicesSkeleton,
+  LocationCardSkeleton,
+  ContactCardSkeleton,
+  ReviewsSkeleton
 } from "@/components/ui/skeletons"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { ReviewForm } from "@/components/review-form"
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { SpecialistBadge } from "@/components/ui/specialist-badge"
 import {
   Star,
   MapPin,
@@ -422,9 +423,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
             {/* Specialist badge and experience */}
             <div className="flex flex-row items-center gap-2 sm:gap-3 mb-4">
-              <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs w-fit">
-                {displayData.expertise}
-              </div>
+              <SpecialistBadge specialty={displayData.expertise} />
               <span className="text-gray-400">•</span>
               <div className="flex items-center text-gray-600 text-sm">
                 <Award className="w-4 h-4 mr-1" />

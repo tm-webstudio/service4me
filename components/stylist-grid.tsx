@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { SpecialistBadge } from "@/components/ui/specialist-badge"
 import { MapPin, Heart, Loader2, Star } from "lucide-react"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { useRouter } from "next/navigation"
@@ -199,12 +200,10 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
                   </div>
 
                   <div className="mb-3">
-                    <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs whitespace-nowrap">
-                      <span className="md:hidden">
-                        {expertise.length > 18 ? `${expertise.substring(0, 18)}...` : expertise}
-                      </span>
-                      <span className="hidden md:inline">{expertise}</span>
-                    </span>
+                    <SpecialistBadge
+                      specialty={expertise}
+                      className="whitespace-nowrap"
+                    />
                   </div>
                 </div>
               </CardContent>
