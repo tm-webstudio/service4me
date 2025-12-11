@@ -421,7 +421,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             </div>
 
             {/* Specialist badge and experience */}
-            <div className="flex flex-row items-center gap-2 sm:gap-3 mb-3">
+            <div className="flex flex-row items-center gap-2 sm:gap-3 mb-4">
               <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs w-fit">
                 {displayData.expertise}
               </div>
@@ -433,7 +433,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             </div>
 
             {/* Mobile Layout - Location and features grid */}
-            <div className="flex flex-col sm:hidden mb-3">
+            <div className="flex flex-col sm:hidden mb-4">
 
               {/* 2x2 Grid for location and features */}
               <div className="grid grid-cols-2 gap-2">
@@ -463,7 +463,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             </div>
 
             {/* Desktop Layout - Location and features row with bullets */}
-            <div className="hidden sm:flex items-center text-gray-600 mb-2 text-sm flex-wrap gap-y-1">
+            <div className="hidden sm:flex items-center text-gray-600 mb-4 text-sm flex-wrap gap-y-1">
               <div className="flex items-center">
                 <MapPin className="w-4 h-4 mr-1" />
                 <span>{displayData.location}</span>
