@@ -494,7 +494,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Specialist badge and experience */}
             <div className="flex flex-col gap-3 mb-4">
               <div className="flex flex-row items-center gap-2 sm:gap-3">
-                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs w-fit">
+                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-4 py-1 rounded-full text-[13px] w-fit">
                   {displayData.expertise}
                 </div>
                 <span className="text-gray-400">•</span>
@@ -508,7 +508,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                   <div className="border-t border-gray-200"></div>
                   <div className="flex flex-wrap items-center gap-2">
                     {stylist.additional_services.map((service, index) => (
-                      <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[12px]">
+                      <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 rounded-full text-[12px]">
                         {service}
                       </div>
                     ))}
