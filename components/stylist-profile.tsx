@@ -396,7 +396,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div>
             {/* Title and action buttons row */}
             <div className="flex items-start justify-between mb-2">
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900">{displayData.businessName}</h1>
+              <h1 className="text-xl md:text-2xl font-medium text-gray-900">{displayData.businessName}</h1>
               <div className="flex space-x-2 flex-shrink-0">
                 <Button variant="outline" size="icon" onClick={() => setIsFavorite(!isFavorite)}>
                   <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
@@ -494,7 +494,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Specialist badge and experience */}
             <div className="flex flex-col gap-3 mb-4">
               <div className="flex flex-row items-center gap-2 sm:gap-3">
-                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm w-fit">
+                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs w-fit">
                   {displayData.expertise}
                 </div>
                 <span className="text-gray-400">•</span>
