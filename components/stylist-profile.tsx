@@ -394,118 +394,10 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
           {/* Business Info */}
           <div>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayData.businessName}</h1>
-
-                {/* Mobile Layout - Stacked */}
-                <div className="flex flex-col sm:hidden space-y-2 mb-3">
-                  <div className="flex items-center">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium text-gray-700 ml-1" style={{ fontSize: '15px' }}>
-                      {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
-                    </span>
-                    <span className="text-gray-500 ml-1" style={{ fontSize: '15px' }}>
-                      ({stylist.review_count || 0})
-                    </span>
-                  </div>
-                  <div className="flex items-center text-gray-600 text-[15px]">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span>{displayData.location}</span>
-                  </div>
-                  {stylist.business_type && (
-                    <div className="flex items-center text-gray-600 text-[15px]">
-                      <Briefcase className="w-4 h-4 mr-1" />
-                      <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
-                    </div>
-                  )}
-                  {stylist.accepts_mobile && (
-                    <div className="flex items-center text-gray-600 text-[15px]">
-                      <Car className="w-4 h-4 mr-1" />
-                      <span>Mobile appointments</span>
-                    </div>
-                  )}
-                  {stylist.accepts_same_day && (
-                    <div className="flex items-center text-gray-600 text-[15px]">
-                      <Clock className="w-4 h-4 mr-1" />
-                      <span>Same day appointments</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Desktop Layout - Row with bullets */}
-                <div className="hidden sm:flex items-center text-gray-600 mb-2 text-[15px] flex-wrap gap-y-1">
-                  <div className="flex items-center">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium text-gray-700 ml-1" style={{ fontSize: '15px' }}>
-                      {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
-                    </span>
-                    <span className="text-gray-500 ml-1" style={{ fontSize: '15px' }}>
-                      ({stylist.review_count || 0})
-                    </span>
-                  </div>
-                  <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span>{displayData.location}</span>
-                  </div>
-                  {stylist.business_type && (
-                    <>
-                      <span className="mx-2 text-gray-400">•</span>
-                      <div className="flex items-center">
-                        <Briefcase className="w-4 h-4 mr-1" />
-                        <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
-                      </div>
-                    </>
-                  )}
-                  {stylist.accepts_mobile && (
-                    <>
-                      <span className="mx-2 text-gray-400">•</span>
-                      <div className="flex items-center">
-                        <Car className="w-4 h-4 mr-1" />
-                        <span>Mobile appointments</span>
-                      </div>
-                    </>
-                  )}
-                  {stylist.accepts_same_day && (
-                    <>
-                      <span className="mx-2 text-gray-400">•</span>
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        <span>Same day appointments</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                    <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[14px] w-fit">
-                      {displayData.expertise}
-                    </div>
-                    <span className="hidden sm:inline text-gray-400">•</span>
-                    <div className="flex items-center text-gray-600 text-[15px]">
-                      <Award className="w-4 h-4 mr-1" />
-                      <span>{displayData.experience} experience</span>
-                    </div>
-                  </div>
-                  {stylist.additional_services && stylist.additional_services.length > 0 && (
-                    <>
-                      <div className="border-t border-gray-200"></div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {stylist.additional_services.map((service, index) => (
-                          <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[12px]">
-                            {service}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="border-t border-gray-200"></div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex space-x-2">
+            {/* Title and action buttons row */}
+            <div className="flex items-start justify-between mb-2">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">{displayData.businessName}</h1>
+              <div className="flex space-x-2 flex-shrink-0">
                 <Button variant="outline" size="icon" onClick={() => setIsFavorite(!isFavorite)}>
                   <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
                 </Button>
@@ -513,6 +405,117 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                   <Share className="w-4 h-4" />
                 </Button>
               </div>
+            </div>
+
+            {/* Mobile Layout - Rating and Grid (Full Width) */}
+            <div className="flex flex-col sm:hidden mb-3">
+              <div className="flex items-center mb-3">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium text-gray-700 ml-1" style={{ fontSize: '15px' }}>
+                  {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
+                </span>
+                <span className="text-gray-500 ml-1" style={{ fontSize: '15px' }}>
+                  ({stylist.review_count || 0})
+                </span>
+              </div>
+
+              {/* 2x2 Grid for location and features */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center text-gray-600 text-[15px]">
+                  <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                  <span className="truncate">{displayData.location}</span>
+                </div>
+                {stylist.business_type && (
+                  <div className="flex items-center text-gray-600 text-[15px]">
+                    <Briefcase className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span className="capitalize truncate">{stylist.business_type.replace(/-/g, ' ')}</span>
+                  </div>
+                )}
+                {stylist.accepts_mobile && (
+                  <div className="flex items-center text-gray-600 text-[15px]">
+                    <Car className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">Mobile appointments</span>
+                  </div>
+                )}
+                {stylist.accepts_same_day && (
+                  <div className="flex items-center text-gray-600 text-[15px]">
+                    <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">Same day appointments</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop Layout - Row with bullets */}
+            <div className="hidden sm:flex items-center text-gray-600 mb-2 text-[15px] flex-wrap gap-y-1">
+              <div className="flex items-center">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium text-gray-700 ml-1" style={{ fontSize: '15px' }}>
+                  {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
+                </span>
+                <span className="text-gray-500 ml-1" style={{ fontSize: '15px' }}>
+                  ({stylist.review_count || 0})
+                </span>
+              </div>
+              <span className="mx-2 text-gray-400">•</span>
+              <div className="flex items-center">
+                <MapPin className="w-4 h-4 mr-1" />
+                <span>{displayData.location}</span>
+              </div>
+              {stylist.business_type && (
+                <>
+                  <span className="mx-2 text-gray-400">•</span>
+                  <div className="flex items-center">
+                    <Briefcase className="w-4 h-4 mr-1" />
+                    <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
+                  </div>
+                </>
+              )}
+              {stylist.accepts_mobile && (
+                <>
+                  <span className="mx-2 text-gray-400">•</span>
+                  <div className="flex items-center">
+                    <Car className="w-4 h-4 mr-1" />
+                    <span>Mobile appointments</span>
+                  </div>
+                </>
+              )}
+              {stylist.accepts_same_day && (
+                <>
+                  <span className="mx-2 text-gray-400">•</span>
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>Same day appointments</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Specialist badge and experience */}
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-row items-center gap-2 sm:gap-3">
+                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[14px] w-fit">
+                  {displayData.expertise}
+                </div>
+                <span className="text-gray-400">•</span>
+                <div className="flex items-center text-gray-600 text-[15px]">
+                  <Award className="w-4 h-4 mr-1" />
+                  <span>{displayData.experience} experience</span>
+                </div>
+              </div>
+              {stylist.additional_services && stylist.additional_services.length > 0 && (
+                <>
+                  <div className="border-t border-gray-200"></div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {stylist.additional_services.map((service, index) => (
+                      <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[12px]">
+                        {service}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-200"></div>
+                </>
+              )}
             </div>
           </div>
 
