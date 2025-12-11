@@ -421,24 +421,24 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
               {/* 2x2 Grid for location and features */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center text-gray-600 text-[15px]">
+                <div className="flex items-center text-gray-600 text-sm">
                   <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
                   <span className="truncate">{displayData.location}</span>
                 </div>
                 {stylist.business_type && (
-                  <div className="flex items-center text-gray-600 text-[15px]">
+                  <div className="flex items-center text-gray-600 text-sm">
                     <Briefcase className="w-4 h-4 mr-1 flex-shrink-0" />
                     <span className="capitalize truncate">{stylist.business_type.replace(/-/g, ' ')}</span>
                   </div>
                 )}
                 {stylist.accepts_mobile && (
-                  <div className="flex items-center text-gray-600 text-[15px]">
+                  <div className="flex items-center text-gray-600 text-sm">
                     <Car className="w-4 h-4 mr-1 flex-shrink-0" />
                     <span className="truncate">Mobile appointments</span>
                   </div>
                 )}
                 {stylist.accepts_same_day && (
-                  <div className="flex items-center text-gray-600 text-[15px]">
+                  <div className="flex items-center text-gray-600 text-sm">
                     <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
                     <span className="truncate">Same day appointments</span>
                   </div>
@@ -447,7 +447,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             </div>
 
             {/* Desktop Layout - Row with bullets */}
-            <div className="hidden sm:flex items-center text-gray-600 mb-2 text-[15px] flex-wrap gap-y-1">
+            <div className="hidden sm:flex items-center text-gray-600 mb-2 text-sm flex-wrap gap-y-1">
               <div className="flex items-center">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 <span className="font-medium text-gray-700 ml-1" style={{ fontSize: '15px' }}>
@@ -494,11 +494,11 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Specialist badge and experience */}
             <div className="flex flex-col gap-3 mb-4">
               <div className="flex flex-row items-center gap-2 sm:gap-3">
-                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-[14px] w-fit">
+                <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm w-fit">
                   {displayData.expertise}
                 </div>
                 <span className="text-gray-400">•</span>
-                <div className="flex items-center text-gray-600 text-[15px]">
+                <div className="flex items-center text-gray-600 text-sm">
                   <Award className="w-4 h-4 mr-1" />
                   <span>{displayData.experience} experience</span>
                 </div>
