@@ -194,7 +194,7 @@ export function Navigation() {
 
       <nav className="border-b bg-white sticky top-0 z-50">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 items-center h-16">
+          <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto] lg:grid-cols-[1fr,auto,1fr] items-center h-16 gap-6 md:gap-8 lg:gap-10">
             {/* Logo */}
             <div className="flex justify-start">
               <Link href="/" className="flex items-center">
@@ -204,8 +204,8 @@ export function Navigation() {
               </Link>
             </div>
 
-            {/* Desktop Navigation - Centered */}
-            <div className="hidden md:flex items-center justify-center space-x-8">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center md:justify-start lg:justify-center space-x-8 md:col-start-2">
               {/* Browse Stylists Mega Menu */}
               <div className="relative" onMouseEnter={handleBrowseMouseEnter} onMouseLeave={handleBrowseMouseLeave}>
                 <button className="flex items-center text-gray-700 hover:text-red-600 font-medium transition-colors py-4">
@@ -305,7 +305,7 @@ export function Navigation() {
             </div>
 
             {/* Desktop Actions */}
-            <div className="hidden md:flex items-center justify-end space-x-4">
+            <div className="hidden md:flex items-center justify-end space-x-4 md:col-start-3 lg:col-start-3">
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -354,7 +354,7 @@ export function Navigation() {
             </div>
 
             {/* Mobile Actions */}
-            <div className="md:hidden flex items-center justify-end space-x-3 col-span-2">
+            <div className="md:hidden flex items-center justify-end space-x-3 col-start-2">
               {(!user || userProfile?.role !== 'stylist') && (
                 <Link href="/list-business">
                   <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem] px-3">
