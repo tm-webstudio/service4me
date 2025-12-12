@@ -268,7 +268,16 @@ export function useStylistProfileEditor() {
           contact_email: data.contact_email,
           instagram_handle: data.instagram_handle,
           tiktok_handle: data.tiktok_handle,
-          portfolio_images: data.portfolio_images || []
+          portfolio_images: data.portfolio_images || [],
+          // Additional fields
+          first_name: data.first_name,
+          last_name: data.last_name,
+          business_type: data.business_type,
+          year_started: data.year_started,
+          accepts_same_day: data.accepts_same_day,
+          accepts_mobile: data.accepts_mobile,
+          logo_url: data.logo_url,
+          additional_services: data.additional_services || []
         }
 
         setProfile(transformedData)

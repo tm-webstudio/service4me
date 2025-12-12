@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check, Eye, Mail, Phone, Calendar, Briefcase } from "lucide-react"
+import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check, Eye, Mail, Phone, Calendar, Briefcase, ChevronLeft, ChevronRight } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
@@ -42,13 +42,7 @@ const ADDITIONAL_SERVICES = [
   "Ponytails"
 ]
 
-const SmallCtaButton = ({ className, ...props }: React.ComponentProps<typeof Button>) => (
-  <Button
-    size="sm"
-    className={cn("h-8 px-3 text-[12px]", className)}
-    {...props}
-  />
-)
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
 
 // Interface for pending stylists from database
 interface PendingStylist {
@@ -211,6 +205,7 @@ export function AdminDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const profilePhotoInputRef = useRef<HTMLInputElement>(null)
   const serviceImageInputRef = useRef<HTMLInputElement>(null)
+  const statsRef = useRef<HTMLDivElement>(null)
   const [galleryImages, setGalleryImages] = useState<string[]>([])
   const [profilePhoto, setProfilePhoto] = useState<string>('')
   const [uploadProgress, setUploadProgress] = useState<{file: File, progress: number, status: string}[]>([])
@@ -810,21 +805,34 @@ Please change your password after first login.`
         accepts_mobile: stylist.accepts_mobile ?? null,
       })
 
-      setAdditionalServices(stylist.additional_services || [])
+      const servicesToSet = stylist.additional_services || []
+      console.log('🔍 [ADMIN-DASHBOARD] Setting additional services:', servicesToSet)
+      setAdditionalServices(servicesToSet)
       setLogoImage(stylist.logo_url || '')
       setGalleryImages(stylist.portfolio_images || [])
 
       // Load services if available
+      console.log('🔍 [ADMIN-DASHBOARD] Loading services for edit:', {
+        stylist_name: stylist.business_name,
+        services_count: servicesData?.length || 0,
+        services: servicesData,
+        servicesError: servicesError,
+        additional_services: stylist.additional_services
+      })
+
       if (servicesData && !servicesError) {
-        setMockServices(servicesData.map((s: any) => ({
+        const convertedServices = servicesData.map((s: any) => ({
           id: s.id,
           name: s.name,
-          price: s.price,
+          price: parseFloat(s.price) / 100, // Convert from pence to pounds
           duration: s.duration,
           image_url: s.image_url || ''
-        })))
+        }))
+        console.log('🔍 [ADMIN-DASHBOARD] Converted services to set:', convertedServices)
+        setFormServices(convertedServices)
       } else {
-        setMockServices([])
+        console.log('❌ [ADMIN-DASHBOARD] No services data or error occurred')
+        setFormServices([])
       }
 
       // Set edit mode
@@ -948,7 +956,7 @@ Please change your password after first login.`
         .eq('stylist_id', editingStylistId)
 
       const existingIds = new Set((existingServices || []).map(s => s.id))
-      const newServiceIds = new Set(mockServices.map(s => s.id))
+      const newServiceIds = new Set(formServices.map(s => s.id))
 
       // Delete removed services
       const toDelete = [...existingIds].filter(id => !newServiceIds.has(id))
@@ -960,14 +968,14 @@ Please change your password after first login.`
       }
 
       // Update or insert services
-      for (const service of mockServices) {
+      for (const service of formServices) {
         if (existingIds.has(service.id)) {
           // Update existing service
           await supabase
             .from('services')
             .update({
               name: service.name,
-              price: service.price,
+              price: service.price * 100, // Convert pounds to pence
               duration: service.duration,
               image_url: service.image_url || null
             })
@@ -979,7 +987,7 @@ Please change your password after first login.`
             .insert({
               stylist_id: editingStylistId,
               name: service.name,
-              price: service.price,
+              price: service.price * 100, // Convert pounds to pence
               duration: service.duration,
               image_url: service.image_url || null
             })
@@ -1363,9 +1371,10 @@ Please change your password after first login.`
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 overflow-x-auto md:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="relative">
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto lg:grid lg:grid-cols-5 lg:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory" ref={statsRef}>
             {/* Total Stylists */}
-            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
+            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Stylists</CardTitle>
                 <User className="h-4 w-4 text-gray-500" />
@@ -1379,7 +1388,7 @@ Please change your password after first login.`
             </Card>
 
             {/* Active Stylists */}
-            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
+            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
                 <UserCheck className="h-4 w-4 text-green-600" />
@@ -1393,7 +1402,7 @@ Please change your password after first login.`
             </Card>
 
             {/* No Account */}
-            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
+            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">No Account</CardTitle>
                 <UserX className="h-4 w-4 text-red-600" />
@@ -1407,7 +1416,7 @@ Please change your password after first login.`
             </Card>
 
             {/* Pending */}
-            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
+            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
                 <Clock className="h-4 w-4 text-orange-600" />
@@ -1421,7 +1430,7 @@ Please change your password after first login.`
             </Card>
 
             {/* New Stylists (30 days) */}
-            <Card className="min-w-[180px] md:min-w-0 flex-shrink-0 md:flex-shrink">
+            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">New This Month</CardTitle>
                 <Calendar className="h-4 w-4 text-red-600" />
@@ -1440,6 +1449,33 @@ Please change your password after first login.`
                 </p>
               </CardContent>
             </Card>
+            </div>
+            <div className="hidden lg:flex items-center justify-between absolute inset-y-1/2 -translate-y-1/2 w-full pointer-events-none">
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-white shadow-sm rounded-full pointer-events-auto"
+                onClick={() => {
+                  if (statsRef.current) {
+                    statsRef.current.scrollBy({ left: -statsRef.current.clientWidth * 0.8, behavior: "smooth" })
+                  }
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-white shadow-sm rounded-full pointer-events-auto"
+                onClick={() => {
+                  if (statsRef.current) {
+                    statsRef.current.scrollBy({ left: statsRef.current.clientWidth * 0.8, behavior: "smooth" })
+                  }
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Pending Verification Carousel */}
@@ -1701,6 +1737,7 @@ Please change your password after first login.`
                   <CardDescription>View and manage all stylist profiles and their account status</CardDescription>
                 </div>
                 <SmallCtaButton 
+                  variant="default"
                   onClick={() => window.location.href = '#create'}
                   className="bg-red-600 hover:bg-red-700 text-white"
                 >

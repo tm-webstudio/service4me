@@ -556,8 +556,8 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           </div>
 
           {/* Services & Pricing */}
-          <div className="space-y-6 max-w-lg">
-            <h2 className="text-lg font-bold text-gray-900">Services & Pricing</h2>
+          <div className="space-y-4 max-w-lg pt-6">
+            <h2 className="text-base font-medium text-gray-900">Services & Pricing</h2>
             {servicesLoading ? (
               <ServicesSkeleton />
             ) : servicesError ? (
@@ -692,9 +692,9 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
       </div>
 
       {/* Reviews - Full Width */}
-      <div className="mt-12 space-y-6">
+      <div className="mt-12 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Reviews</h2>
+          <h2 className="text-base font-medium text-gray-900">Reviews</h2>
           {userProfile?.role === 'client' && !showReviewForm && !editingReview && (
             <Button 
               className="bg-red-600 hover:bg-red-700"

@@ -92,7 +92,7 @@ export function StarRating({
 interface StarDisplayProps {
   rating: number
   totalReviews?: number
-  size?: "sm" | "md" | "lg"
+  size?: "xs" | "sm" | "md" | "lg"
   showCount?: boolean
   className?: string
 }
@@ -100,22 +100,38 @@ interface StarDisplayProps {
 export function StarDisplay({
   rating,
   totalReviews,
-  size = "md",
+  size = "sm",
   showCount = true,
   className
 }: StarDisplayProps) {
   const sizeClasses = {
+    xs: "w-3 h-3",
     sm: "w-4 h-4",
     md: "w-4 h-4", 
     lg: "w-4 h-4"
   }
   
   const textSizeClasses = {
+    xs: "text-xs",
     sm: "text-sm",
     md: "text-sm",
     lg: "text-sm"
   }
   
+  if (rating <= 0) {
+    return (
+      <div className={cn("flex items-center gap-1", className)}>
+        <Star className={cn(sizeClasses[size], "fill-yellow-400 text-yellow-400")} />
+        <span className={cn("font-medium text-gray-800", textSizeClasses[size])}>New</span>
+        {showCount && (
+          <span className={cn("text-gray-500", textSizeClasses[size])}>
+            ({totalReviews ?? 0})
+          </span>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className={cn("flex items-center gap-1", className)}>
       <div className="flex">
@@ -161,7 +177,7 @@ export function StarDisplay({
         {rating > 0 ? rating.toFixed(1) : "New"}
       </span>
       {showCount && totalReviews !== undefined && (
-        <span className="text-gray-500 text-sm">
+        <span className={cn("text-gray-500", textSizeClasses[size])}>
           ({totalReviews})
         </span>
       )}

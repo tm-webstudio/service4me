@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
@@ -1077,16 +1078,15 @@ export function ListBusinessForm() {
                         }
                       }}>
                         <DialogTrigger asChild>
-                          <Button
+                          <SmallCtaButton
                             type="button"
                             onClick={openAddServiceModal}
                             variant="outline"
-                            size="sm"
-                            className="text-red-600 border-red-600 hover:bg-red-50 text-[12px] h-8 px-3"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
                           >
                             <Plus className="w-3 h-3 mr-1" />
                             Add Service
-                          </Button>
+                          </SmallCtaButton>
                         </DialogTrigger>
                         <DialogContent className="w-[92vw] max-w-md sm:w-full">
                           <DialogHeader>

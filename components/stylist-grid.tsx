@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
-import { MapPin, Heart, Loader2, Star } from "lucide-react"
+import { MapPin, Heart } from "lucide-react"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
@@ -165,41 +165,17 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
 
                 <div className="p-2 md:p-4">
                   {/* Mobile Layout - Title first, then stars below */}
-                  <div className="md:hidden">
-                    <h3 className="font-semibold text-lg text-gray-900 mb-2">{businessName}</h3>
-                    <div className="mb-3">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium text-gray-700 text-sm">
-                          {rating > 0 ? rating.toFixed(1) : "New"}
-                        </span>
-                        <span className="text-gray-500 text-sm">
-                          ({reviewCount})
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-2 min-w-0">
+                    <h3 className="font-medium text-base text-gray-900 leading-tight truncate">{businessName}</h3>
+                    <StarDisplay rating={rating} totalReviews={reviewCount} size="sm" className="flex-shrink-0" />
                   </div>
 
-                  {/* Desktop Layout - Title and stars side by side */}
-                  <div className="hidden md:flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-lg text-gray-900">{businessName}</h3>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium text-gray-700 text-sm">
-                        {rating > 0 ? rating.toFixed(1) : "New"}
-                      </span>
-                      <span className="text-gray-500 text-sm">
-                        ({reviewCount})
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center text-gray-600 mb-3">
+                  <div className="flex items-center text-gray-600 mb-2">
                     <MapPin className="w-4 h-4 mr-1" />
                     <span className="text-sm">{location}</span>
                   </div>
 
-                  <div className="mb-3">
+                  <div>
                     <SpecialistBadge
                       specialty={expertise}
                       className="whitespace-nowrap"

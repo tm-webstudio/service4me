@@ -73,7 +73,7 @@ export function HeroSection() {
           />
 
           <div className="w-full relative z-10">
-            <div className="max-w-[90%] md:max-w-[25%]">
+            <div className="max-w-[90%] md:max-w-[48%] lg:max-w-[48%] xl:max-w-[34%]">
               <h1
                 className="font-bold text-white mb-2 text-[2.125rem] md:mb-3 md:text-5xl tracking-tight"
                 style={{ lineHeight: "108%" }}

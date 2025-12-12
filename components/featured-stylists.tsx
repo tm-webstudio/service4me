@@ -2,9 +2,10 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Badge } from "@/components/ui/badge"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
-import { MapPin, Heart, ChevronLeft, ChevronRight, Loader2, Star } from "lucide-react"
+import { MapPin, Heart, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -69,18 +70,16 @@ export function FeaturedStylists() {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+            <h2 className="text-lg md:text-xl font-medium text-gray-900">
               London Stylists
             </h2>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
+          <SmallCtaButton
+            variant="outline"
             onClick={() => router.push("/browse")}
           >
             View All
-          </Button>
+          </SmallCtaButton>
         </div>
 
         {/* Loading State with Skeletons */}
@@ -171,9 +170,9 @@ export function FeaturedStylists() {
                 return (
                   <div
                     key={stylist.id}
-                    className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(22.22%-9px)]"
-                    style={{ scrollSnapAlign: "start" }}
-                  >
+                className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
+                style={{ scrollSnapAlign: "start" }}
+              >
                     <Card 
                       className="group cursor-pointer hover:shadow-sm transition-shadow h-full"
                       onClick={() => router.push(`/stylist/${stylist.id}`)}
@@ -207,25 +206,17 @@ export function FeaturedStylists() {
                         </div>
 
                         <div className="p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold text-lg text-gray-900">{businessName}</h3>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="font-medium text-gray-700 text-sm">
-                                {rating > 0 ? rating.toFixed(1) : "New"}
-                              </span>
-                              <span className="text-gray-500 text-sm">
-                                ({reviewCount})
-                              </span>
-                            </div>
+                          <div className="flex items-center justify-between mb-2 gap-2 min-w-0">
+                            <h3 className="font-medium text-base text-gray-900 leading-tight truncate">{businessName}</h3>
+                            <StarDisplay rating={rating} totalReviews={reviewCount} size="sm" className="flex-shrink-0" />
                           </div>
 
-                          <div className="flex items-center text-gray-600 mb-3">
+                          <div className="flex items-center text-gray-600 mb-2">
                             <MapPin className="w-4 h-4 mr-1" />
                             <span className="text-sm">{location}</span>
                           </div>
 
-                          <div className="mb-3">
+                          <div>
                             <SpecialistBadge
                               specialty={expertise}
                               className="whitespace-nowrap"

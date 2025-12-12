@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { useState, useRef } from "react"
 import Link from "next/link"
 
@@ -70,12 +71,12 @@ export function CategoryCarousel() {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6 md:mb-8">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Browse by Category</h2>
+            <h2 className="text-lg md:text-xl font-medium text-gray-900">Browse by Category</h2>
           </div>
           <Link href="/browse">
-            <Button variant="outline" size="sm" className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent">
+            <SmallCtaButton variant="outline">
               View All
-            </Button>
+            </SmallCtaButton>
           </Link>
         </div>
 
@@ -122,7 +123,7 @@ export function CategoryCarousel() {
             {categories.map((category, index) => (
               <div
                 key={index}
-                className="flex-none w-[70%] sm:w-[45%] md:w-[30%] lg:w-[18%]"
+                className="flex-none w-[70%] sm:w-[45%] md:w-[30%] lg:w-[20%]"
                 style={{ scrollSnapAlign: "start" }}
               >
                 <Link href={`/browse?category=${encodeURIComponent(category.name)}`}>
@@ -137,7 +138,7 @@ export function CategoryCarousel() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                        <h3 className="font-bold text-lg text-white text-center">{category.name}</h3>
+                        <h3 className="font-semibold text-lg text-white text-center">{category.name}</h3>
                       </div>
                     </CardContent>
                   </Card>
