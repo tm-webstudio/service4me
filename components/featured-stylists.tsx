@@ -90,10 +90,10 @@ export function FeaturedStylists() {
               msOverflowStyle: "none",
             }}
           >
-            {Array.from({ length: 4 }).map((_, index) => (
+            {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
+                className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] xl:w-[calc((100%-64px)/5)]"
               >
                 <StylistCardSkeleton />
               </div>
@@ -170,9 +170,9 @@ export function FeaturedStylists() {
                 return (
                   <div
                     key={stylist.id}
-                className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
-                style={{ scrollSnapAlign: "start" }}
-              >
+                    className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] xl:w-[calc((100%-64px)/5)]"
+                    style={{ scrollSnapAlign: "start" }}
+                  >
                     <Card 
                       className="group cursor-pointer hover:shadow-sm transition-shadow h-full"
                       onClick={() => router.push(`/stylist/${stylist.id}`)}
