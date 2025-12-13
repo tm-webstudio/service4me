@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check, Eye, Mail, Phone, Calendar, Briefcase, ChevronLeft, ChevronRight } from "lucide-react"
+import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check, Eye, Mail, Phone, Calendar, Briefcase } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
@@ -1449,32 +1449,6 @@ Please change your password after first login.`
                 </p>
               </CardContent>
             </Card>
-            </div>
-            <div className="hidden lg:flex items-center justify-between absolute inset-y-1/2 -translate-y-1/2 w-full pointer-events-none">
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white shadow-sm rounded-full pointer-events-auto"
-                onClick={() => {
-                  if (statsRef.current) {
-                    statsRef.current.scrollBy({ left: -statsRef.current.clientWidth * 0.8, behavior: "smooth" })
-                  }
-                }}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white shadow-sm rounded-full pointer-events-auto"
-                onClick={() => {
-                  if (statsRef.current) {
-                    statsRef.current.scrollBy({ left: statsRef.current.clientWidth * 0.8, behavior: "smooth" })
-                  }
-                }}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           </div>
 

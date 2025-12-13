@@ -574,26 +574,26 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             <div className="grid gap-4">
               {displayData.services.map((service, index) => (
                 <Card key={service.id || index}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-4">
+                  <CardContent className="p-2">
+                    <div className="flex items-stretch space-x-3">
                       <img
                         src={service.image || "/placeholder.svg"}
                         alt={service.name}
-                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.src = '/placeholder.svg?height=200&width=200&text=Service'
                         }}
                       />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-base">{service.name}</h3>
+                      <div className="flex-1 flex flex-col justify-between min-h-[64px]">
+                        <h3 className="font-medium text-sm">{service.name}</h3>
                         <div className="flex items-center text-gray-600 text-sm">
                           <Clock className="w-4 h-4 mr-1" />
                           <span>{service.duration}</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-base font-semibold text-gray-700">£{service.price}</div>
+                      <div className="self-stretch flex items-end text-right">
+                        <div className="text-sm font-medium text-gray-700">£{service.price}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -636,13 +636,13 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           {/* Contact */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Contact</CardTitle>
+              <CardTitle className="text-base font-medium">Contact</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {stylist.phone && (
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-3 text-gray-600" />
-                  <a href={`tel:${stylist.phone}`} className="text-gray-700 hover:text-gray-900" style={{ fontSize: '15px' }}>
+                  <a href={`tel:${stylist.phone}`} className="text-gray-700 hover:text-gray-900 text-sm">
                     {stylist.phone}
                   </a>
                 </div>
@@ -650,7 +650,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
               {stylist.contact_email && (
                 <div className="flex items-center">
                   <Mail className="w-4 h-4 mr-3 text-gray-600" />
-                  <a href={`mailto:${stylist.contact_email}`} className="text-gray-700 hover:text-gray-900" style={{ fontSize: '15px' }}>
+                  <a href={`mailto:${stylist.contact_email}`} className="text-gray-700 hover:text-gray-900 text-sm">
                     {stylist.contact_email}
                   </a>
                 </div>
