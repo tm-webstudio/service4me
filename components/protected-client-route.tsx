@@ -13,25 +13,26 @@ export function ProtectedClientRoute({ children }: ProtectedClientRouteProps) {
   const { user, userProfile, loading } = useAuth()
   const router = useRouter()
 
+  // Check role from userProfile OR user_metadata as fallback
+  const role = userProfile?.role || user?.user_metadata?.role
+  const isClient = role === 'client' || !role // Default to client if no role
+
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login?redirect=/dashboard/client')
-        return
-      }
-      
-      if (userProfile?.role && userProfile.role !== 'client') {
-        if (userProfile.role === 'admin') {
+    if (!loading && user) {
+      if (!isClient) {
+        // User is not a client - redirect to appropriate dashboard
+        if (role === 'admin') {
           router.push('/admin')
-        } else if (userProfile.role === 'stylist') {
+        } else if (role === 'stylist') {
           router.push('/dashboard/stylist')
         } else {
           router.push('/')
         }
-        return
       }
+    } else if (!loading && !user) {
+      router.push('/login?redirect=/dashboard/client')
     }
-  }, [user, userProfile, loading, router])
+  }, [user, isClient, role, loading, router])
 
   if (loading) {
     return (
@@ -44,7 +45,7 @@ export function ProtectedClientRoute({ children }: ProtectedClientRouteProps) {
     )
   }
 
-  if (!user || (userProfile?.role && userProfile.role !== 'client')) {
+  if (!user || !isClient) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

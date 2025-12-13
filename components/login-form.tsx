@@ -27,42 +27,20 @@ export function LoginForm() {
     e.preventDefault()
     setError("")
     setLoading(true)
-    
+
     try {
       const result = await signIn(email, password)
-      
-      if (result.user?.user_metadata?.role) {
-        const role = result.user.user_metadata.role
-        
-        setLoading(false)
-        if (role === 'admin') {
-          router.push('/admin')
-        } else if (role === 'stylist') {
-          router.push('/dashboard/stylist')
-        } else {
-          router.push('/dashboard/client')
-        }
-        return
+
+      // Use user_metadata.role for immediate redirect
+      const role = result.user?.user_metadata?.role || 'client'
+
+      if (role === 'admin') {
+        router.push('/admin')
+      } else if (role === 'stylist') {
+        router.push('/dashboard/stylist')
       } else {
-        const { data: profile, error: profileError } = await import('@/lib/supabase').then(async m => {
-          return m.supabase
-            .from('users')
-            .select('role')
-            .eq('id', result.user.id)
-            .single()
-        })
-        
-        setLoading(false)
-        if (profile?.role === 'admin') {
-          router.push('/admin')
-        } else if (profile?.role === 'stylist') {
-          router.push('/dashboard/stylist')
-        } else {
-          router.push('/dashboard/client')
-        }
-        return
+        router.push('/dashboard/client')
       }
-      
     } catch (err: any) {
       setError(err.message || "Failed to sign in")
       setLoading(false)

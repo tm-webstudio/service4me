@@ -120,12 +120,13 @@ export function Navigation() {
   }
 
   const handleDashboard = () => {
-    if (userProfile?.role === 'stylist') {
+    const role = userProfile?.role || user?.user_metadata?.role
+    if (role === 'admin') {
+      router.push('/admin')
+    } else if (role === 'stylist') {
       router.push('/dashboard/stylist')
-    } else if (userProfile?.role === 'client') {
-      router.push('/dashboard/client')
     } else {
-      router.push('/dashboard/client') // Default fallback
+      router.push('/dashboard/client')
     }
     setIsOpen(false)
   }
@@ -321,9 +322,9 @@ export function Navigation() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <div className="px-3 py-2 text-sm">
-                      <div className="font-medium">{userProfile?.full_name || "User"}</div>
+                      <div className="font-medium">{userProfile?.full_name || user?.user_metadata?.full_name || "User"}</div>
                       <div className="text-xs text-gray-500">{user.email}</div>
-                      <div className="text-xs text-blue-600 capitalize">{userProfile?.role || "client"}</div>
+                      <div className="text-xs text-blue-600 capitalize">{userProfile?.role || user?.user_metadata?.role || "client"}</div>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleDashboard} className="cursor-pointer">
@@ -413,16 +414,16 @@ export function Navigation() {
                       }}
                     >
                       {/* User Profile Section (Mobile) */}
-                      {user && userProfile && (
+                      {user && (
                         <div className="bg-gray-50 rounded-lg p-4 mb-6">
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                               <User className="w-5 h-5 text-red-600" />
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">{userProfile.full_name || "User"}</div>
+                              <div className="font-medium text-gray-900">{userProfile?.full_name || user?.user_metadata?.full_name || "User"}</div>
                               <div className="text-sm text-gray-500">{user.email}</div>
-                              <div className="text-sm text-blue-600 capitalize">{userProfile.role}</div>
+                              <div className="text-sm text-blue-600 capitalize">{userProfile?.role || user?.user_metadata?.role || "client"}</div>
                             </div>
                           </div>
                         </div>

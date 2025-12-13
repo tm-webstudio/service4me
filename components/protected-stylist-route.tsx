@@ -13,25 +13,26 @@ export function ProtectedStylistRoute({ children }: ProtectedStylistRouteProps) 
   const { user, userProfile, loading } = useAuth()
   const router = useRouter()
 
+  // Check role from userProfile OR user_metadata as fallback
+  const isStylist = userProfile?.role === 'stylist' || user?.user_metadata?.role === 'stylist'
+  const role = userProfile?.role || user?.user_metadata?.role
+
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // User not logged in - redirect to login
-        router.push('/login?redirect=/dashboard/stylist')
-        return
-      }
-      
-      if (userProfile?.role !== 'stylist') {
-        // User is not a stylist - redirect to appropriate dashboard or home
-        if (userProfile?.role === 'client') {
+    if (!loading && user) {
+      if (!isStylist) {
+        // User is not a stylist - redirect to appropriate dashboard
+        if (role === 'admin') {
+          router.push('/admin')
+        } else if (role === 'client') {
           router.push('/dashboard/client')
         } else {
           router.push('/')
         }
-        return
       }
+    } else if (!loading && !user) {
+      router.push('/login?redirect=/dashboard/stylist')
     }
-  }, [user, userProfile, loading, router])
+  }, [user, isStylist, role, loading, router])
 
   // Show loading while checking authentication
   if (loading) {
@@ -45,8 +46,8 @@ export function ProtectedStylistRoute({ children }: ProtectedStylistRouteProps) 
     )
   }
 
-  // Show loading while redirecting
-  if (!user || userProfile?.role !== 'stylist') {
+  // Show loading while redirecting (user not logged in or not a stylist)
+  if (!user || !isStylist) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

@@ -287,18 +287,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) {
       throw new Error('Authentication not available - missing configuration')
     }
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
 
-      if (error) throw error
-      return data
-    } catch (error) {
-      throw error
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) throw error
+
+    // Immediately set user and session
+    setUser(data.user)
+    setSession(data.session)
+    setLoading(false)
+
+    // Fetch profile in background - don't block the login
+    if (data.user) {
+      lastFetchedUserId.current = null
+      fetchUserProfile(data.user.id).catch(() => {})
     }
+
+    // Return user data with role from user_metadata for immediate redirect
+    return data
   }
 
   const signOut = async () => {
@@ -324,9 +333,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const getDashboardUrl = () => {
-    if (!userProfile) return '/dashboard/client'
-    
-    switch (userProfile.role) {
+    const role = userProfile?.role || user?.user_metadata?.role
+
+    switch (role) {
       case 'admin':
         return '/admin'
       case 'stylist':
