@@ -90,21 +90,6 @@ export function Footer() {
                   Contact Us
                 </Link>
               </li>
-              <li>
-                <Link href="/dashboard/client" className="hover:text-gray-900">
-                  Client Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/stylist" className="hover:text-gray-900">
-                  Stylist Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-gray-900">
-                  Admin Dashboard
-                </Link>
-              </li>
             </ul>
           </div>
         </div>
