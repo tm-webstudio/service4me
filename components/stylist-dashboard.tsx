@@ -414,6 +414,13 @@ export function StylistDashboard() {
             Dashboard
           </TabsTrigger>
           <TabsTrigger
+            value="reviews"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Reviews
+          </TabsTrigger>
+          <TabsTrigger
             value="profile"
             className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
           >
@@ -427,6 +434,25 @@ export function StylistDashboard() {
             <CardHeader>
               <CardTitle className="text-base sm:text-xl">Recent Reviews</CardTitle>
               <CardDescription>Your latest ratings and feedback</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ReviewsDisplay stylistId={profile.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reviews" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base sm:text-xl">Reviews</CardTitle>
+                  <CardDescription>See what clients are saying about your services.</CardDescription>
+                </div>
+                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100">
+                  {getReviewCount()} total
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent>
               <ReviewsDisplay stylistId={profile.id} />
