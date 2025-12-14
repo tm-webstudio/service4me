@@ -13,6 +13,10 @@ import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 import { useServices } from "@/hooks/use-services"
 import { postcodeToAreaName } from "@/lib/postcode-utils"
 import { BusinessFormFields, BusinessFormData, ServiceItem, initialBusinessFormData } from "@/components/business-form-fields"
+import { StarDisplay } from "@/components/ui/star-rating"
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
+import { ReviewsDisplay } from "@/components/reviews-display"
+import { DashboardHero } from "@/components/ui/dashboard-hero"
 
 export function StylistDashboard() {
   const { user } = useAuth()
@@ -365,37 +369,40 @@ export function StylistDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-6 sm:mb-8">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <p className="text-xs font-semibold tracking-wider text-green-600 uppercase">
-              Stylist Dashboard
-            </p>
-            <Badge variant="secondary" className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
-            </Badge>
-          </div>
-          <h1 className="text-xl sm:text-3xl font-medium text-gray-900">
-            Hello, {getBusinessName()}!
-          </h1>
-          <div className="flex items-center flex-wrap gap-6 text-sm sm:text-base text-green-700/80">
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium">{getRating() > 0 ? getRating().toFixed(1) : "New"}</span>
-              <span>({getReviewCount()} reviews)</span>
-            </div>
-          </div>
-      <div className="pt-2">
-        <Link href={`/stylist/${profile.id}`}>
-          <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 bg-transparent">
-            <ExternalLink className="w-4 h-4 mr-2" />
-            View Public Profile
-          </Button>
-        </Link>
-      </div>
-    </div>
-      </div>
+      <DashboardHero
+        eyebrow="Stylist Dashboard"
+        eyebrowClassName="text-green-600"
+        badge={
+          <Badge variant="secondary" className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
+          </Badge>
+        }
+        title={<>Hello, {getBusinessName()}!</>}
+        gradientFrom="from-emerald-50"
+        gradientTo="to-emerald-100"
+        borderClassName="border-emerald-100"
+      >
+        <div className="flex items-center flex-wrap gap-6 text-sm sm:text-base text-green-700/80">
+          <StarDisplay
+            rating={getRating()}
+            totalReviews={getReviewCount()}
+            size="sm"
+            showReviewsLabel
+            className="[&_span]:text-green-700/80"
+          />
+        </div>
+        <div className="pt-2">
+          <Link href={`/stylist/${profile.id}`}>
+            <SmallCtaButton
+              variant="outline"
+              className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 bg-transparent h-8 px-3 text-xs"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              View Public Profile
+            </SmallCtaButton>
+          </Link>
+        </div>
+      </DashboardHero>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
         <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-4 sm:gap-6 flex-nowrap overflow-x-auto whitespace-nowrap justify-start rounded-none w-full -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -418,39 +425,11 @@ export function StylistDashboard() {
         <TabsContent value="dashboard" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base sm:text-xl">Overview</CardTitle>
-              <CardDescription>Your business performance and activity</CardDescription>
+              <CardTitle className="text-base sm:text-xl">Recent Reviews</CardTitle>
+              <CardDescription>Your latest ratings and feedback</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-100">
-                  <div className="bg-green-600 p-3 rounded-full">
-                    <Star className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Rating</p>
-                    <p className="text-2xl font-bold text-gray-900">{getRating() > 0 ? getRating().toFixed(1) : "New"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-100">
-                  <div className="bg-green-600 p-3 rounded-full">
-                    <MessageSquare className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Reviews</p>
-                    <p className="text-2xl font-bold text-gray-900">{getReviewCount()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-100">
-                  <div className="bg-green-600 p-3 rounded-full">
-                    <Scissors className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Specialties</p>
-                    <p className="text-2xl font-bold text-gray-900">{profile.specialties?.length || (profileFormData.specialties ? 1 : 0)}</p>
-                  </div>
-                </div>
-              </div>
+              <ReviewsDisplay stylistId={profile.id} />
             </CardContent>
           </Card>
         </TabsContent>

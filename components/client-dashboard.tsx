@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { supabase } from "@/lib/supabase"
 import { formatDistanceToNow } from "date-fns"
+import { DashboardHero } from "@/components/ui/dashboard-hero"
 
 interface ClientReview {
   id: string
@@ -163,21 +164,21 @@ export function ClientDashboard() {
 
   return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-6 sm:mb-8">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold tracking-wider text-blue-600 uppercase">
-            Client Dashboard
-          </p>
-          <h1 className="text-xl sm:text-3xl font-medium text-gray-900">
-            Welcome back, {userProfile?.full_name || 'Client'}!
-          </h1>
-          <p className="text-sm sm:text-base text-blue-700/80 mt-3 flex items-center gap-2">
+      <DashboardHero
+        eyebrow="Client Dashboard"
+        eyebrowClassName="text-blue-600"
+        title={<>Welcome back, {userProfile?.full_name || 'Client'}!</>}
+        subtitle={
+          <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Member since {getMemberSince()}
-          </p>
-        </div>
-      </div>
+            <span>Member since {getMemberSince()}</span>
+          </div>
+        }
+        subtitleClassName="text-blue-700/80"
+        gradientFrom="from-blue-50"
+        gradientTo="to-indigo-50"
+        borderClassName="border-blue-100"
+      />
 
       <Tabs defaultValue="dashboard" className="space-y-6">
         <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-4 sm:gap-6 flex-nowrap overflow-x-auto whitespace-nowrap justify-start rounded-none w-full -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">

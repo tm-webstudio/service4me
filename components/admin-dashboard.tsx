@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useCallback, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,6 +44,7 @@ const ADDITIONAL_SERVICES = [
 ]
 
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
+import { DashboardHero } from "@/components/ui/dashboard-hero"
 
 // Interface for pending stylists from database
 interface PendingStylist {
@@ -71,6 +73,7 @@ interface PendingStylist {
 
 export function AdminDashboard() {
   const { user } = useAuth()
+  const router = useRouter()
   const [stylists, setStylists] = useState<PendingStylist[]>([])
   const [loadingPendingStylists, setLoadingPendingStylists] = useState(true)
   const [allStylists, setAllStylists] = useState<any[]>([])
@@ -356,6 +359,10 @@ export function AdminDashboard() {
     } catch {
       return 'Unknown'
     }
+  }
+
+  const openPreview = (stylistId: string) => {
+    router.push(`/admin/pending-preview/${stylistId}`)
   }
 
   // Open details modal
@@ -1323,20 +1330,16 @@ Please change your password after first login.`
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-100 rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-6 sm:mb-8">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold tracking-wider text-red-600 uppercase">
-            Admin Dashboard
-          </p>
-          <h1 className="text-xl sm:text-3xl font-medium text-gray-900">
-            System Administration
-          </h1>
-          <p className="text-sm sm:text-base text-red-700/80 mt-3">
-            Manage stylists, services, and platform operations
-          </p>
-        </div>
-      </div>
+      <DashboardHero
+        eyebrow="Admin Dashboard"
+        eyebrowClassName="text-red-600"
+        title="System Administration"
+        subtitle="Manage stylists, services, and platform operations"
+        subtitleClassName="text-red-700/80"
+        gradientFrom="from-red-50"
+        gradientTo="to-pink-50"
+        borderClassName="border-red-100"
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-4 sm:gap-6 flex-nowrap overflow-x-auto whitespace-nowrap justify-start rounded-none w-full -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -1372,71 +1375,74 @@ Please change your password after first login.`
 
         <TabsContent value="dashboard" className="space-y-6">
           <div className="relative">
-            <div className="flex gap-3 sm:gap-4 overflow-x-auto lg:grid lg:grid-cols-5 lg:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory" ref={statsRef}>
+            <div
+              className="flex gap-3 sm:gap-4 overflow-x-auto md:grid md:grid-cols-5 md:overflow-visible px-1 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory"
+              ref={statsRef}
+            >
             {/* Total Stylists */}
-            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="min-w-[220px] md:min-w-0 flex-shrink-0 snap-start">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pt-4 pb-4">
                 <CardTitle className="text-sm font-medium">Total Stylists</CardTitle>
                 <User className="h-4 w-4 text-gray-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-xl sm:text-2xl font-bold">{allStylists.length}</div>
-                <p className="text-xs text-gray-500 mt-1">
+              <CardContent className="pt-4 pb-5">
+                <div className="text-lg sm:text-xl font-bold mb-1">{allStylists.length}</div>
+                <p className="text-xs text-gray-500 whitespace-nowrap">
                   {allStylists.filter(s => s.user_id).length} with accounts
                 </p>
               </CardContent>
             </Card>
 
             {/* Active Stylists */}
-            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="min-w-[220px] md:min-w-0 flex-shrink-0 snap-start">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pt-4 pb-4">
                 <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
                 <UserCheck className="h-4 w-4 text-green-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-xl sm:text-2xl font-bold">{allStylists.filter(s => s.user_id).length}</div>
-                <p className="text-xs text-gray-500 mt-1">
+              <CardContent className="pt-4 pb-5">
+                <div className="text-lg sm:text-xl font-bold mb-1">{allStylists.filter(s => s.user_id).length}</div>
+                <p className="text-xs text-gray-500 whitespace-nowrap">
                   Stylists with active accounts
                 </p>
               </CardContent>
             </Card>
 
             {/* No Account */}
-            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="min-w-[220px] md:min-w-0 flex-shrink-0 snap-start">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pt-4 pb-4">
                 <CardTitle className="text-sm font-medium">No Account</CardTitle>
                 <UserX className="h-4 w-4 text-red-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-xl sm:text-2xl font-bold">{allStylists.filter(s => !s.user_id).length}</div>
-                <p className="text-xs text-gray-500 mt-1">
+              <CardContent className="pt-4 pb-5">
+                <div className="text-lg sm:text-xl font-bold mb-1">{allStylists.filter(s => !s.user_id).length}</div>
+                <p className="text-xs text-gray-500 whitespace-nowrap">
                   Stylists without accounts
                 </p>
               </CardContent>
             </Card>
 
             {/* Pending */}
-            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="min-w-[220px] md:min-w-0 flex-shrink-0 snap-start">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pt-4 pb-4">
                 <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
                 <Clock className="h-4 w-4 text-orange-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-xl sm:text-2xl font-bold">{stylists.length}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Applications awaiting verification
+              <CardContent className="pt-4 pb-5">
+                <div className="text-lg sm:text-xl font-bold mb-1">{stylists.length}</div>
+                <p className="text-xs text-gray-500 whitespace-nowrap">
+                  Awaiting verification
                 </p>
               </CardContent>
             </Card>
 
             {/* New Stylists (30 days) */}
-            <Card className="min-w-[240px] md:min-w-[240px] flex-shrink-0 snap-start">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="min-w-[220px] md:min-w-0 flex-shrink-0 snap-start">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pt-4 pb-4">
                 <CardTitle className="text-sm font-medium">New This Month</CardTitle>
                 <Calendar className="h-4 w-4 text-red-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-xl sm:text-2xl font-bold">
+              <CardContent className="pt-4 pb-5">
+                <div className="text-lg sm:text-xl font-bold mb-1">
                   {allStylists.filter(s => {
                     if (!s.created_at) return false
                     const created = new Date(s.created_at).getTime()
@@ -1444,8 +1450,8 @@ Please change your password after first login.`
                     return created >= thirtyDaysAgo
                   }).length}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Profiles created in the last 30 days
+                <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
+                  Created in the last 30 days
                 </p>
               </CardContent>
             </Card>
@@ -1494,7 +1500,10 @@ Please change your password after first login.`
 
                     return (
                       <div key={stylist.id} className="flex-none w-[280px]">
-                        <Card className="group cursor-pointer hover:shadow-sm transition-shadow h-full">
+                        <Card
+                          className="group cursor-pointer hover:shadow-sm transition-shadow h-full"
+                          onClick={() => openPreview(stylist.id)}
+                        >
                           <CardContent className="p-0 h-full">
                             <div className="relative aspect-square md:aspect-[4/3]">
                               <img
@@ -1610,7 +1619,11 @@ Please change your password after first login.`
                     const displayImage = stylist.portfolio_images?.[0] || stylist.logo_url || placeholderImage
 
                     return (
-                    <Card key={stylist.id} className="group cursor-pointer hover:shadow-sm transition-shadow h-full">
+                    <Card
+                      key={stylist.id}
+                      className="group cursor-pointer hover:shadow-sm transition-shadow h-full"
+                      onClick={() => openPreview(stylist.id)}
+                    >
                       <CardContent className="p-0 h-full">
                         <div className="relative aspect-square md:aspect-[4/3]">
                           <img

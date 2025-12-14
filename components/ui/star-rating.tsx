@@ -94,6 +94,7 @@ interface StarDisplayProps {
   totalReviews?: number
   size?: "xs" | "sm" | "md" | "lg"
   showCount?: boolean
+  showReviewsLabel?: boolean
   className?: string
 }
 
@@ -102,6 +103,7 @@ export function StarDisplay({
   totalReviews,
   size = "sm",
   showCount = true,
+  showReviewsLabel = false,
   className
 }: StarDisplayProps) {
   const sizeClasses = {
@@ -117,6 +119,14 @@ export function StarDisplay({
     md: "text-sm",
     lg: "text-sm"
   }
+
+  const formatReviewCount = (count: number) => {
+    if (showReviewsLabel) {
+      const label = count === 1 ? "review" : "reviews"
+      return `${count} ${label}`
+    }
+    return `${count}`
+  }
   
   if (rating <= 0) {
     return (
@@ -125,7 +135,7 @@ export function StarDisplay({
         <span className={cn("font-medium text-gray-800", textSizeClasses[size])}>New</span>
         {showCount && (
           <span className={cn("text-gray-500", textSizeClasses[size])}>
-            ({totalReviews ?? 0})
+            ({formatReviewCount(totalReviews ?? 0)})
           </span>
         )}
       </div>
@@ -178,7 +188,7 @@ export function StarDisplay({
       </span>
       {showCount && totalReviews !== undefined && (
         <span className={cn("text-gray-500", textSizeClasses[size])}>
-          ({totalReviews})
+          ({formatReviewCount(totalReviews)})
         </span>
       )}
     </div>
