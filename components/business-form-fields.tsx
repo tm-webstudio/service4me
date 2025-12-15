@@ -303,7 +303,7 @@ export function BusinessFormFields({
     <div className="space-y-5">
       {/* Section 1: Basic Information */}
       <Card>
-        <CardContent className="p-4 sm:p-6 space-y-5">
+        <CardContent className="px-3 py-4 sm:p-6 space-y-5">
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-red-600" />
             <h3 className="text-base font-semibold text-gray-900">Basic Information</h3>
@@ -408,7 +408,7 @@ export function BusinessFormFields({
 
       {/* Section 2: Business Details */}
       <Card>
-        <CardContent className="p-4 sm:p-6 space-y-5">
+        <CardContent className="px-3 py-4 sm:p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Settings className="w-4 h-4 text-red-600" />
             <h3 className="text-base font-semibold text-gray-900">Business Details</h3>
@@ -782,7 +782,7 @@ export function BusinessFormFields({
 
       {/* Section 3: Photos */}
       <Card>
-        <CardContent className="p-4 sm:p-6 space-y-5">
+        <CardContent className="px-3 py-4 sm:p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Upload className="w-4 h-4 text-red-600" />
             <h3 className="text-base font-semibold text-gray-900">Photos</h3>

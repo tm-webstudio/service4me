@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useStylist } from "@/hooks/use-stylist"
 import { useStylistServices } from "@/hooks/use-stylist-services"
+import { useSavedStylists } from "@/hooks/use-saved-stylists"
 import { postcodeToAreaName, postcodeToAreaNameWithCode } from "@/lib/postcode-utils"
 import { StylistLocationMap, MapStylesImport } from "@/components/stylist-location-map"
 import {
@@ -70,7 +71,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   const { userProfile } = useAuth()
   const { stylist, loading, error, refetch: refetchStylist } = useStylist(stylistId)
   const { services, loading: servicesLoading, error: servicesError, formatDuration } = useStylistServices(stylist?.id)
-  const [isFavorite, setIsFavorite] = useState(false)
+  const { isSaved: isFavorite, toggleSave, loading: savingFavorite, isAuthenticated } = useSavedStylists(stylist?.id)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -412,8 +413,18 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                 <h1 className="text-xl md:text-2xl font-medium text-gray-900">{displayData.businessName}</h1>
               </div>
               <div className="flex space-x-2 flex-shrink-0">
-                <Button variant="outline" size="icon" onClick={() => setIsFavorite(!isFavorite)}>
-                  <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleSave}
+                  disabled={savingFavorite || !isAuthenticated}
+                  title={!isAuthenticated ? "Sign in to save stylists" : isFavorite ? "Remove from saved" : "Save stylist"}
+                >
+                  {savingFavorite ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+                  )}
                 </Button>
                 <Button variant="outline" size="icon">
                   <Share className="w-4 h-4" />
@@ -607,7 +618,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
           {/* Location */}
           <Card>
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="px-3 py-4 sm:p-6">
               {/* Profile Card */}
               <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100">
                 <Avatar className="h-16 w-16">

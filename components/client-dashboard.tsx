@@ -661,10 +661,10 @@ export function ClientDashboard() {
               title="Profile Information"
               description="Update the details you shared when creating your client account."
             />
-            <CardContent className="pt-0">
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0">
               <div className="max-w-3xl">
                 <Card>
-                  <CardContent className="p-4 sm:p-6 space-y-5">
+                  <CardContent className="px-3 py-4 sm:p-6 space-y-5">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-red-600" />
                       <h3 className="text-base font-semibold text-gray-900">Basic Information</h3>

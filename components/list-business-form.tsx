@@ -594,7 +594,7 @@ export function ListBusinessForm() {
     <div className="bg-gray-50 py-6 sm:pt-8 sm:pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg shadow-sm p-4 sm:p-6 mb-4">
+        <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg shadow-sm px-3 py-4 sm:p-6 mb-4">
           <div className="mb-2">
             <p className="text-xs sm:text-sm font-medium text-red-600 uppercase tracking-wide">Join Our Platform</p>
           </div>
@@ -708,7 +708,7 @@ export function ListBusinessForm() {
 
         {/* Form Card */}
         <Card>
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="px-3 py-4 sm:p-6">
             <form onSubmit={handleSubmit}>
               {/* Step 1: Basic Information */}
               {currentStep === 1 && (

@@ -1786,13 +1786,14 @@ Please change your password after first login.`
                     }
                   </p>
                   {(!searchTerm && statusFilter === 'all') && (
-                    <Button 
+                    <SmallCtaButton
                       onClick={() => window.location.href = '#create'}
-                      className="bg-red-600 hover:bg-red-700"
+                      variant="default"
+                      className="bg-red-600 hover:bg-red-700 text-white"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Create First Stylist
-                    </Button>
+                    </SmallCtaButton>
                   )}
                 </div>
               ) : (
@@ -1801,11 +1802,11 @@ Please change your password after first login.`
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b">
                         <tr>
-                          <th className="text-left p-4 font-medium text-gray-900">Stylist</th>
-                          <th className="text-left p-4 font-medium text-gray-900">Contact</th>
-                          <th className="text-left p-4 font-medium text-gray-900">Location</th>
-                          <th className="text-left p-4 font-medium text-gray-900">Account Status</th>
-                          <th className="text-left p-4 font-medium text-gray-900">Actions</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Stylist</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Contact</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Location</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Account Status</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -1827,7 +1828,7 @@ Please change your password after first login.`
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <div className="font-medium text-gray-900">
+                                    <div className="text-sm font-semibold text-gray-900">
                                       {stylist.business_name || 'Unnamed Business'}
                                     </div>
                                     <div className="text-sm text-gray-500">
@@ -1859,7 +1860,7 @@ Please change your password after first login.`
 
                               {/* Account Status */}
                               <td className="p-4">
-                                <Badge variant="secondary" className={accountStatus.color}>
+                                <Badge variant="secondary" className={`${accountStatus.color} whitespace-nowrap`}>
                                   {accountStatus.status === 'active' ? (
                                     <UserCheck className="w-3 h-3 mr-1" />
                                   ) : (
@@ -1873,9 +1874,9 @@ Please change your password after first login.`
                               <td className="p-4">
                                 <div className="flex items-center space-x-2">
                                   {accountStatus.status === 'no-account' ? (
-                                    <Button
-                                      size="sm"
-                                      className="bg-green-600 hover:bg-green-700 px-3 py-2 w-[180px] disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                    <SmallCtaButton
+                                      variant="default"
+                                      className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-[12px] min-w-[140px] disabled:bg-gray-300 disabled:cursor-not-allowed"
                                       disabled={generatingAccountForStylist === stylist.id || !stylist.contact_email}
                                       onClick={() => handleTableGenerateAccount(stylist)}
                                       title={!stylist.contact_email ? 'Stylist must have an email address to generate an account' : ''}
@@ -1896,12 +1897,12 @@ Please change your password after first login.`
                                           Generate Account
                                         </>
                                       )}
-                                    </Button>
+                                    </SmallCtaButton>
                                   ) : (
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="px-3 py-2 w-[180px]"
+                                      className="h-8 px-3 text-sm min-w-[140px]"
                                       onClick={() => {
                                         alert('Password reset functionality will be implemented next')
                                       }}
@@ -1914,6 +1915,7 @@ Please change your password after first login.`
                                   <Button
                                     size="sm"
                                     variant="outline"
+                                    className="h-8 px-3 text-sm"
                                     onClick={() => loadStylistForEdit(stylist)}
                                     disabled={loadingEditData}
                                   >
@@ -1928,7 +1930,7 @@ Please change your password after first login.`
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                    className="h-8 px-3 text-sm"
                                     onClick={() => openDeleteModal(stylist)}
                                   >
                                     <Trash2 className="w-3 h-3 mr-1" />
@@ -2154,7 +2156,7 @@ Please change your password after first login.`
                     : 'Create stylist profile and generate login credentials'
                   }
                 />
-                <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
+                <CardContent className="space-y-4 px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
                   {/* Edit Mode - Save Button */}
                   {isEditMode ? (
                     <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">

@@ -130,7 +130,7 @@ export function HeroSection() {
                 <Link
                   key={`${location}-${index}`}
                   href={`/browse?location=${encodeURIComponent(location.replace("Braids In ", ""))}`}
-                  className="flex-shrink-0 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 rounded-full text-sm font-medium transition-colors whitespace-nowrap border border-white/20 py-1"
+                  className="flex-shrink-0 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 rounded-full text-sm font-normal transition-colors whitespace-nowrap border border-white/20 py-1"
                 >
                   {location}
                 </Link>

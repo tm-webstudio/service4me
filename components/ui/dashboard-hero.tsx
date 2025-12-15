@@ -40,7 +40,7 @@ export function DashboardHero({
         className
       )}
     >
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-3 flex-wrap">
           <p className={cn("text-xs font-semibold tracking-wider uppercase", eyebrowClassName)}>
             {eyebrow}

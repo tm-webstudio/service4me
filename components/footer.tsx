@@ -13,7 +13,7 @@ export function Footer() {
                 Service<span className="text-red-600">4</span>Me
               </span>
             </div>
-            <p className="text-gray-600 mb-4 max-w-md text-sm md:text-sm">
+            <p className="text-gray-600 mb-4 max-w-[320px] sm:max-w-[360px] text-sm md:text-sm">
               Connecting clients with talented hairstylists. Discover, book, and review the best hair services in your
               area.
             </p>

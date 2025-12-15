@@ -1,14 +1,14 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
-import { MapPin, Heart } from "lucide-react"
+import { MapPin, Heart, Loader2 } from "lucide-react"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
+import { useSavedStylistIds } from "@/hooks/use-saved-stylists"
 import { postcodeToAreaName } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
 
@@ -20,7 +20,7 @@ interface StylistGridProps {
 export function StylistGrid({ category, location }: StylistGridProps = {}) {
   const router = useRouter()
   const { stylists, loading, error } = useStylists()
-  const [favorites, setFavorites] = useState<string[]>([])
+  const { savedIds, toggleSave, savingId, isAuthenticated } = useSavedStylistIds()
 
   // Filter stylists based on category and location
   const filteredStylists = stylists.filter(stylist => {
@@ -38,10 +38,6 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
 
     return matchesCategory && matchesLocation
   })
-
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => (prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]))
-  }
 
   // Helper function to format specialties for display
   const getExpertiseDisplay = (specialties: string[]) => {
@@ -146,17 +142,23 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
                     variant="ghost"
                     size="icon"
                     className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                    disabled={savingId === stylist.id || !isAuthenticated}
+                    title={!isAuthenticated ? "Sign in to save stylists" : savedIds.includes(stylist.id) ? "Remove from saved" : "Save stylist"}
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      toggleFavorite(stylist.id)
+                      toggleSave(stylist.id)
                     }}
                   >
-                    <Heart
-                      className={`w-4 h-4 ${
-                        favorites.includes(stylist.id) ? "fill-red-500 text-red-500" : "text-gray-600"
-                      }`}
-                    />
+                    {savingId === stylist.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                    ) : (
+                      <Heart
+                        className={`w-4 h-4 ${
+                          savedIds.includes(stylist.id) ? "fill-red-500 text-red-500" : "text-gray-600"
+                        }`}
+                      />
+                    )}
                   </Button>
                   {stylist.is_verified && (
                     <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">Verified</Badge>

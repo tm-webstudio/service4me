@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { EmptyState } from "@/components/ui/empty-state"
 import { 
   Loader2, 
   ChevronLeft, 
@@ -185,9 +186,14 @@ export function ReviewsDisplay({
   if (loading && reviews.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
+        <EmptyState
+          icon={<Loader2 className="h-6 w-6 animate-spin text-gray-400" />}
+          title="Loading reviews"
+          description="Give us a moment to fetch client feedback."
+          className="py-10"
+          titleClassName="text-base font-medium text-gray-900"
+          descriptionClassName="text-sm text-gray-500"
+        />
       </div>
     )
   }
@@ -206,19 +212,24 @@ export function ReviewsDisplay({
   if (totalReviews === 0) {
     return (
       <Card>
-        <CardContent className="pt-8 pb-8 md:pt-16 md:pb-16 text-center">
-          <MessageSquare className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <h3 className="text-base font-medium text-gray-900 mb-1">No reviews yet</h3>
-          <p className="text-sm text-gray-500 mb-4">Be the first to leave a review for this stylist!</p>
-          {onLeaveReview && (
-            <Button
-              onClick={onLeaveReview}
-              size="sm"
-              className="bg-red-600 hover:bg-red-700 text-[12px] h-8 px-3"
-            >
-              Leave a Review
-            </Button>
-          )}
+        <CardContent className="pt-8 pb-8 md:pt-16 md:pb-16">
+          <EmptyState
+            icon={<MessageSquare className="h-8 w-8 text-gray-400" />}
+            title="No reviews yet"
+            description="Be the first to leave a review for this stylist."
+            className="py-0"
+            titleClassName="text-base font-medium text-gray-900"
+            descriptionClassName="text-sm text-gray-500"
+            action={onLeaveReview ? (
+              <Button
+                onClick={onLeaveReview}
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-[12px] h-8 px-3"
+              >
+                Leave a Review
+              </Button>
+            ) : undefined}
+          />
         </CardContent>
       </Card>
     )

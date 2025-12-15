@@ -398,20 +398,13 @@ export function StylistDashboard() {
   }
   const getRating = () => profile.average_rating || 0
   const getReviewCount = () => profile.review_count || 0
+  const isActive = optimisticActive !== null ? optimisticActive : profile?.is_active
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <DashboardHero
         eyebrow="Stylist Dashboard"
         eyebrowClassName="text-blue-600"
-        badge={
-          <Badge
-            variant="secondary"
-            className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-          >
-            {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
-          </Badge>
-        }
         title={<>Hello, {getBusinessName()}!</>}
         gradientFrom="from-blue-50"
         gradientTo="to-indigo-50"
@@ -426,7 +419,7 @@ export function StylistDashboard() {
             className="[&_span]:text-blue-700/80"
           />
         </div>
-        <div className="pt-2">
+        <div className="pt-2 flex items-center gap-3 flex-wrap">
           <Link href={`/stylist/${profile.id}`}>
             <SmallCtaButton
               variant="outline"
@@ -436,6 +429,12 @@ export function StylistDashboard() {
               View Public Profile
             </SmallCtaButton>
           </Link>
+          <Badge
+            variant="secondary"
+            className={`${isActive ? 'bg-green-600 text-white' : 'bg-red-100 text-red-800'}`}
+          >
+            {profile?.is_verified ? "Verified Profile" : (isActive ? "Active Profile" : "Inactive Profile")}
+          </Badge>
         </div>
       </DashboardHero>
 
@@ -447,13 +446,6 @@ export function StylistDashboard() {
           >
             <LayoutDashboard className="w-4 h-4" />
             Dashboard
-          </TabsTrigger>
-          <TabsTrigger
-            value="reviews"
-            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Reviews
           </TabsTrigger>
           <TabsTrigger
             value="profile"
@@ -476,18 +468,6 @@ export function StylistDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="reviews" className="space-y-6">
-          <Card>
-            <SectionHeader
-              title="Reviews"
-              description="See what clients are saying about your services."
-            />
-            <CardContent>
-              <ReviewsDisplay stylistId={profile.id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="profile" className="space-y-6">
           <div className="space-y-6">
           <Card className="mb-5">
@@ -500,15 +480,15 @@ export function StylistDashboard() {
                 <button
                   onClick={() => handleToggleActiveStatus(!profile?.is_active)}
                   disabled={saving}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-blue-600' : 'bg-gray-400'
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                    isActive ? 'bg-green-600' : 'bg-gray-400'
                   } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
-                    (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
+                    isActive ? 'translate-x-6' : 'translate-x-1'
                   }`} />
                 </button>
-                <span className="text-sm">{(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'Active' : 'Inactive'}</span>
+                <span className="text-sm">{isActive ? 'Active' : 'Inactive'}</span>
               </div>
             </SectionHeader>
             <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 space-y-5">
