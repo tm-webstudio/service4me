@@ -8,9 +8,7 @@ export default function AdminPage() {
     <ProtectedAdminRoute>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="py-0">
-          <AdminDashboard />
-        </main>
+        <AdminDashboard />
         <Footer />
       </div>
     </ProtectedAdminRoute>

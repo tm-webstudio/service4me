@@ -45,6 +45,7 @@ const ADDITIONAL_SERVICES = [
 
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { DashboardHero } from "@/components/ui/dashboard-hero"
+import { SectionHeader } from "@/components/ui/section-header"
 
 // Interface for pending stylists from database
 interface PendingStylist {
@@ -1329,7 +1330,7 @@ Please change your password after first login.`
   const disableGenerateLogin = !createdStylist || generatingAccount || loginAlreadyGenerated
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <DashboardHero
         eyebrow="Admin Dashboard"
         eyebrowClassName="text-red-600"
@@ -1460,26 +1461,23 @@ Please change your password after first login.`
 
           {/* Pending Verification Carousel */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-base sm:text-xl">Pending Verification</CardTitle>
-                <CardDescription>Stylists awaiting approval</CardDescription>
-              </div>
-              {stylists.length > 0 && (
+            <SectionHeader
+              title="Pending Verification"
+              description="Stylists awaiting approval"
+              action={stylists.length > 0 ? (
                 <SmallCtaButton
                   variant="outline"
                   className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
                   onClick={() => {
-                    // Switch to pending tab
                     const pendingTab = document.querySelector('[value=\"pending\"]') as HTMLElement
                     if (pendingTab) pendingTab.click()
                   }}
                 >
                   View All
                 </SmallCtaButton>
-              )}
-            </CardHeader>
-            <CardContent>
+              ) : undefined}
+            />
+            <CardContent className="pt-0">
               {stylists.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="mx-auto h-12 w-12 text-gray-400" />
@@ -1594,11 +1592,11 @@ Please change your password after first login.`
 
         <TabsContent value="pending" className="space-y-6">
           <Card>
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-base sm:text-xl">Stylists Awaiting Verification</CardTitle>
-              <CardDescription>Review and approve or reject stylist applications</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
+            <SectionHeader
+              title="Stylists Awaiting Verification"
+              description="Review and approve or reject stylist applications"
+            />
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
               {stylists.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="mx-auto h-12 w-12 text-gray-400" />
@@ -1717,13 +1715,11 @@ Please change your password after first login.`
 
         <TabsContent value="manage" className="space-y-6">
           <Card>
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-base sm:text-xl">Manage Stylists</CardTitle>
-                  <CardDescription>View and manage all stylist profiles and their account status</CardDescription>
-                </div>
-                <SmallCtaButton 
+            <SectionHeader
+              title="Manage Stylists"
+              description="View and manage all stylist profiles and their account status"
+              action={
+                <SmallCtaButton
                   variant="default"
                   onClick={() => window.location.href = '#create'}
                   className="bg-red-600 hover:bg-red-700 text-white"
@@ -1731,9 +1727,9 @@ Please change your password after first login.`
                   <Plus className="w-4 h-4 mr-1" />
                   Add New Stylist
                 </SmallCtaButton>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
+              }
+            />
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
               {/* Search and Filter Controls */}
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
@@ -2094,32 +2090,24 @@ Please change your password after first login.`
         <TabsContent value="create" className="space-y-6">
           {/* Container styled like profile tab */}
           <Card className="shadow-sm">
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-start justify-between flex-wrap gap-3">
-                <div>
-                  <CardTitle className="text-base sm:text-xl">
-                    {isEditMode ? 'Edit Stylist Profile' : 'Create Stylist Profile'}
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    {isEditMode
-                      ? `Editing profile for ${formData.business_name || 'stylist'}. Make changes and save.`
-                      : 'Use the shared form layout to add a new stylist listing.'
-                    }
-                  </CardDescription>
-                </div>
-                {isEditMode && (
-                  <Button
-                    variant="outline"
-                    onClick={resetEditMode}
-                    disabled={saving}
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel Edit
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 space-y-4">
+            <SectionHeader
+              title={isEditMode ? 'Edit Stylist Profile' : 'Create Stylist Profile'}
+              description={isEditMode
+                ? `Editing profile for ${formData.business_name || 'stylist'}. Make changes and save.`
+                : 'Use the shared form layout to add a new stylist listing.'
+              }
+              action={isEditMode ? (
+                <Button
+                  variant="outline"
+                  onClick={resetEditMode}
+                  disabled={saving}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel Edit
+                </Button>
+              ) : undefined}
+            />
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 space-y-4">
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
                   <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
@@ -2154,18 +2142,18 @@ Please change your password after first login.`
 
               {/* Account Access Section */}
               <Card className="mt-2 max-w-3xl">
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="flex items-center text-base">
-                    <Key className="w-4 h-4 mr-2 text-red-600" />
-                    {isEditMode ? 'Save Changes' : 'Account Access'}
-                </CardTitle>
-                  <CardDescription>
-                    {isEditMode
-                      ? 'Save your changes to update this stylist profile'
-                      : 'Create stylist profile and generate login credentials'
-                    }
-                  </CardDescription>
-                </CardHeader>
+                <SectionHeader
+                  title={
+                    <span className="flex items-center">
+                      <Key className="w-4 h-4 mr-2 text-red-600" />
+                      {isEditMode ? 'Save Changes' : 'Account Access'}
+                    </span>
+                  }
+                  description={isEditMode
+                    ? 'Save your changes to update this stylist profile'
+                    : 'Create stylist profile and generate login credentials'
+                  }
+                />
                 <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
                   {/* Edit Mode - Save Button */}
                   {isEditMode ? (

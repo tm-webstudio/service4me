@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, ExternalLink, Settings, MessageSquare, Edit, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User, XCircle } from "lucide-react"
+import { Star, ExternalLink, Settings, MessageSquare, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User, XCircle } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
@@ -17,13 +17,14 @@ import { StarDisplay } from "@/components/ui/star-rating"
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { ReviewsDisplay } from "@/components/reviews-display"
 import { DashboardHero } from "@/components/ui/dashboard-hero"
+import { SectionHeader } from "@/components/ui/section-header"
 
 export function StylistDashboard() {
   const { user } = useAuth()
   const { profile, loading, saving, error, updateProfile, updatePortfolioImages } = useStylistProfileEditor()
   const { uploadFiles, deleteImage, uploadProgress, isUploading, error: uploadError } = usePortfolioUpload()
   const { services, addService, updateService, deleteService, refreshServices } = useServices()
-  const [isEditing, setIsEditing] = useState(false)
+  const [formDirty, setFormDirty] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [localGalleryImages, setLocalGalleryImages] = useState<string[]>([])
   const uploadInProgressRef = useRef(false)
@@ -31,12 +32,41 @@ export function StylistDashboard() {
   const [additionalServices, setAdditionalServices] = useState<string[]>([])
   const [logoImage, setLogoImage] = useState<string>('')
   const [formServices, setFormServices] = useState<ServiceItem[]>([])
+  const updateProfileFormData = (updater: React.SetStateAction<BusinessFormData>) => {
+    setFormDirty(true)
+    setProfileFormData(prev => typeof updater === 'function'
+      ? (updater as (prev: BusinessFormData) => BusinessFormData)(prev)
+      : updater
+    )
+  }
+  const updateAdditionalServices = (updater: React.SetStateAction<string[]>) => {
+    setFormDirty(true)
+    setAdditionalServices(prev => typeof updater === 'function'
+      ? (updater as (prev: string[]) => string[])(prev)
+      : updater
+    )
+  }
+  const updateLogoImage = (updater: React.SetStateAction<string>) => {
+    setFormDirty(true)
+    setLogoImage(prev => typeof updater === 'function'
+      ? (updater as (prev: string) => string)(prev)
+      : updater
+    )
+  }
+  const updateFormServices = (updater: React.SetStateAction<ServiceItem[]>) => {
+    setFormDirty(true)
+    setFormServices(prev => typeof updater === 'function'
+      ? (updater as (prev: ServiceItem[]) => ServiceItem[])(prev)
+      : updater
+    )
+  }
 
   // Track gallery mutations while ensuring unsaved flag is set
   const updateGalleryImages = useCallback((updater: React.SetStateAction<string[]>) => {
     setLocalGalleryImages(prev => {
       const next = typeof updater === 'function' ? (updater as (prev: string[]) => string[])(prev) : updater
       setHasUnsavedChanges(true)
+      setFormDirty(true)
       return next
     })
   }, [])
@@ -77,6 +107,7 @@ export function StylistDashboard() {
     setAdditionalServices(profile.additional_services || [])
     setLocalGalleryImages(profile.portfolio_images || [])
     setHasUnsavedChanges(false)
+    setFormDirty(false)
   }, [profile])
 
   useEffect(() => {
@@ -178,7 +209,8 @@ export function StylistDashboard() {
 
       await refreshServices()
 
-      setIsEditing(false)
+      setFormDirty(false)
+      setHasUnsavedChanges(false)
     } catch (err) {
     }
   }
@@ -213,7 +245,7 @@ export function StylistDashboard() {
       setLocalGalleryImages(profile.portfolio_images || [])
       setHasUnsavedChanges(false)
     }
-    setIsEditing(false)
+    setFormDirty(false)
   }
   
   // Image upload handlers
@@ -321,7 +353,7 @@ export function StylistDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-red-600" />
           <span className="ml-2 text-gray-600">Loading your profile...</span>
@@ -332,7 +364,7 @@ export function StylistDashboard() {
   
   if (error && !profile) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="text-center py-20">
           <p className="text-red-600 mb-4">Error loading profile: {error}</p>
           <Button onClick={() => window.location.reload()} variant="outline">
@@ -345,7 +377,7 @@ export function StylistDashboard() {
   
   if (!profile) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="text-center py-20">
           <p className="text-gray-600 mb-4">No profile found.</p>
           <p className="text-sm text-gray-500">Please contact support if this error persists.</p>
@@ -368,34 +400,37 @@ export function StylistDashboard() {
   const getReviewCount = () => profile.review_count || 0
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <DashboardHero
         eyebrow="Stylist Dashboard"
-        eyebrowClassName="text-green-600"
+        eyebrowClassName="text-blue-600"
         badge={
-          <Badge variant="secondary" className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <Badge
+            variant="secondary"
+            className={`${(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+          >
             {profile?.is_verified ? "Verified Profile" : ((optimisticActive !== null ? optimisticActive : profile?.is_active) ? "Active Profile" : "Inactive Profile")}
           </Badge>
         }
         title={<>Hello, {getBusinessName()}!</>}
-        gradientFrom="from-emerald-50"
-        gradientTo="to-emerald-100"
-        borderClassName="border-emerald-100"
+        gradientFrom="from-blue-50"
+        gradientTo="to-indigo-50"
+        borderClassName="border-blue-100"
       >
-        <div className="flex items-center flex-wrap gap-6 text-sm sm:text-base text-green-700/80">
+        <div className="flex items-center flex-wrap gap-6 text-sm sm:text-base text-blue-700/80">
           <StarDisplay
             rating={getRating()}
             totalReviews={getReviewCount()}
             size="sm"
             showReviewsLabel
-            className="[&_span]:text-green-700/80"
+            className="[&_span]:text-blue-700/80"
           />
         </div>
         <div className="pt-2">
           <Link href={`/stylist/${profile.id}`}>
             <SmallCtaButton
               variant="outline"
-              className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 bg-transparent h-8 px-3 text-xs"
+              className="border-blue-600 text-blue-700 hover:bg-blue-50 bg-transparent h-8 px-3 text-xs"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               View Public Profile
@@ -408,21 +443,21 @@ export function StylistDashboard() {
         <TabsList className="bg-transparent border-b border-gray-200 p-0 h-auto gap-4 sm:gap-6 flex-nowrap overflow-x-auto whitespace-nowrap justify-start rounded-none w-full -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <TabsTrigger
             value="dashboard"
-            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
           >
             <LayoutDashboard className="w-4 h-4" />
             Dashboard
           </TabsTrigger>
           <TabsTrigger
             value="reviews"
-            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
           >
             <MessageSquare className="w-4 h-4" />
             Reviews
           </TabsTrigger>
           <TabsTrigger
             value="profile"
-            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-green-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
           >
             <User className="w-4 h-4" />
             Edit Profile
@@ -431,10 +466,10 @@ export function StylistDashboard() {
 
         <TabsContent value="dashboard" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-xl">Recent Reviews</CardTitle>
-              <CardDescription>Your latest ratings and feedback</CardDescription>
-            </CardHeader>
+            <SectionHeader
+              title="Recent Reviews"
+              description="Your latest ratings and feedback"
+            />
             <CardContent>
               <ReviewsDisplay stylistId={profile.id} />
             </CardContent>
@@ -443,17 +478,10 @@ export function StylistDashboard() {
 
         <TabsContent value="reviews" className="space-y-6">
           <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="text-base sm:text-xl">Reviews</CardTitle>
-                  <CardDescription>See what clients are saying about your services.</CardDescription>
-                </div>
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100">
-                  {getReviewCount()} total
-                </Badge>
-              </div>
-            </CardHeader>
+            <SectionHeader
+              title="Reviews"
+              description="See what clients are saying about your services."
+            />
             <CardContent>
               <ReviewsDisplay stylistId={profile.id} />
             </CardContent>
@@ -463,56 +491,39 @@ export function StylistDashboard() {
         <TabsContent value="profile" className="space-y-6">
           <div className="space-y-6">
           <Card className="mb-5">
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <CardTitle className="text-base sm:text-xl">
-                    Profile Information
-                  </CardTitle>
-                  <CardDescription className="mt-1">Use the shared form layout to update your business info, photos, and contact details.</CardDescription>
-                  <div className="flex items-center gap-2 text-sm mt-2">
-                    <span className="font-medium text-gray-900 whitespace-nowrap">Profile Status:</span>
-                    <button
-                      onClick={() => handleToggleActiveStatus(!profile?.is_active)}
-                      disabled={saving}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                        (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-green-600' : 'bg-gray-400'
-                      } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
-                        (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
-                      }`} />
-                    </button>
-                    <span className="text-sm">{(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'Active' : 'Inactive'}</span>
-                  </div>
-                </div>
-                <div className="flex sm:ml-auto">
-                  <Button
-                    onClick={() => setIsEditing(!isEditing)}
-                    variant={isEditing ? "outline" : "default"}
-                    size="sm"
-                    className={isEditing ? "h-8 px-3 text-[12px]" : "h-8 px-3 text-[12px] bg-red-600 hover:bg-red-700"}
-                    disabled={saving}
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    {isEditing ? "Cancel" : "Edit Profile"}
-                  </Button>
-                </div>
+            <SectionHeader
+              title="Profile Information"
+              description="Use the shared form layout to update your business info, photos, and contact details."
+            >
+              <div className="flex items-center gap-2 text-sm mt-4">
+                <span className="font-medium text-gray-900 whitespace-nowrap">Profile Status:</span>
+                <button
+                  onClick={() => handleToggleActiveStatus(!profile?.is_active)}
+                  disabled={saving}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'bg-blue-600' : 'bg-gray-400'
+                  } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                    (optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+                <span className="text-sm">{(optimisticActive !== null ? optimisticActive : profile?.is_active) ? 'Active' : 'Inactive'}</span>
               </div>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 space-y-5">
-              <div className={`${isEditing ? "" : "pointer-events-none opacity-60"} max-w-3xl`}>
+            </SectionHeader>
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 space-y-5">
+              <div className="max-w-3xl">
                 <BusinessFormFields
                   formData={profileFormData}
-                  setFormData={setProfileFormData}
+                  setFormData={updateProfileFormData}
                   additionalServices={additionalServices}
-                  setAdditionalServices={setAdditionalServices}
+                  setAdditionalServices={updateAdditionalServices}
                   logoImage={logoImage}
-                  setLogoImage={setLogoImage}
+                  setLogoImage={updateLogoImage}
                   galleryImages={localGalleryImages}
                   setGalleryImages={updateGalleryImages}
                   services={formServices}
-                  setServices={setFormServices}
+                  setServices={updateFormServices}
                   isUploading={isUploading}
                   onUploadImages={handleImageUpload}
                   showServices={true}
@@ -568,16 +579,12 @@ export function StylistDashboard() {
             </CardContent>
           </Card>
 
-          {isEditing && (
+          {(formDirty || hasUnsavedChanges) && (
             <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <CardTitle className="text-base sm:text-xl">
-                      Save Changes
-                    </CardTitle>
-                    <CardDescription className="mt-1">Save your profile updates or cancel to discard changes.</CardDescription>
-                  </div>
+              <SectionHeader
+                title="Save Changes"
+                description="Save your profile updates or cancel to discard changes."
+                action={
                   <div className="flex gap-2">
                     <Button
                       onClick={handleCancel}
@@ -601,8 +608,8 @@ export function StylistDashboard() {
                       )}
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
+                }
+              />
             </Card>
           )}
 
