@@ -80,7 +80,10 @@ export function HeroSection() {
               >
                 Find Your Next Hair Stylist.
               </h1>
-              <p className="text-white mb-5 md:mb-6 text-base lg:text-lg">
+              <p
+                className="text-white mb-4 text-base lg:text-lg"
+                style={{ lineHeight: "1.3rem" }}
+              >
                 Discover trusted talented hairstylists in your area
               </p>
             </div>
