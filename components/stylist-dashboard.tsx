@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, ExternalLink, Settings, MessageSquare, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User, XCircle } from "lucide-react"
+import { Star, ExternalLink, Settings, MessageSquare, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User, XCircle, X } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/hooks/use-auth"
@@ -307,28 +307,33 @@ export function StylistDashboard() {
     }
   }, [uploadFiles])
 
-  // Local state for optimistic UI updates
+  // Local state for optimistic UI updates and toggle loading
   const [optimisticActive, setOptimisticActive] = useState<boolean | null>(null)
+  const [isToggling, setIsToggling] = useState(false)
 
   // Toggle profile active status with optimistic updates
-  const handleToggleActiveStatus = useCallback(async (isActive: boolean) => {
+  const handleToggleActiveStatus = async (newActiveState: boolean) => {
+    if (!profile || isToggling) return
+
+    setIsToggling(true)
     try {
       // Immediately update the UI optimistically
-      setOptimisticActive(isActive)
+      setOptimisticActive(newActiveState)
 
-      // Update the database in the background
-      await updateProfile({ is_active: isActive })
+      // Update the database (this also updates local profile state)
+      await updateProfile({ is_active: newActiveState })
 
-      // Clear optimistic state once real data is updated
+      // Clear optimistic state - profile state is already updated by updateProfile
       setOptimisticActive(null)
 
     } catch (err) {
       // Revert optimistic state on error
       setOptimisticActive(null)
-
       alert('Failed to update profile status. Please try again.')
+    } finally {
+      setIsToggling(false)
     }
-  }, [updateProfile])
+  }
 
   // Save gallery changes to database
   const handleSaveGallery = useCallback(async () => {
@@ -484,17 +489,18 @@ export function StylistDashboard() {
               <div className="flex items-center gap-2 text-sm mt-4">
                 <span className="font-medium text-gray-900 whitespace-nowrap">Profile Status:</span>
                 <button
-                  onClick={() => handleToggleActiveStatus(!profile?.is_active)}
-                  disabled={saving}
+                  type="button"
+                  onClick={() => handleToggleActiveStatus(!isActive)}
+                  disabled={isToggling}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
                     isActive ? 'bg-green-600' : 'bg-gray-400'
-                  } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
                     isActive ? 'translate-x-6' : 'translate-x-1'
                   }`} />
                 </button>
-                <span className="text-sm">{isActive ? 'Active' : 'Inactive'}</span>
+                <span className="text-sm">{isToggling ? 'Updating...' : (isActive ? 'Active' : 'Inactive')}</span>
               </div>
             </SectionHeader>
             <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 space-y-5">
@@ -565,37 +571,45 @@ export function StylistDashboard() {
 
               {(formDirty || hasUnsavedChanges) && (
                 <div className="max-w-3xl pt-4 border-t">
-                  <div className="flex items-start justify-between gap-4">
+                <div className="border border-blue-200 bg-blue-50 rounded-lg p-4 sm:p-5 space-y-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900 leading-tight">Save Changes</h3>
-                      <p className="text-sm text-gray-500 mt-1">Save your profile updates or cancel to discard changes.</p>
+                      <h3 className="text-base font-semibold text-blue-900 leading-tight">Save Changes</h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Save your profile updates for <span className="font-semibold">{getBusinessName()}</span>.
+                      </p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Button
-                        onClick={handleCancel}
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-[12px]"
-                        disabled={isSaving}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        size="sm"
-                        className="h-8 px-3 text-[12px] bg-red-600 hover:bg-red-700"
-                      >
-                        {isSaving ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                        ) : (
-                          <><Save className="w-4 h-4 mr-2" />Save Changes</>
-                        )}
-                      </Button>
-                    </div>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      Editing
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      size="sm"
+                      className="w-full text-sm bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSaving ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                      ) : (
+                        <><Save className="w-4 h-4 mr-2" />Save Changes</>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleCancel}
+                      variant="outline"
+                      disabled={isSaving}
+                      size="sm"
+                      className="w-full text-sm"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancel
+                    </Button>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
             </CardContent>
           </Card>
 
