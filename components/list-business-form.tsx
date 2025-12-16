@@ -435,6 +435,7 @@ export function ListBusinessForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setError("")
 
     if (formData.password !== formData.confirmPassword) {
@@ -543,19 +544,22 @@ export function ListBusinessForm() {
         throw new Error('Failed to create user account')
       }
 
-      // Step 5: Create users table entry (this triggers the profile linking)
+      // Step 5: Create users table entry (idempotent)
       const { error: userError } = await supabase
         .from('users')
-        .insert({
-          id: authData.user.id,
-          email: formData.email,
-          full_name: `${formData.firstName} ${formData.lastName}`.trim(),
-          role: 'stylist',
-          phone: formData.phone
-        })
+        .upsert(
+          {
+            id: authData.user.id,
+            email: formData.email,
+            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+            role: 'stylist',
+            phone: formData.phone
+          },
+          { onConflict: 'id' }
+        )
 
       if (userError && userError.code !== '23505') { // Ignore duplicate key errors
-        console.error('User creation error:', userError)
+        console.error('User creation error:', userError.message || userError)
       }
 
       // Step 6: Create services if any
@@ -1693,7 +1697,7 @@ export function ListBusinessForm() {
               </Button>
             ) : (
               <Button
-                type="submit"
+                type="button"
                 onClick={handleSubmit}
                 className="bg-red-600 hover:bg-red-700 text-sm font-normal px-4 py-2"
                 disabled={loading}

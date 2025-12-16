@@ -55,8 +55,8 @@ export function BrowseHeader({ category, location }: BrowseHeaderProps) {
         {/* Header Box */}
         <div className="bg-gray-50 rounded-lg p-8 md:p-12 mb-0 md:mb-4">
           <div className="text-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{title}</h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">{description}</p>
+            <h1 className="text-2xl font-medium text-gray-900 mb-2">{title}</h1>
+            <p className="text-sm md:text-base text-gray-600 max-w-3xl mx-auto">{description}</p>
           </div>
         </div>
 

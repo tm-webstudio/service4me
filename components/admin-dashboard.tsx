@@ -244,9 +244,9 @@ export function AdminDashboard() {
     try {
       for (const file of fileArray) {
         // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
         if (!allowedTypes.includes(file.type)) {
-          throw new Error(`Invalid file type: ${file.type}. Only JPG, PNG, and GIF files are allowed.`)
+          throw new Error(`Invalid file type: ${file.type}. Only JPG, PNG, GIF, WEBP, and HEIC files are allowed.`)
         }
         
         // Validate file size (5MB)
@@ -1512,7 +1512,7 @@ Please change your password after first login.`
                               <div className="absolute top-3 right-3 flex gap-2">
                                 <Button
                                   size="icon"
-                                  className="bg-green-600 hover:bg-green-700 h-9 w-9 shadow-md rounded-md"
+                                  className="bg-green-600 hover:bg-green-700 h-8 w-8 shadow-md rounded-md"
                                   disabled={approvingId === stylist.id}
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -1527,7 +1527,7 @@ Please change your password after first login.`
                                 </Button>
                                 <Button
                                   size="icon"
-                                  className="bg-red-600 hover:bg-red-700 h-9 w-9 shadow-md rounded-md"
+                                  className="bg-red-600 hover:bg-red-700 h-8 w-8 shadow-md rounded-md"
                                   disabled={rejectingId === stylist.id}
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -2275,79 +2275,7 @@ Please change your password after first login.`
                     </div>
                   )}
 
-                  {/* Account Status - only shown when creating new stylist */}
-                  {!isEditMode && createdStylist && (
-                    <div className={`rounded-lg p-4 border ${
-                      accountCredentials
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-yellow-50 border-yellow-200'
-                    }`}>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className={`font-medium ${
-                          accountCredentials ? 'text-green-900' : 'text-yellow-900'
-                        }`}>
-                          Login Account Status
-                        </h4>
-                        <Badge variant="secondary" className={
-                          accountCredentials
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }>
-                          {accountCredentials ? 'Account Created' : 'No login account'}
-                        </Badge>
-                      </div>
-
-                      {accountCredentials ? (
-                        <div className="bg-white rounded border p-3">
-                          <h5 className="font-medium text-sm mb-2">Login Credentials</h5>
-                          <div className="space-y-2 text-sm">
-                            <div>
-                              <span className="font-medium">Email:</span> {accountCredentials.email}
-                            </div>
-                            <div>
-                              <span className="font-medium">Temporary Password:</span>
-                              <code className="ml-1 px-1 bg-gray-100 rounded text-xs">{accountCredentials.password}</code>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-2 mt-3">
-                            <Button
-                              onClick={copyCredentials}
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                            >
-                              <Copy className="w-4 h-4 mr-2" />
-                              Copy Credentials
-                            </Button>
-                            <Button
-                              onClick={resetCreationState}
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Create Another
-                            </Button>
-                          </div>
-
-                          <p className="text-xs text-gray-500 mt-2">
-                            Share these credentials with the stylist. They should change their password after first login.
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-yellow-700">
-                          Click "Generate Login" button above to create login credentials for this stylist.
-                        </p>
-                      )}
-
-                      {accountError && (
-                        <div className="bg-red-50 border border-red-200 rounded p-3 mt-3">
-                          <p className="text-sm text-red-600">{accountError}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Login Account Status block removed per request */}
                 </CardContent>
               </Card>
             </CardContent>

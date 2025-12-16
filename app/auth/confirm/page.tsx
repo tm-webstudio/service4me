@@ -16,9 +16,28 @@ function ConfirmContent() {
   useEffect(() => {
     const confirmEmail = async () => {
       try {
+        const code = searchParams.get('code')
         const token_hash = searchParams.get('token_hash')
         const type = searchParams.get('type')
 
+        // New-style magic/confirmation links include `code`
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+          if (error) {
+            setStatus('error')
+            setMessage(error.message || 'Invalid or expired confirmation link')
+            return
+          }
+
+          if (data.session) {
+            setStatus('success')
+            setMessage('Email confirmed! Redirecting to your dashboard...')
+            router.replace('/dashboard/stylist')
+            return
+          }
+        }
+
+        // Fallback for legacy token_hash links
         if (!token_hash || !type) {
           setStatus('error')
           setMessage('Invalid confirmation link')

@@ -19,9 +19,9 @@ export function usePortfolioUpload() {
 
   const validateFile = (file: File): string | null => {
     // Check file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
     if (!allowedTypes.includes(file.type)) {
-      return `Invalid file type. Only JPG, PNG, and GIF files are allowed.`
+      return `Invalid file type. Only JPG, PNG, GIF, WEBP, and HEIC files are allowed.`
     }
 
     // Check file size (5MB = 5 * 1024 * 1024 bytes)
