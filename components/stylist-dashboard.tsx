@@ -32,6 +32,7 @@ export function StylistDashboard() {
   const [additionalServices, setAdditionalServices] = useState<string[]>([])
   const [logoImage, setLogoImage] = useState<string>('')
   const [formServices, setFormServices] = useState<ServiceItem[]>([])
+  const [isSaving, setIsSaving] = useState(false)
   const updateProfileFormData = (updater: React.SetStateAction<BusinessFormData>) => {
     setFormDirty(true)
     setProfileFormData(prev => typeof updater === 'function'
@@ -122,7 +123,8 @@ export function StylistDashboard() {
   
   const handleSave = async () => {
     if (!profile) return
-    
+
+    setIsSaving(true)
     try {
       const yearStartedNumber = profileFormData.year_started ? Number(profileFormData.year_started) : null
       const years_experience = yearStartedNumber
@@ -212,6 +214,10 @@ export function StylistDashboard() {
       setFormDirty(false)
       setHasUnsavedChanges(false)
     } catch (err) {
+      console.error('Failed to save profile:', err)
+      alert('Failed to save changes. Please try again.')
+    } finally {
+      setIsSaving(false)
     }
   }
   
@@ -556,42 +562,42 @@ export function StylistDashboard() {
                   <p className="text-sm text-red-800">{uploadError}</p>
                 </div>
               )}
+
+              {(formDirty || hasUnsavedChanges) && (
+                <div className="max-w-3xl pt-4 border-t">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-gray-900 leading-tight">Save Changes</h3>
+                      <p className="text-sm text-gray-500 mt-1">Save your profile updates or cancel to discard changes.</p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button
+                        onClick={handleCancel}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-[12px]"
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        size="sm"
+                        className="h-8 px-3 text-[12px] bg-red-600 hover:bg-red-700"
+                      >
+                        {isSaving ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                        ) : (
+                          <><Save className="w-4 h-4 mr-2" />Save Changes</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
-
-          {(formDirty || hasUnsavedChanges) && (
-            <Card>
-              <SectionHeader
-                title="Save Changes"
-                description="Save your profile updates or cancel to discard changes."
-                action={
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleCancel}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-[12px]"
-                      disabled={saving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSave}
-                      disabled={saving}
-                      size="sm"
-                      className="h-8 px-3 text-[12px] bg-red-600 hover:bg-red-700"
-                    >
-                      {saving ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                      ) : (
-                        <><Save className="w-4 h-4 mr-2" />Save Changes</>
-                      )}
-                    </Button>
-                  </div>
-                }
-              />
-            </Card>
-          )}
 
           </div>
         </TabsContent>
