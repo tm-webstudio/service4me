@@ -90,20 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, forceRefresh: boolean = false): Promise<UserProfile | null> => {
     try {
-      // Verify this is still the current session's user
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
-
-      if (!currentSession || currentSession.user.id !== userId) {
-        // Session has changed or is invalid, don't fetch profile
-        setUserProfile(null)
-        return
-      }
-
-      // Check if we've already fetched this user recently
-      if (lastFetchedUserId.current === userId) {
-        return
+      // Skip cache check if force refresh is requested (e.g., during sign in)
+      if (!forceRefresh && lastFetchedUserId.current === userId && userProfile) {
+        return userProfile
       }
 
       lastFetchedUserId.current = userId
@@ -114,37 +105,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single()
 
-      // Verify session hasn't changed during the fetch
-      const { data: { session: verifySession } } = await supabase.auth.getSession()
-
-      if (!verifySession || verifySession.user.id !== userId) {
-        // Session changed during fetch, discard results
-        setUserProfile(null)
-        lastFetchedUserId.current = null
-        return
-      }
-
       if (error) {
         if (error.code === 'PGRST116') {
           // No profile found - try to create one from auth user data
           const { data: { user } } = await supabase.auth.getUser()
           if (user && user.id === userId) {
             await createUserProfileFromAuth(user)
-          } else {
-            setUserProfile(null)
-            lastFetchedUserId.current = null
+            // After creating, the profile should be set by createUserProfileFromAuth
+            return userProfile
           }
-        } else {
-          setUserProfile(null)
-          lastFetchedUserId.current = null
         }
-        return
+        setUserProfile(null)
+        lastFetchedUserId.current = null
+        return null
       }
 
       setUserProfile(data)
+      return data
     } catch (error) {
       setUserProfile(null)
       lastFetchedUserId.current = null
+      return null
     }
   }
 
@@ -331,18 +312,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) throw error
 
-    // Immediately set user and session
+    // Set user and session
     setUser(data.user)
     setSession(data.session)
-    setLoading(false)
 
-    // Fetch profile in background - don't block the login
+    // Fetch profile and wait for it - ensures userProfile is available before redirect
     if (data.user) {
       lastFetchedUserId.current = null
-      fetchUserProfile(data.user.id).catch(() => {})
+      await fetchUserProfile(data.user.id, true)
     }
 
-    // Return user data with role from user_metadata for immediate redirect
+    setLoading(false)
     return data
   }
 
