@@ -570,7 +570,24 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div className="space-y-4 max-w-lg pt-6">
             <h2 className="text-base font-medium text-gray-900">Services & Pricing</h2>
             {servicesLoading ? (
-              <ServicesSkeleton />
+              <div className="grid gap-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="p-2">
+                      <div className="flex items-stretch space-x-3">
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 animate-pulse" />
+                        <div className="flex-1 flex flex-col justify-between min-h-[64px]">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
+                          <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
+                        </div>
+                        <div className="self-stretch flex items-end">
+                          <div className="h-4 bg-gray-200 rounded w-10 animate-pulse" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             ) : servicesError ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-2">Unable to load services</p>
@@ -580,37 +597,37 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
               <div className="text-center py-8">
                 <p className="text-gray-500">No services available</p>
               </div>
-            ) : null}
-            
-            <div className="grid gap-4">
-              {displayData.services.map((service, index) => (
-                <Card key={service.id || index}>
-                  <CardContent className="p-2">
-                    <div className="flex items-stretch space-x-3">
-                      <img
-                        src={service.image || "/placeholder.svg"}
-                        alt={service.name}
-                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = '/placeholder.svg?height=200&width=200&text=Service'
-                        }}
-                      />
-                      <div className="flex-1 flex flex-col justify-between min-h-[64px]">
-                        <h3 className="font-medium text-sm">{service.name}</h3>
-                        <div className="flex items-center text-gray-600 text-sm">
-                          <Clock className="w-4 h-4 mr-1" />
-                          <span>{service.duration}</span>
+            ) : (
+              <div className="grid gap-4">
+                {displayData.services.map((service, index) => (
+                  <Card key={service.id || index}>
+                    <CardContent className="p-2">
+                      <div className="flex items-stretch space-x-3">
+                        <img
+                          src={service.image || "/placeholder.svg"}
+                          alt={service.name}
+                          className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = '/placeholder.svg?height=200&width=200&text=Service'
+                          }}
+                        />
+                        <div className="flex-1 flex flex-col justify-between min-h-[64px]">
+                          <h3 className="font-medium text-sm">{service.name}</h3>
+                          <div className="flex items-center text-gray-600 text-sm">
+                            <Clock className="w-4 h-4 mr-1" />
+                            <span>{service.duration}</span>
+                          </div>
+                        </div>
+                        <div className="self-stretch flex items-end text-right">
+                          <div className="text-sm font-medium text-gray-700">£{service.price}</div>
                         </div>
                       </div>
-                      <div className="self-stretch flex items-end text-right">
-                        <div className="text-sm font-medium text-gray-700">£{service.price}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

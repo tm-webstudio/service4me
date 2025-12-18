@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const lastFetchedUserId = useRef<string | null>(null)
+  const initialSessionHandled = useRef<boolean>(false)
 
   const createUserProfileFromAuth = async (user: User) => {
     const role = user.user_metadata?.role || 'client'
@@ -153,68 +154,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const getInitialSession = async () => {
+    // Handle session initialization from auth state change
+    const handleSession = async (newSession: Session | null, isInitial: boolean = false) => {
       try {
-        // Clear any stale cache data on init
-        lastFetchedUserId.current = null
+        setSession(newSession)
+        setUser(newSession?.user ?? null)
 
-        const { data: { session }, error } = await supabase.auth.getSession()
-
-        if (error) {
-          if (error.message?.includes('Refresh Token Not Found') ||
-              error.message?.includes('Invalid Refresh Token')) {
-            setSession(null)
-            setUser(null)
-            setUserProfile(null)
-            setLoading(false)
-            return
-          }
-          throw error
-        }
-
-        setSession(session)
-        setUser(session?.user ?? null)
-
-        if (session?.user) {
-          await fetchUserProfile(session.user.id)
+        if (newSession?.user) {
+          await fetchUserProfile(newSession.user.id)
         } else {
           setUserProfile(null)
         }
-
-        setLoading(false)
       } catch (error) {
-        setSession(null)
-        setUser(null)
         setUserProfile(null)
-        lastFetchedUserId.current = null
+      } finally {
+        // Always ensure loading is set to false
         setLoading(false)
       }
     }
 
-    getInitialSession()
-
+    // Subscribe to auth state changes FIRST
+    // This ensures we catch the INITIAL_SESSION event
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         try {
+          // Handle sign out immediately
           if (event === 'SIGNED_OUT') {
             setSession(null)
             setUser(null)
             setUserProfile(null)
             setLoading(false)
             lastFetchedUserId.current = null
+            initialSessionHandled.current = false
             return
           }
-          
+
+          // Handle INITIAL_SESSION - fired immediately when subscription is set up
+          if (event === 'INITIAL_SESSION') {
+            // Mark that initial session has been handled
+            initialSessionHandled.current = true
+            lastFetchedUserId.current = null
+            await handleSession(session, true)
+            return
+          }
+
+          // Handle sign in and token refresh
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            setSession(session)
-            setUser(session?.user ?? null)
-            
-            if (session?.user) {
-              await fetchUserProfile(session.user.id)
-            } else {
-              setUserProfile(null)
+            // Reset lastFetchedUserId for new sign ins to force profile fetch
+            if (event === 'SIGNED_IN') {
+              lastFetchedUserId.current = null
             }
-            
+            await handleSession(session)
+            return
+          }
+
+          // Handle any other events (USER_UPDATED, PASSWORD_RECOVERY, etc.)
+          // Still update session state and ensure loading is set to false
+          if (session) {
+            await handleSession(session)
+          } else {
             setLoading(false)
           }
         } catch (error) {
@@ -226,7 +224,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    // Fallback: If INITIAL_SESSION doesn't fire within 100ms, fetch session manually
+    // This handles edge cases where the event might not fire
+    const fallbackTimeout = setTimeout(async () => {
+      if (!initialSessionHandled.current) {
+        try {
+          lastFetchedUserId.current = null
+          const { data: { session }, error } = await supabase.auth.getSession()
+
+          if (error) {
+            if (error.message?.includes('Refresh Token Not Found') ||
+                error.message?.includes('Invalid Refresh Token')) {
+              setSession(null)
+              setUser(null)
+              setUserProfile(null)
+              setLoading(false)
+              return
+            }
+            throw error
+          }
+
+          // Only process if INITIAL_SESSION hasn't been handled yet
+          if (!initialSessionHandled.current) {
+            initialSessionHandled.current = true
+            await handleSession(session, true)
+          }
+        } catch (error) {
+          setSession(null)
+          setUser(null)
+          setUserProfile(null)
+          lastFetchedUserId.current = null
+          setLoading(false)
+        }
+      }
+    }, 100)
+
+    return () => {
+      clearTimeout(fallbackTimeout)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signUp = async (email: string, password: string, role: 'client' | 'stylist', additionalData?: any) => {

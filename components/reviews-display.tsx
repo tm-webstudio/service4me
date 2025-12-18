@@ -8,9 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { EmptyState } from "@/components/ui/empty-state"
-import { 
-  Loader2, 
-  ChevronLeft, 
+import {
+  Loader2,
+  ChevronLeft,
   ChevronRight,
   MessageSquare,
   Edit2,
