@@ -51,11 +51,11 @@ export function BrowseHeader({ category, location }: BrowseHeaderProps) {
 
   return (
     <div className="bg-white border-b">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
         {/* Header Box */}
-        <div className="bg-gray-50 rounded-lg p-8 md:p-12 mb-0 md:mb-4">
+        <div className="bg-gray-50 rounded-lg px-6 py-4 md:p-12">
           <div className="text-center">
-            <h1 className="text-2xl font-medium text-gray-900 mb-2">{title}</h1>
+            <h1 className="text-xl md:text-2xl font-medium text-gray-900 mb-2">{title}</h1>
             <p className="text-sm md:text-base text-gray-600 max-w-3xl mx-auto">{description}</p>
           </div>
         </div>

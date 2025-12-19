@@ -11,6 +11,8 @@ import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
 import { useSavedStylistIds } from "@/hooks/use-saved-stylists"
 import { postcodeToAreaName } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
+import { EmptyState } from "@/components/ui/empty-state"
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
 
 interface StylistGridProps {
   category?: string
@@ -59,22 +61,24 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
   }
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 md:pt-0 md:pb-8">
       {/* Browse Stylists Header with Sort */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-gray-900">
-          {category ? `${category} Stylists` : 'Browse Stylists'} 
-          {filteredStylists.length > 0 && ` (${filteredStylists.length})`}
-        </h2>
-        <div className="flex items-center space-x-3">
-          <span className="text-sm font-medium text-gray-700 hidden md:inline">Sort by:</span>
-          <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white">
-            <option>Recommended</option>
-            <option>Distance</option>
-            <option>Rating</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-          </select>
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 py-2 mb-6">
+        <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
+          <h2 className="text-sm font-normal text-gray-900">
+            {category ? `${category} Stylists` : "Browse Stylists"}
+            {filteredStylists.length > 0 && ` (${filteredStylists.length})`}
+          </h2>
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700 hidden md:inline">Sort by:</span>
+            <select className="border border-gray-200 rounded-lg h-10 px-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white">
+              <option>Recommended</option>
+              <option>Distance</option>
+              <option>Rating</option>
+              <option>Price: Low to High</option>
+              <option>Price: High to Low</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -99,20 +103,30 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
 
       {/* No Results State */}
       {!loading && !error && filteredStylists.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 mb-4">
-            {category || location 
-              ? `No stylists found for ${category || location}.` 
-              : 'No stylists found.'
-            }
-          </p>
-          <p className="text-sm text-gray-500">
-            {category || location 
-              ? 'Try browsing all stylists or a different category.' 
-              : 'Check back soon as new stylists join regularly!'
-            }
-          </p>
-        </div>
+        <EmptyState
+          icon={<Heart className="h-8 w-8 text-gray-400" />}
+          title={
+            category || location
+              ? `No stylists found for ${category || location}.`
+              : "No stylists available yet."
+          }
+          description={
+            category || location
+              ? "Try browsing all stylists or a different category."
+              : "Tap browse to discover stylists you might like."
+          }
+          className="py-10 space-y-1"
+          titleClassName="text-base font-medium text-gray-900"
+          descriptionClassName="text-sm text-gray-500"
+          action={
+            <SmallCtaButton
+              className="bg-red-600 text-white border-red-600 hover:bg-red-700"
+              onClick={() => router.push("/browse")}
+            >
+              Browse Stylists
+            </SmallCtaButton>
+          }
+        />
       )}
 
       {/* Stylist Grid - Real Data */}
