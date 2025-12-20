@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useStylist } from "@/hooks/use-stylist"
 import { useStylistServices } from "@/hooks/use-stylist-services"
 import { useSavedStylists } from "@/hooks/use-saved-stylists"
@@ -22,9 +23,10 @@ import { useAuth } from "@/hooks/use-auth"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
 import {
   Star,
@@ -78,6 +80,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [editingReview, setEditingReview] = useState<{id: string; rating: number; comment: string} | null>(null)
   const [reviewsRefreshTrigger, setReviewsRefreshTrigger] = useState(0)
+  const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false)
 
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
@@ -115,6 +118,14 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   const openGallery = (index: number) => {
     setSelectedImage(index)
     setIsGalleryOpen(true)
+  }
+
+  const handleLeaveReviewClick = () => {
+    if (!userProfile) {
+      setIsAuthPromptOpen(true)
+      return
+    }
+    setShowReviewForm(true)
   }
 
   // Loading state with skeletons
@@ -567,7 +578,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           </div>
 
           {/* Services & Pricing */}
-          <div className="space-y-4 max-w-lg pt-6">
+          <div className="space-y-4 pt-6 w-full sm:w-1/2">
             <h2 className="text-base font-medium text-gray-900">Services & Pricing</h2>
             {servicesLoading ? (
               <div className="grid gap-4">
@@ -601,7 +612,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
               <div className="grid gap-4">
                 {displayData.services.map((service, index) => (
                   <Card key={service.id || index}>
-                    <CardContent className="p-2">
+                    <CardContent className="p-2.5">
                       <div className="flex items-stretch space-x-3">
                         <img
                           src={service.image || "/placeholder.svg"}
@@ -628,6 +639,54 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Reviews */}
+          <div className="pt-8 space-y-4 w-full">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-medium text-gray-900">Reviews</h2>
+              {(!userProfile || userProfile?.role === 'client') && !showReviewForm && !editingReview && (
+                <SmallCtaButton onClick={handleLeaveReviewClick} variant="outline">
+                  Leave a Review
+                </SmallCtaButton>
+              )}
+            </div>
+
+            {/* Review Form */}
+            {(showReviewForm || editingReview) && (
+              <ReviewForm
+                stylistId={stylistId}
+                existingReview={editingReview || undefined}
+                onSuccess={() => {
+                  setShowReviewForm(false)
+                  setEditingReview(null)
+                  setReviewsRefreshTrigger(prev => prev + 1)
+                  refetchStylist() // Refresh stylist data to get updated rating
+                }}
+                onCancel={() => {
+                  setShowReviewForm(false)
+                  setEditingReview(null)
+                }}
+              />
+            )}
+
+            {/* Reviews Display */}
+            <ReviewsDisplay
+              stylistId={stylistId}
+              onLeaveReview={handleLeaveReviewClick}
+              onEditReview={(review) => {
+                setEditingReview({
+                  id: review.id,
+                  rating: review.rating,
+                  comment: review.comment || ""
+                })
+                setShowReviewForm(false)
+              }}
+              refreshTrigger={reviewsRefreshTrigger}
+              onReviewDeleted={() => {
+                refetchStylist() // Refresh stylist data to get updated rating
+              }}
+            />
           </div>
         </div>
 
@@ -719,57 +778,29 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         </div>
       </div>
 
-      {/* Reviews - Full Width */}
-      <div className="mt-12 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium text-gray-900">Reviews</h2>
-          {userProfile?.role === 'client' && !showReviewForm && !editingReview && (
-            <Button 
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => setShowReviewForm(true)}
-            >
-              Leave a Review
-            </Button>
-          )}
-        </div>
-        
-        {/* Review Form */}
-        {(showReviewForm || editingReview) && (
-          <ReviewForm
-            stylistId={stylistId}
-            existingReview={editingReview || undefined}
-            onSuccess={() => {
-              setShowReviewForm(false)
-              setEditingReview(null)
-              setReviewsRefreshTrigger(prev => prev + 1)
-              refetchStylist() // Refresh stylist data to get updated rating
-            }}
-            onCancel={() => {
-              setShowReviewForm(false)
-              setEditingReview(null)
-            }}
-          />
-        )}
-        
-        {/* Reviews Display */}
-        <ReviewsDisplay
-          stylistId={stylistId}
-          onEditReview={(review) => {
-            setEditingReview({
-              id: review.id,
-              rating: review.rating,
-              comment: review.comment || ""
-            })
-            setShowReviewForm(false)
-          }}
-          refreshTrigger={reviewsRefreshTrigger}
-          onReviewDeleted={() => {
-            refetchStylist() // Refresh stylist data to get updated rating
-          }}
-        />
-      </div>
-
       {/* Gallery Modal */}
+      <Dialog open={isAuthPromptOpen} onOpenChange={setIsAuthPromptOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Leave a review</DialogTitle>
+            <DialogDescription>
+              Create an account or log in to leave a review for this stylist.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <SmallCtaButton asChild variant="outline">
+              <Link href="/login">Log in</Link>
+            </SmallCtaButton>
+            <SmallCtaButton
+              asChild
+              className="bg-red-600 text-white border-red-600 hover:bg-red-700"
+            >
+              <Link href="/signup">Create account</Link>
+            </SmallCtaButton>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
           <DialogTitle className="sr-only">Portfolio Gallery</DialogTitle>

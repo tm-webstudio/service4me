@@ -2,8 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useAuth } from "@/hooks/use-auth"
+import { useClientAvatarUpload } from "@/hooks/use-client-avatar-upload"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Scissors, CheckCircle } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Scissors, CheckCircle, X, Upload, Image as ImageIcon } from "lucide-react"
 
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -22,8 +23,13 @@ export function SignupForm() {
   const [error, setError] = useState("")
   const [signupSuccess, setSignupSuccess] = useState(false)
   const [successEmail, setSuccessEmail] = useState("")
-  
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
+  const [isProfileDragOver, setIsProfileDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const { signUp } = useAuth()
+  const { uploadAvatar, validateFile } = useClientAvatarUpload()
   const router = useRouter()
 
   const [clientData, setClientData] = useState({
@@ -45,35 +51,94 @@ export function SignupForm() {
     confirmPassword: "",
   })
 
+  const handleProfileImageFile = (file: File) => {
+    const validationError = validateFile(file)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    setProfileImage(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setProfileImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    handleProfileImageFile(file)
+  }
+
+  const handleProfileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsProfileDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      handleProfileImageFile(file)
+    }
+  }
+
+  const handleProfileDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsProfileDragOver(true)
+  }
+
+  const handleProfileDragLeave = () => {
+    setIsProfileDragOver(false)
+  }
+
+  const removeProfileImage = () => {
+    setProfileImage(null)
+    setProfileImagePreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
   const handleClientSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    
+
     if (clientData.password !== clientData.confirmPassword) {
       setError("Passwords don't match")
       return
     }
-    
+
     setLoading(true)
-    
+
     try {
       const result = await signUp(
-        clientData.email, 
-        clientData.password, 
+        clientData.email,
+        clientData.password,
         "client",
         {
           full_name: `${clientData.firstName} ${clientData.lastName}`.trim()
         }
       )
-      
+
       console.log("Client signup result:", result)
-      
+
+      // If email confirmation is required, show success message
+      // User will upload profile image from dashboard after confirming
       if (result.user && !result.user.email_confirmed_at) {
         setSuccessEmail(clientData.email)
         setSignupSuccess(true)
         return
       }
-      
+
+      // Upload profile image if one was selected AND user is confirmed/authenticated
+      if (profileImage && result.user?.id) {
+        try {
+          await uploadAvatar(profileImage, result.user.id)
+        } catch (uploadErr) {
+          console.error("Failed to upload profile image:", uploadErr)
+          // Don't block signup if image upload fails
+        }
+      }
+
       router.push("/dashboard/client")
     } catch (err: any) {
       setError(err.message || "Failed to create account")
@@ -126,17 +191,17 @@ export function SignupForm() {
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Create your account</h2>
-          <p className="mt-2 text-gray-600">Join the Service4Me community</p>
+          <h2 className="text-xl sm:text-2xl font-medium text-gray-900">Create Your Account</h2>
+          <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">Join the Service4Me community</p>
         </div>
 
         <Card className="border shadow-sm">
           {!signupSuccess && (
             <CardHeader className="space-y-1 pb-6">
-              <CardTitle className="text-center text-xl">Sign up</CardTitle>
+              <CardTitle className="text-center text-lg">Sign up</CardTitle>
             </CardHeader>
           )}
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             {signupSuccess ? (
               <div className="text-center pt-6">
                 <div className="mx-auto mb-6 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
@@ -180,6 +245,77 @@ export function SignupForm() {
 
               <TabsContent value="client" className="mt-6">
                 <form onSubmit={handleClientSubmit} className="space-y-4">
+                  {/* Profile Photo Upload */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Profile Photo</h3>
+                    <p className="text-xs text-gray-500 mb-4">Upload your profile photo (optional)</p>
+                    <div
+                      onDrop={handleProfileDrop}
+                      onDragOver={handleProfileDragOver}
+                      onDragLeave={handleProfileDragLeave}
+                      className={`flex items-start gap-4 p-4 rounded-lg border bg-white transition-colors cursor-pointer ${
+                        isProfileDragOver ? "border-red-500 bg-red-50" : "border-gray-200"
+                      }`}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <div className="w-20 h-20 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {profileImagePreview ? (
+                          <img
+                            src={profileImagePreview}
+                            alt="Profile photo"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800">
+                          {profileImagePreview ? "Photo uploaded" : "Add Profile Photo"}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Share a quick photo so we know you’re a real person. Max 5MB.
+                        </p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              fileInputRef.current?.click()
+                            }}
+                            className="h-7 px-2 text-[10px] font-medium text-gray-600 bg-gray-50/90 hover:bg-gray-100 border border-gray-200"
+                          >
+                            <Upload className="w-3 h-3 mr-1.5 text-gray-600" />
+                            {profileImagePreview ? "Replace photo" : "Upload photo"}
+                          </Button>
+                          {profileImagePreview && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeProfileImage()
+                              }}
+                              className="h-7 w-7 p-0 bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="client-firstName" className="text-sm font-medium">
@@ -285,7 +421,7 @@ export function SignupForm() {
                       className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                       required
                     />
-                    <label htmlFor="client-terms" className="ml-2 block text-sm text-gray-700">
+                    <label htmlFor="client-terms" className="ml-2 block text-xs text-gray-700">
                       I agree to the{" "}
                       <Link href="/terms" className="text-red-600 hover:text-red-500">
                         Terms of Service
@@ -468,7 +604,7 @@ export function SignupForm() {
                       className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                       required
                     />
-                    <label htmlFor="stylist-terms" className="ml-2 block text-sm text-gray-700">
+                    <label htmlFor="stylist-terms" className="ml-2 block text-xs text-gray-700">
                       I agree to the{" "}
                       <Link href="/terms" className="text-red-600 hover:text-red-500">
                         Terms of Service
@@ -492,14 +628,11 @@ export function SignupForm() {
               </TabsContent>
             </Tabs>
 
-                <div className="mt-6">
-                  <Separator className="my-4" />
-                  <div className="text-center">
-                    <span className="text-sm text-gray-600">Already have an account? </span>
-                    <Link href="/login" className="text-sm text-red-600 hover:text-red-500 font-medium">
-                      Sign in
-                    </Link>
-                  </div>
+                <div className="mt-6 text-center">
+                  <span className="text-sm text-gray-600">Already have an account? </span>
+                  <Link href="/login" className="text-sm text-red-600 hover:text-red-500 font-medium">
+                    Sign in
+                  </Link>
                 </div>
               </>
             )}

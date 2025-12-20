@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { ReviewForm } from "@/components/review-form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   User,
   Edit2,
@@ -19,10 +20,13 @@ import {
   MapPin,
   Heart,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Camera,
+  X
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
+import { useClientAvatarUpload } from "@/hooks/use-client-avatar-upload"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { formatDistanceToNow } from "date-fns"
 import { DashboardHero } from "@/components/ui/dashboard-hero"
@@ -196,6 +200,7 @@ function SavedStylistsCarousel({ stylists, totalCount, showCounter, onViewProfil
 export function ClientDashboard() {
   const router = useRouter()
   const { userProfile, loading: authLoading } = useAuth()
+  const { uploadAvatar, deleteAvatar, isUploading, validateFile, error: uploadError } = useClientAvatarUpload()
   const [reviews, setReviews] = useState<ClientReview[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -206,6 +211,9 @@ export function ClientDashboard() {
   const [savedLoading, setSavedLoading] = useState(true)
   const [savedError, setSavedError] = useState<string | null>(null)
   const [savedNotice, setSavedNotice] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const fetchClientReviews = async () => {
     if (!userProfile?.id) return
@@ -383,6 +391,63 @@ export function ClientDashboard() {
       lastName: rest.join(' ') || 'Not provided'
     }
   }
+
+  const getInitials = () => {
+    const name = userProfile?.full_name || ''
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'U'
+  }
+
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validationError = validateFile(file)
+    if (validationError) {
+      setAvatarError(validationError)
+      return
+    }
+
+    setAvatarError(null)
+
+    try {
+      const newUrl = await uploadAvatar(file)
+      setAvatarUrl(newUrl)
+    } catch (err: any) {
+      setAvatarError(err.message || 'Failed to upload image')
+    }
+
+    // Reset file input
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    if (!confirm('Are you sure you want to remove your profile photo?')) {
+      return
+    }
+
+    setAvatarError(null)
+
+    try {
+      await deleteAvatar()
+      setAvatarUrl(null)
+    } catch (err: any) {
+      setAvatarError(err.message || 'Failed to remove image')
+    }
+  }
+
+  // Sync avatar URL from userProfile
+  useEffect(() => {
+    if (userProfile?.avatar_url) {
+      setAvatarUrl(userProfile.avatar_url)
+    }
+  }, [userProfile?.avatar_url])
 
   useEffect(() => {
     if (userProfile?.id) {
@@ -659,10 +724,83 @@ export function ClientDashboard() {
           <Card>
             <SectionHeader
               title="Profile Information"
-              description="Update the details you shared when creating your client account."
+              description="Update your profile photo and view your account details."
             />
             <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0">
-              <div className="max-w-3xl">
+              <div className="max-w-3xl space-y-6">
+                {/* Profile Photo Section */}
+                <Card>
+                  <CardContent className="px-3 py-4 sm:p-6 space-y-5">
+                    <div className="flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-red-600" />
+                      <h3 className="text-base font-semibold text-gray-900">Profile Photo</h3>
+                    </div>
+
+                    {avatarError && (
+                      <Alert className="border-red-200 bg-red-50">
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <AlertDescription className="text-red-800">
+                          {avatarError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className="flex items-center gap-6">
+                      <div className="relative">
+                        <Avatar className="w-24 h-24 border-2 border-gray-200">
+                          <AvatarImage src={avatarUrl || undefined} className="object-cover" />
+                          <AvatarFallback className="bg-gray-100 text-gray-600 text-xl">
+                            {getInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {isUploading && (
+                          <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                            <Loader2 className="w-6 h-6 animate-spin text-white" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <input
+                          ref={avatarInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                          onChange={handleAvatarSelect}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => avatarInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="text-sm"
+                        >
+                          {avatarUrl ? 'Change Photo' : 'Upload Photo'}
+                        </Button>
+                        {avatarUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveAvatar}
+                            disabled={isUploading}
+                            className="text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      JPG, PNG, GIF, or WEBP. Max file size 5MB.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Basic Information Section */}
                 <Card>
                   <CardContent className="px-3 py-4 sm:p-6 space-y-5">
                     <div className="flex items-center gap-2">

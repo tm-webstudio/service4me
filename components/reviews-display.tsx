@@ -3,11 +3,19 @@
 import { useState, useEffect } from "react"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { Button } from "@/components/ui/button"
+import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { EmptyState } from "@/components/ui/empty-state"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import {
   Loader2,
   ChevronLeft,
@@ -15,7 +23,8 @@ import {
   MessageSquare,
   Edit2,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  MoreVertical
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/use-auth"
@@ -57,6 +66,7 @@ export function ReviewsDisplay({
   const [currentPage, setCurrentPage] = useState(1)
   const [totalReviews, setTotalReviews] = useState(0)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
 
   const totalPages = Math.ceil(totalReviews / REVIEWS_PER_PAGE)
   const startIndex = (currentPage - 1) * REVIEWS_PER_PAGE
@@ -171,6 +181,17 @@ export function ReviewsDisplay({
       .slice(0, 2)
   }
 
+  const getClientDisplayName = (name: string) => {
+    const safeName = (name || "Anonymous").trim()
+    if (!safeName) {
+      return "Anonymous"
+    }
+    const parts = safeName.split(/\s+/)
+    const firstName = parts[0]
+    const lastInitial = parts.length > 1 ? `${parts[parts.length - 1][0]?.toUpperCase()}.` : ""
+    return lastInitial ? `${firstName} ${lastInitial}` : firstName
+  }
+
   const formatDate = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), { addSuffix: true })
@@ -181,6 +202,18 @@ export function ReviewsDisplay({
 
   const canEditReview = (review: Review) => {
     return userProfile?.id === review.client_id && userProfile?.role === 'client'
+  }
+
+  const toggleExpandedReview = (reviewId: string) => {
+    setExpandedReviews((prev) => {
+      const next = new Set(prev)
+      if (next.has(reviewId)) {
+        next.delete(reviewId)
+      } else {
+        next.add(reviewId)
+      }
+      return next
+    })
   }
 
   if (loading && reviews.length === 0) {
@@ -221,13 +254,9 @@ export function ReviewsDisplay({
             titleClassName="text-base font-medium text-gray-900"
             descriptionClassName="text-sm text-gray-500"
             action={onLeaveReview ? (
-              <Button
-                onClick={onLeaveReview}
-                size="sm"
-                className="bg-red-600 hover:bg-red-700 text-[12px] h-8 px-3"
-              >
+              <SmallCtaButton onClick={onLeaveReview} variant="outline">
                 Leave a Review
-              </Button>
+              </SmallCtaButton>
             ) : undefined}
           />
         </CardContent>
@@ -238,21 +267,21 @@ export function ReviewsDisplay({
   return (
     <div className="space-y-6">
       {/* Reviews Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {reviews.map((review) => (
           <Card key={review.id} className="h-fit">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start space-x-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={review.client_avatar} />
+                    <AvatarImage src={review.client_avatar} className="object-cover" />
                     <AvatarFallback className="bg-gray-100 text-gray-600 text-sm">
                       {getClientInitials(review.client_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <h4 className="font-medium text-gray-900">
-                      {review.client_name}
+                      {getClientDisplayName(review.client_name)}
                     </h4>
                     <div className="text-sm text-gray-500">
                       {formatDate(review.created_at)}
@@ -266,29 +295,35 @@ export function ReviewsDisplay({
                 </div>
                 
                 {canEditReview(review) && (
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEditReview?.(review)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteReview(review.id)}
-                      disabled={deletingId === review.id}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      {deletingId === review.id ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36">
+                      <DropdownMenuItem
+                        onClick={() => onEditReview?.(review)}
+                        className="cursor-pointer"
+                      >
+                        <Edit2 className="mr-2 h-3.5 w-3.5" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteReview(review.id)}
+                        disabled={deletingId === review.id}
+                        className="cursor-pointer text-red-600 focus:text-red-600"
+                      >
+                        {deletingId === review.id ? (
+                          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="mr-2 h-3.5 w-3.5" />
+                        )}
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
 
@@ -300,9 +335,25 @@ export function ReviewsDisplay({
               />
 
               {review.comment && (
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {review.comment}
-                </p>
+                <div className="space-y-2">
+                  <p
+                    className={`text-gray-700 text-sm leading-relaxed ${
+                      expandedReviews.has(review.id) ? "" : "line-clamp-3"
+                    }`}
+                  >
+                    {review.comment}
+                  </p>
+                  {review.comment.length > 160 && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => toggleExpandedReview(review.id)}
+                      className="p-0 h-auto text-red-600 hover:text-red-700"
+                    >
+                      {expandedReviews.has(review.id) ? "See less" : "See more"}
+                    </Button>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

@@ -51,13 +51,13 @@ export function LoginForm() {
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
-          <p className="mt-2 text-gray-600">Sign in to your Service4Me account</p>
+          <h2 className="text-xl sm:text-2xl font-medium text-gray-900">Welcome back</h2>
+          <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">Sign in to your Service4Me account</p>
         </div>
 
         <Card className="border shadow-sm">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-center text-xl">Sign in</CardTitle>
+            <CardTitle className="text-center text-lg">Sign in</CardTitle>
           </CardHeader>
           <CardContent>
             {error && (
