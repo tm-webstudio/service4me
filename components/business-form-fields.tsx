@@ -73,6 +73,7 @@ interface BusinessFormFieldsProps {
   isUploading?: boolean
   onUploadImages?: (files: FileList | File[]) => Promise<string[]>
   showServices?: boolean
+  isAdminForm?: boolean
 }
 
 export function BusinessFormFields({
@@ -88,7 +89,8 @@ export function BusinessFormFields({
   setServices,
   isUploading = false,
   onUploadImages,
-  showServices = true
+  showServices = true,
+  isAdminForm = false
 }: BusinessFormFieldsProps) {
   // Logo state
   const [isLogoDragOver, setIsLogoDragOver] = useState(false)
@@ -312,7 +314,7 @@ export function BusinessFormFields({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                First Name <span className="text-red-600">*</span>
+                First Name {!isAdminForm && <span className="text-red-600">*</span>}
               </Label>
               <Input
                 value={formData.first_name}
@@ -322,7 +324,7 @@ export function BusinessFormFields({
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                Last Name <span className="text-red-600">*</span>
+                Last Name {!isAdminForm && <span className="text-red-600">*</span>}
               </Label>
               <Input
                 value={formData.last_name}
@@ -361,7 +363,7 @@ export function BusinessFormFields({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                Phone Number <span className="text-red-600">*</span>
+                Phone Number {!isAdminForm && <span className="text-red-600">*</span>}
               </Label>
               <Input
                 value={formData.phone}
@@ -478,7 +480,7 @@ export function BusinessFormFields({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                Booking Link
+                Booking Link <span className="text-red-600">*</span>
               </Label>
               <Input
                 value={formData.booking_link}

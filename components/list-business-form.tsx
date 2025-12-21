@@ -125,7 +125,7 @@ export function ListBusinessForm() {
         return
       }
     } else if (currentStep === 2) {
-      if (!formData.businessType || !formData.location || !formData.bio || !formData.specialty) {
+      if (!formData.businessType || !formData.location || !formData.bio || !formData.specialty || !formData.bookingLink) {
         setError("Please fill in all required fields")
         return
       }
@@ -930,7 +930,7 @@ export function ListBusinessForm() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <Label htmlFor="bookingLink" className="text-sm font-medium text-gray-900 mb-2 block">
-                        Booking Link
+                        Booking Link <span className="text-red-600">*</span>
                       </Label>
                       <Input
                         id="bookingLink"
@@ -939,6 +939,7 @@ export function ListBusinessForm() {
                         onChange={(e) => setFormData({ ...formData, bookingLink: e.target.value })}
                         placeholder="https://your-booking-site.com"
                         className="w-full"
+                        required
                       />
                       <p className="text-xs text-gray-400 mt-1">Add your booking page URL (e.g., Calendly, Square, etc.)</p>
                     </div>

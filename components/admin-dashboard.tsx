@@ -383,10 +383,6 @@ export function AdminDashboard() {
 
     try {
       // Validate required fields
-      if (!formData.first_name.trim() || !formData.last_name.trim()) {
-        throw new Error('First name and last name are required')
-      }
-
       if (!formData.business_name.trim()) {
         throw new Error('Business name is required')
       }
@@ -395,8 +391,8 @@ export function AdminDashboard() {
         throw new Error('Email is required')
       }
 
-      if (!formData.phone.trim()) {
-        throw new Error('Phone number is required')
+      if (!formData.booking_link.trim()) {
+        throw new Error('Booking link is required')
       }
 
       if (!formData.location.trim()) {
@@ -878,10 +874,6 @@ Please change your password after first login.`
 
     try {
       // Validate required fields
-      if (!formData.first_name.trim() || !formData.last_name.trim()) {
-        throw new Error('First name and last name are required')
-      }
-
       if (!formData.business_name.trim()) {
         throw new Error('Business name is required')
       }
@@ -890,8 +882,8 @@ Please change your password after first login.`
         throw new Error('Email is required')
       }
 
-      if (!formData.phone.trim()) {
-        throw new Error('Phone number is required')
+      if (!formData.booking_link.trim()) {
+        throw new Error('Booking link is required')
       }
 
       if (!formData.location.trim()) {
@@ -2139,6 +2131,7 @@ Please change your password after first login.`
                   isUploading={isUploading}
                   onUploadImages={adminUploadFiles}
                   showServices={true}
+                  isAdminForm={true}
                 />
               </div>
 
