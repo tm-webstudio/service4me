@@ -198,6 +198,8 @@ function SavedStylistsCarousel({ stylists, totalCount, showCounter, onViewProfil
 }
 
 export function ClientDashboard() {
+  console.log('🔧 [CLIENT-DASHBOARD] Component rendering')
+
   const router = useRouter()
   const { userProfile, loading: authLoading } = useAuth()
   const { uploadAvatar, deleteAvatar, isUploading, validateFile, error: uploadError } = useClientAvatarUpload()
@@ -214,6 +216,13 @@ export function ClientDashboard() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  console.log('🔧 [CLIENT-DASHBOARD] State', {
+    authLoading,
+    userProfileId: userProfile?.id,
+    userProfileRole: userProfile?.role,
+    hasUserProfile: !!userProfile
+  })
 
   const fetchClientReviews = async () => {
     if (!userProfile?.id) return
@@ -444,20 +453,36 @@ export function ClientDashboard() {
 
   // Sync avatar URL from userProfile
   useEffect(() => {
+    console.log('🔧 [CLIENT-DASHBOARD] Avatar sync useEffect triggered', {
+      avatarUrl: userProfile?.avatar_url
+    })
     if (userProfile?.avatar_url) {
       setAvatarUrl(userProfile.avatar_url)
     }
   }, [userProfile?.avatar_url])
 
   useEffect(() => {
+    console.log('🔧 [CLIENT-DASHBOARD] Reviews useEffect triggered', {
+      userProfileId: userProfile?.id,
+      refreshTrigger
+    })
     if (userProfile?.id) {
+      console.log('🔧 [CLIENT-DASHBOARD] Fetching client reviews...')
       fetchClientReviews()
+    } else {
+      console.log('⚠️ [CLIENT-DASHBOARD] No userProfile.id, skipping reviews fetch')
     }
   }, [userProfile?.id, refreshTrigger])
 
   useEffect(() => {
+    console.log('🔧 [CLIENT-DASHBOARD] Saved stylists useEffect triggered', {
+      userProfileId: userProfile?.id
+    })
     if (userProfile?.id) {
+      console.log('🔧 [CLIENT-DASHBOARD] Fetching saved stylists...')
       fetchSavedStylists()
+    } else {
+      console.log('⚠️ [CLIENT-DASHBOARD] No userProfile.id, skipping saved stylists fetch')
     }
   }, [userProfile?.id])
 

@@ -16,7 +16,34 @@ export function ProtectedClientRoute({ children }: ProtectedClientRouteProps) {
   const role = userProfile?.role || user?.user_metadata?.role
   const isClient = role === 'client' || !role // Default to client if no role
 
+  console.log('🔧 [PROTECTED-CLIENT] Render', {
+    loading,
+    hasUser: !!user,
+    hasUserProfile: !!userProfile,
+    role,
+    isClient,
+    userId: user?.id,
+    userProfileRole: userProfile?.role,
+    userMetadataRole: user?.user_metadata?.role
+  })
+
+  // Show loading while auth is initializing
   if (loading) {
+    console.log('🔧 [PROTECTED-CLIENT] Showing loading state (auth loading)')
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4" />
+          <p className="text-gray-600">Verifying access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // CRITICAL FIX: If user is authenticated but userProfile hasn't loaded yet, keep waiting
+  // This prevents the race condition where dashboard tries to fetch with null userProfile
+  if (user && !userProfile) {
+    console.log('🔧 [PROTECTED-CLIENT] User authenticated but waiting for userProfile...')
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

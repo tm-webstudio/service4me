@@ -16,13 +16,37 @@ export function ProtectedStylistRoute({ children }: ProtectedStylistRouteProps) 
   const isStylist = userProfile?.role === 'stylist' || user?.user_metadata?.role === 'stylist'
   const role = userProfile?.role || user?.user_metadata?.role
 
-  // Show loading while checking authentication
+  console.log('🔧 [PROTECTED-STYLIST] Render', {
+    loading,
+    hasUser: !!user,
+    hasUserProfile: !!userProfile,
+    role,
+    isStylist,
+    userId: user?.id
+  })
+
+  // Show loading while auth is initializing
   if (loading) {
+    console.log('🔧 [PROTECTED-STYLIST] Showing loading state (auth loading)')
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4" />
           <p className="text-gray-600">Verifying access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // CRITICAL FIX: If user is authenticated but userProfile hasn't loaded yet, keep waiting
+  // This prevents the race condition where dashboard tries to fetch with null userProfile
+  if (user && !userProfile) {
+    console.log('🔧 [PROTECTED-STYLIST] User authenticated but waiting for userProfile...')
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
     )

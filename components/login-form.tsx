@@ -29,10 +29,20 @@ export function LoginForm() {
     setLoading(true)
 
     try {
+      console.log('🔧 [LOGIN-FORM] Starting sign in...')
       const result = await signIn(email, password)
+      console.log('✅ [LOGIN-FORM] Sign in completed', {
+        userId: result.user?.id,
+        userRole: result.user?.user_metadata?.role
+      })
 
-      // Use user_metadata.role for immediate redirect
+      // CRITICAL: Allow React to process state updates before navigation
+      // This ensures userProfile is available in the context when dashboard loads
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      // Use user_metadata.role for determining redirect destination
       const role = result.user?.user_metadata?.role || 'client'
+      console.log('🔧 [LOGIN-FORM] Navigating to dashboard for role:', role)
 
       if (role === 'admin') {
         router.push('/admin')
@@ -42,6 +52,7 @@ export function LoginForm() {
         router.push('/dashboard/client')
       }
     } catch (err: any) {
+      console.error('❌ [LOGIN-FORM] Sign in failed:', err)
       setError(err.message || "Failed to sign in")
       setLoading(false)
     }

@@ -42,23 +42,22 @@ export function useStylistProfileEditor() {
   // Fetch the current user's stylist profile
   useEffect(() => {
     const fetchProfile = async () => {
+      console.log('🔧 [PROFILE-EDITOR] fetchProfile called', { userId: user?.id })
+
       if (!user?.id) {
+        console.log('⚠️ [PROFILE-EDITOR] No user.id, setting loading to false')
         setLoading(false)
         lastFetchedUserId.current = null
         return
       }
 
-      // Prevent duplicate fetches for the same user within a short timeframe
-      const lastFetchKey = `lastProfileFetch_${user.id}`
-      const lastFetchTime = sessionStorage.getItem(lastFetchKey)
-      const now = Date.now()
-      
-      if (lastFetchTime && (now - parseInt(lastFetchTime)) < 5000) { // 5 second cooldown
-        console.log('🔍 [PROFILE-EDITOR] Skipping recent fetch for user:', user.id)
+      // Skip if we already fetched for this user (prevents duplicate fetches on re-renders)
+      // But always fetch on first load for this user
+      if (lastFetchedUserId.current === user.id && profile) {
+        console.log('✅ [PROFILE-EDITOR] Already have profile for user, skipping fetch:', user.id)
+        setLoading(false)
         return
       }
-
-      sessionStorage.setItem(lastFetchKey, now.toString())
 
       try {
         setLoading(true)
@@ -120,15 +119,17 @@ export function useStylistProfileEditor() {
           }
 
           setProfile(transformedData)
+          lastFetchedUserId.current = user.id
           console.log('✅ [PROFILE-EDITOR] Profile loaded via direct client')
           return
         }
 
         throw new Error('Profile not found')
-        
+
       } catch (err: any) {
-        console.log('❌ [PROFILE-EDITOR] Failed to fetch profile:', err?.message)
+        console.error('❌ [PROFILE-EDITOR] Failed to fetch profile:', err?.message)
         setError('Failed to load profile data')
+        lastFetchedUserId.current = null // Reset on error so we can retry
       } finally {
         setLoading(false)
       }
