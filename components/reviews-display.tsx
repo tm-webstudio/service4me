@@ -27,7 +27,7 @@ import {
   MoreVertical
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/lib/auth-v2"
 import { formatDistanceToNow } from "date-fns"
 import { updateStylistRating } from "@/lib/rating-utils"
 
@@ -59,7 +59,7 @@ export function ReviewsDisplay({
   refreshTrigger,
   onReviewDeleted
 }: ReviewsDisplayProps) {
-  const { userProfile } = useAuth()
+  const { user } = useAuth()
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -140,7 +140,7 @@ export function ReviewsDisplay({
         .from('reviews')
         .delete()
         .eq('id', reviewId)
-        .eq('client_id', userProfile?.id) // Ensure user can only delete their own review
+        .eq('client_id', user?.id) // Ensure user can only delete their own review
 
       if (error) {
         throw error
@@ -201,7 +201,7 @@ export function ReviewsDisplay({
   }
 
   const canEditReview = (review: Review) => {
-    return userProfile?.id === review.client_id && userProfile?.role === 'client'
+    return user?.id === review.client_id && user?.role === 'client'
   }
 
   const toggleExpandedReview = (reviewId: string) => {

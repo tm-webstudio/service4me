@@ -25,7 +25,8 @@ import {
   X
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/lib/auth-v2"
+import { AuthStatus } from "@/lib/auth-v2/types"
 import { useClientAvatarUpload } from "@/hooks/use-client-avatar-upload"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { formatDistanceToNow } from "date-fns"
@@ -201,7 +202,8 @@ export function ClientDashboard() {
   console.log('🔧 [CLIENT-DASHBOARD] Component rendering')
 
   const router = useRouter()
-  const { userProfile, loading: authLoading } = useAuth()
+  const { user, status } = useAuth()
+  const authLoading = status === AuthStatus.INITIALIZING || status === AuthStatus.LOADING
   const { uploadAvatar, deleteAvatar, isUploading, validateFile, error: uploadError } = useClientAvatarUpload()
   const [reviews, setReviews] = useState<ClientReview[]>([])
   const [loading, setLoading] = useState(true)
@@ -219,13 +221,13 @@ export function ClientDashboard() {
 
   console.log('🔧 [CLIENT-DASHBOARD] State', {
     authLoading,
-    userProfileId: userProfile?.id,
-    userProfileRole: userProfile?.role,
-    hasUserProfile: !!userProfile
+    userId: user?.id,
+    userRole: user?.role,
+    hasUser: !!user
   })
 
   const fetchClientReviews = async () => {
-    if (!userProfile?.id) return
+    if (!user?.id) return
 
     try {
       setLoading(true)
@@ -244,7 +246,7 @@ export function ClientDashboard() {
             business_name
           )
         `)
-        .eq('client_id', userProfile.id)
+        .eq('client_id', user.id)
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -279,7 +281,7 @@ export function ClientDashboard() {
       return
     }
 
-    if (!userProfile?.id) return
+    if (!user?.id) return
 
     try {
       setSavedLoading(true)
@@ -300,7 +302,7 @@ export function ClientDashboard() {
             portfolio_images
           )
         `)
-        .eq('client_id', userProfile.id)
+        .eq('client_id', user.id)
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -349,7 +351,7 @@ export function ClientDashboard() {
         .from('reviews')
         .delete()
         .eq('id', reviewId)
-        .eq('client_id', userProfile?.id) // Ensure user can only delete their own review
+        .eq('client_id', user?.id) // Ensure user can only delete their own review
 
       if (error) {
         throw error
@@ -375,10 +377,10 @@ export function ClientDashboard() {
   }
 
   const getMemberSince = () => {
-    if (!userProfile?.created_at) return 'Recently'
-    
+    if (!user?.createdAt) return 'Recently'
+
     try {
-      const date = new Date(userProfile.created_at)
+      const date = new Date(user.createdAt)
       return date.toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'long' 
@@ -389,7 +391,7 @@ export function ClientDashboard() {
   }
 
   const getNameParts = () => {
-    const fullName = (userProfile?.full_name || '').trim()
+    const fullName = (user?.fullName || '').trim()
     if (!fullName) {
       return { firstName: 'Not provided', lastName: 'Not provided' }
     }
@@ -402,7 +404,7 @@ export function ClientDashboard() {
   }
 
   const getInitials = () => {
-    const name = userProfile?.full_name || ''
+    const name = user?.fullName || ''
     return name
       .split(' ')
       .map(part => part[0])
@@ -451,40 +453,40 @@ export function ClientDashboard() {
     }
   }
 
-  // Sync avatar URL from userProfile
+  // Sync avatar URL from user
   useEffect(() => {
     console.log('🔧 [CLIENT-DASHBOARD] Avatar sync useEffect triggered', {
-      avatarUrl: userProfile?.avatar_url
+      avatarUrl: user?.avatarUrl
     })
-    if (userProfile?.avatar_url) {
-      setAvatarUrl(userProfile.avatar_url)
+    if (user?.avatarUrl) {
+      setAvatarUrl(user.avatarUrl)
     }
-  }, [userProfile?.avatar_url])
+  }, [user?.avatarUrl])
 
   useEffect(() => {
     console.log('🔧 [CLIENT-DASHBOARD] Reviews useEffect triggered', {
-      userProfileId: userProfile?.id,
+      userId: user?.id,
       refreshTrigger
     })
-    if (userProfile?.id) {
+    if (user?.id) {
       console.log('🔧 [CLIENT-DASHBOARD] Fetching client reviews...')
       fetchClientReviews()
     } else {
-      console.log('⚠️ [CLIENT-DASHBOARD] No userProfile.id, skipping reviews fetch')
+      console.log('⚠️ [CLIENT-DASHBOARD] No user.id, skipping reviews fetch')
     }
-  }, [userProfile?.id, refreshTrigger])
+  }, [user?.id, refreshTrigger])
 
   useEffect(() => {
     console.log('🔧 [CLIENT-DASHBOARD] Saved stylists useEffect triggered', {
-      userProfileId: userProfile?.id
+      userId: user?.id
     })
-    if (userProfile?.id) {
+    if (user?.id) {
       console.log('🔧 [CLIENT-DASHBOARD] Fetching saved stylists...')
       fetchSavedStylists()
     } else {
-      console.log('⚠️ [CLIENT-DASHBOARD] No userProfile.id, skipping saved stylists fetch')
+      console.log('⚠️ [CLIENT-DASHBOARD] No user.id, skipping saved stylists fetch')
     }
-  }, [userProfile?.id])
+  }, [user?.id])
 
   // Show loading state
   if (authLoading) {
@@ -500,8 +502,8 @@ export function ClientDashboard() {
   // User is authenticated and is a client - show dashboard
 
   const nameParts = getNameParts()
-  const accountEmail = userProfile?.email || 'Not provided'
-  const accountRole = userProfile?.role || 'client'
+  const accountEmail = user?.email || 'Not provided'
+  const accountRole = user?.role || 'client'
   const renderSavedStylists = (showAll: boolean) => {
     const list = showAll ? savedStylists : savedStylists.slice(0, 5)
 
@@ -567,7 +569,7 @@ export function ClientDashboard() {
       <DashboardHero
         eyebrow="Client Dashboard"
         eyebrowClassName="text-green-600"
-        title={<>Welcome, {userProfile?.full_name || 'Client'}!</>}
+        title={<>Welcome, {user?.fullName || 'Client'}!</>}
         subtitle="Manage your saved stylists, reviews, and account details."
         subtitleClassName="text-green-700/80"
         gradientFrom="from-emerald-50"
@@ -876,7 +878,7 @@ export function ClientDashboard() {
                         <Input
                           id="profile-phone"
                           name="phone"
-                          defaultValue={userProfile?.phone || ''}
+                          defaultValue={user?.phone || ''}
                           placeholder="Add a phone number"
                           readOnly
                           className="bg-white"

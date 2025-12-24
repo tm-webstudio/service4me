@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Star, ExternalLink, Settings, MessageSquare, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User, XCircle, X } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/lib/auth-v2"
+import { AuthStatus } from "@/lib/auth-v2/types"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
 import { useServices } from "@/hooks/use-services"
 import { postcodeToAreaName } from "@/lib/postcode-utils"
@@ -20,7 +21,7 @@ import { DashboardHero } from "@/components/ui/dashboard-hero"
 import { SectionHeader } from "@/components/ui/section-header"
 
 export function StylistDashboard() {
-  const { user } = useAuth()
+  const { status, user } = useAuth()
   const { profile, loading, saving, error, updateProfile, updatePortfolioImages } = useStylistProfileEditor()
   const { uploadFiles, deleteImage, uploadProgress, isUploading, error: uploadError } = usePortfolioUpload()
   const { services, addService, updateService, deleteService, refreshServices } = useServices()

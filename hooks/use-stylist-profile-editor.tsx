@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { useAuth } from './use-auth'
+import { useAuth } from '@/lib/auth-v2'
 import type { StylistProfile } from './use-stylists'
 
 interface ProfileUpdateData {
@@ -99,7 +99,7 @@ export function useStylistProfileEditor() {
             review_count: data.review_count,
             is_verified: data.is_verified,
             is_active: data.is_active ?? true,
-            full_name: data.full_name || user.user_metadata?.full_name || 'Professional Stylist',
+            full_name: data.full_name || user.fullName || 'Professional Stylist',
             email: data.email || user.email || 'stylist@example.com',
             booking_link: data.booking_link,
             phone: data.phone,

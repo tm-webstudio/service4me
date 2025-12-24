@@ -17,7 +17,7 @@ import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/lib/auth-v2"
 import { formatDistanceToNow, format } from "date-fns"
 import { BusinessFormFields, BusinessFormData, ServiceItem, initialBusinessFormData } from "@/components/business-form-fields"
 import { cn } from "@/lib/utils"
@@ -373,6 +373,7 @@ export function AdminDashboard() {
   }
 
   const handleSaveStylist = async () => {
+    console.log('🔧 [ADMIN] handleSaveStylist started')
     setError('')
     setSuccess('')
     setSaving(true)
@@ -382,6 +383,7 @@ export function AdminDashboard() {
     setAccountCredentials(null)
 
     try {
+      console.log('🔧 [ADMIN] Starting validation')
       // Validate required fields
       if (!formData.business_name.trim()) {
         throw new Error('Business name is required')
@@ -430,50 +432,62 @@ export function AdminDashboard() {
       // Use the actual uploaded image URLs
       const portfolioImages = galleryImages
 
-      // Create profile with pending verification status
-      const { data, error: insertError } = await supabase
-        .from('stylist_profiles')
-        .insert([
-          {
-            business_name: formData.business_name,
-            bio: formData.bio,
-            location: formData.location.toUpperCase(),
-            specialties: formData.specialties ? [formData.specialties] : [],
-            primary_specialty: formData.specialties,
-            additional_services: additionalServices,
-            year_started: formData.year_started ? parseInt(formData.year_started) : null,
-            booking_link: formData.booking_link || null,
-            phone: formData.phone,
-            contact_email: formData.contact_email,
-            instagram_handle: formData.instagram_handle || null,
-            tiktok_handle: formData.tiktok_handle || null,
-            business_type: formData.business_type,
-            accepts_same_day: formData.accepts_same_day,
-            accepts_mobile: formData.accepts_mobile,
-            logo_url: logoImage || null,
-            portfolio_images: portfolioImages,
-            // Set to pending verification
-            verification_status: 'pending_verification',
-            submitted_at: new Date().toISOString(),
-            is_active: false,
-            is_verified: false,
-            rating: 0,
-            total_reviews: 0
-          }
-        ])
-        .select()
+      console.log('🔧 [ADMIN] Validation passed, creating profile...')
 
-      if (insertError) {
-        throw new Error(`Database error: ${insertError.message || insertError.details || 'Unknown database error'}`)
+      // Create profile using admin API to bypass RLS
+      const profileData = {
+        business_name: formData.business_name,
+        bio: formData.bio,
+        location: formData.location.toUpperCase(),
+        specialties: formData.specialties ? [formData.specialties] : [],
+        primary_specialty: formData.specialties,
+        additional_services: additionalServices,
+        year_started: formData.year_started ? parseInt(formData.year_started) : null,
+        booking_link: formData.booking_link || null,
+        phone: formData.phone,
+        contact_email: formData.contact_email,
+        instagram_handle: formData.instagram_handle || null,
+        tiktok_handle: formData.tiktok_handle || null,
+        business_type: formData.business_type,
+        accepts_same_day: formData.accepts_same_day,
+        accepts_mobile: formData.accepts_mobile,
+        logo_url: logoImage || null,
+        portfolio_images: portfolioImages,
+        // Set to pending verification
+        verification_status: 'pending_verification',
+        submitted_at: new Date().toISOString(),
+        is_active: false,
+        is_verified: false,
+        rating: 0,
+        total_reviews: 0
       }
 
+      const response = await fetch('/api/admin/stylist-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ profile: profileData })
+      })
+
+      const result = await response.json()
+      console.log('🔧 [ADMIN] Profile creation result:', { ok: response.ok, result })
+
+      if (!response.ok) {
+        console.error('❌ [ADMIN] API error:', result)
+        throw new Error(result.error || 'Failed to create stylist profile')
+      }
+
+      const data = [result.profile]
       const stylistId = data[0].id
-      
+      console.log('🔧 [ADMIN] Stylist profile created with ID:', stylistId)
+
       // Save services if any have been added
       let servicesSaveFailed = false
       let servicesFailReason = ''
 
       if (mockServices.length > 0) {
+        console.log('🔧 [ADMIN] Saving', mockServices.length, 'services...')
         try {
           const response = await fetch('/api/admin/services', {
             method: 'POST',
@@ -487,6 +501,7 @@ export function AdminDashboard() {
           })
 
           const result = await response.json()
+          console.log('🔧 [ADMIN] Services API response:', { ok: response.ok, result })
 
           if (!response.ok) {
             // Check if it's an RLS policy error
@@ -497,6 +512,7 @@ export function AdminDashboard() {
             }
           }
         } catch (apiError) {
+          console.error('❌ [ADMIN] Services API error:', apiError)
           // Continue with profile creation even if services fail
         }
       }
@@ -518,13 +534,16 @@ export function AdminDashboard() {
       successMessage += ` You can approve it from the Pending tab or generate login credentials below.`
 
       setSuccess(successMessage)
+      console.log('🔧 [ADMIN] Success message set')
 
       // Store created stylist data for account generation
       setCreatedStylist(data[0])
       setAccountCredentials(null) // Reset any previous credentials
 
       // Refresh pending stylists list
-      fetchPendingStylists()
+      console.log('🔧 [ADMIN] Refreshing pending stylists list...')
+      await fetchPendingStylists()
+      console.log('🔧 [ADMIN] Pending stylists refreshed')
 
       // Reset form and clear all images
       setFormData(initialBusinessFormData)
@@ -539,10 +558,15 @@ export function AdminDashboard() {
       setServiceImagePreview('')
       setMockServices([]) // Clear services list
 
+      console.log('🔧 [ADMIN] Form reset complete')
+
     } catch (err: any) {
+      console.error('❌ [ADMIN] Error in handleSaveStylist:', err)
       setError(err.message || 'Failed to create stylist profile')
     } finally {
+      console.log('🔧 [ADMIN] Setting saving to false')
       setSaving(false)
+      console.log('🔧 [ADMIN] handleSaveStylist complete')
     }
   }
 
@@ -918,34 +942,41 @@ Please change your password after first login.`
         throw new Error('Booking link must start with http:// or https://')
       }
 
-      // Update profile
-      const { error: updateError } = await supabase
-        .from('stylist_profiles')
-        .update({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          business_name: formData.business_name,
-          bio: formData.bio,
-          location: formData.location.toUpperCase(),
-          specialties: formData.specialties ? [formData.specialties] : [],
-          primary_specialty: formData.specialties,
-          additional_services: additionalServices,
-          year_started: formData.year_started ? parseInt(formData.year_started) : null,
-          booking_link: formData.booking_link || null,
-          phone: formData.phone,
-          contact_email: formData.contact_email,
-          instagram_handle: formData.instagram_handle || null,
-          tiktok_handle: formData.tiktok_handle || null,
-          business_type: formData.business_type,
-          accepts_same_day: formData.accepts_same_day,
-          accepts_mobile: formData.accepts_mobile,
-          logo_url: logoImage || null,
-          portfolio_images: galleryImages,
-        })
-        .eq('id', editingStylistId)
+      // Update profile using admin API to bypass RLS
+      const updateData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        business_name: formData.business_name,
+        bio: formData.bio,
+        location: formData.location.toUpperCase(),
+        specialties: formData.specialties ? [formData.specialties] : [],
+        primary_specialty: formData.specialties,
+        additional_services: additionalServices,
+        year_started: formData.year_started ? parseInt(formData.year_started) : null,
+        booking_link: formData.booking_link || null,
+        phone: formData.phone,
+        contact_email: formData.contact_email,
+        instagram_handle: formData.instagram_handle || null,
+        tiktok_handle: formData.tiktok_handle || null,
+        business_type: formData.business_type,
+        accepts_same_day: formData.accepts_same_day,
+        accepts_mobile: formData.accepts_mobile,
+        logo_url: logoImage || null,
+        portfolio_images: galleryImages,
+      }
 
-      if (updateError) {
-        throw new Error(`Database error: ${updateError.message || updateError.details || 'Unknown database error'}`)
+      const response = await fetch('/api/admin/stylist-profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: editingStylistId, profile: updateData })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update stylist profile')
       }
 
       // Update services

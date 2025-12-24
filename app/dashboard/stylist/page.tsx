@@ -1,16 +1,16 @@
 import { Navigation } from "@/components/navigation"
 import { StylistDashboard } from "@/components/stylist-dashboard"
 import { Footer } from "@/components/footer"
-import { ProtectedStylistRoute } from "@/components/protected-stylist-route"
+import { ProtectedRoute } from "@/lib/auth-v2"
 
 export default function StylistDashboardPage() {
   return (
-    <ProtectedStylistRoute>
+    <ProtectedRoute allowedRoles={['stylist']}>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <StylistDashboard />
         <Footer />
       </div>
-    </ProtectedStylistRoute>
+    </ProtectedRoute>
   )
 }

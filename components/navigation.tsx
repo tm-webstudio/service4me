@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/lib/auth-v2"
+import { AuthStatus } from "@/lib/auth-v2/types"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -35,7 +36,7 @@ const safariStyles = `
 `
 
 export function Navigation() {
-  const { user, userProfile, signOut } = useAuth()
+  const { status, user, signOut } = useAuth()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -120,10 +121,12 @@ export function Navigation() {
   }
 
   const handleDashboard = () => {
-    const role = userProfile?.role || user?.user_metadata?.role
-    if (role === 'admin') {
+    // Single source of truth: user.role from auth-v2
+    if (!user) return
+
+    if (user.role === 'admin') {
       router.push('/admin')
-    } else if (role === 'stylist') {
+    } else if (user.role === 'stylist') {
       router.push('/dashboard/stylist')
     } else {
       router.push('/dashboard/client')
@@ -312,9 +315,9 @@ export function Navigation() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="flex items-center space-x-2">
                       <User className="w-4 h-4" />
-                      {userProfile?.full_name && (
+                      {user.fullName && (
                         <span className="text-sm max-w-[100px] truncate">
-                          {userProfile.full_name.split(' ')[0]}
+                          {user.fullName.split(' ')[0]}
                         </span>
                       )}
                       <ChevronDown className="w-3 h-3" />
@@ -322,9 +325,9 @@ export function Navigation() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <div className="px-3 py-2 text-sm">
-                      <div className="font-medium">{userProfile?.full_name || user?.user_metadata?.full_name || "User"}</div>
+                      <div className="font-medium">{user.fullName || user.email}</div>
                       <div className="text-xs text-gray-500">{user.email}</div>
-                      <div className="text-xs text-blue-600 capitalize">{userProfile?.role || user?.user_metadata?.role || "client"}</div>
+                      <div className="text-xs text-blue-600 capitalize">{user.role}</div>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleDashboard} className="cursor-pointer">
@@ -339,13 +342,13 @@ export function Navigation() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link href="/login">
+                <Link href="/login-v2">
                   <Button variant="outline" size="sm">
                     <User className="w-4 h-4" />
                   </Button>
                 </Link>
               )}
-              {(!user || userProfile?.role !== 'stylist') && (
+              {(!user || user.role !== 'stylist') && (
                 <Link href="/list-business">
                   <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem]">
                     List Your Business
@@ -356,7 +359,7 @@ export function Navigation() {
 
             {/* Mobile Actions */}
             <div className="md:hidden flex items-center justify-end space-x-3 col-start-2">
-              {(!user || userProfile?.role !== 'stylist') && (
+              {(!user || user.role !== 'stylist') && (
                 <Link href="/list-business">
                   <Button size="sm" className="bg-gray-200 text-neutral-600 hover:bg-gray-300 text-[0.825rem] px-3">
                     List Your Business
@@ -421,9 +424,9 @@ export function Navigation() {
                               <User className="w-5 h-5 text-red-600" />
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">{userProfile?.full_name || user?.user_metadata?.full_name || "User"}</div>
+                              <div className="font-medium text-gray-900">{user.fullName || user.email}</div>
                               <div className="text-sm text-gray-500">{user.email}</div>
-                              <div className="text-sm text-blue-600 capitalize">{userProfile?.role || user?.user_metadata?.role || "client"}</div>
+                              <div className="text-sm text-blue-600 capitalize">{user.role}</div>
                             </div>
                           </div>
                         </div>
@@ -518,7 +521,7 @@ export function Navigation() {
                           </Button>
                         </>
                       ) : (
-                        <Link href="/login">
+                        <Link href="/login-v2">
                           <Button
                             variant="outline"
                             className="w-full justify-center bg-transparent mb-3 text-[0.85rem]"
@@ -529,7 +532,7 @@ export function Navigation() {
                           </Button>
                         </Link>
                       )}
-                      {(!user || userProfile?.role !== 'stylist') && (
+                      {(!user || user.role !== 'stylist') && (
                         <Link href="/list-business">
                           <Button
                             className="w-full bg-red-600 hover:bg-red-700 text-[0.825rem]"

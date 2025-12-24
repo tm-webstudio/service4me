@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/lib/auth-v2"
 import { supabase } from "@/lib/supabase"
 import { updateStylistRating } from "@/lib/rating-utils"
 
@@ -28,7 +28,7 @@ export function ReviewForm({
   onSuccess, 
   onCancel 
 }: ReviewFormProps) {
-  const { userProfile } = useAuth()
+  const { user } = useAuth()
   const [rating, setRating] = useState(existingReview?.rating || 0)
   const [comment, setComment] = useState(existingReview?.comment || "")
   const [loading, setLoading] = useState(false)
@@ -41,12 +41,12 @@ export function ReviewForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!userProfile) {
+    if (!user) {
       setError("You must be logged in to leave a review")
       return
     }
 
-    if (userProfile.role !== 'client') {
+    if (user.role !== 'client') {
       setError("Only clients can leave reviews")
       return
     }
@@ -67,7 +67,7 @@ export function ReviewForm({
     try {
       const reviewData = {
         stylist_id: stylistId,
-        client_id: userProfile.id,
+        client_id: user.id,
         rating,
         comment: comment.trim() || null,
         updated_at: new Date().toISOString()
@@ -116,7 +116,7 @@ export function ReviewForm({
     }
   }
 
-  if (!userProfile) {
+  if (!user) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -131,7 +131,7 @@ export function ReviewForm({
     )
   }
 
-  if (userProfile.role !== 'client') {
+  if (user.role !== 'client') {
     return (
       <Card>
         <CardContent className="pt-6">

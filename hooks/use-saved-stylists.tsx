@@ -2,18 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/lib/auth-v2'
 
 // Hook for single stylist (used in profile page)
 export function useSavedStylists(stylistId?: string) {
-  const { userProfile } = useAuth()
+  const { user } = useAuth()
   const [isSaved, setIsSaved] = useState(false)
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
 
   // Check if the stylist is already saved
   const checkIfSaved = useCallback(async () => {
-    if (!isSupabaseConfigured() || !userProfile?.id || !stylistId) {
+    if (!isSupabaseConfigured() || !user?.id || !stylistId) {
       setChecking(false)
       return
     }
@@ -23,7 +23,7 @@ export function useSavedStylists(stylistId?: string) {
       const { data, error } = await supabase
         .from('saved_stylists')
         .select('id')
-        .eq('client_id', userProfile.id)
+        .eq('client_id', user.id)
         .eq('stylist_id', stylistId)
         .maybeSingle()
 
@@ -43,14 +43,14 @@ export function useSavedStylists(stylistId?: string) {
     } finally {
       setChecking(false)
     }
-  }, [userProfile?.id, stylistId])
+  }, [user?.id, stylistId])
 
   useEffect(() => {
     checkIfSaved()
   }, [checkIfSaved])
 
   const toggleSave = useCallback(async () => {
-    if (!isSupabaseConfigured() || !userProfile?.id || !stylistId) {
+    if (!isSupabaseConfigured() || !user?.id || !stylistId) {
       return { success: false, error: 'Not authenticated or Supabase not configured' }
     }
 
@@ -62,7 +62,7 @@ export function useSavedStylists(stylistId?: string) {
         const { error } = await supabase
           .from('saved_stylists')
           .delete()
-          .eq('client_id', userProfile.id)
+          .eq('client_id', user.id)
           .eq('stylist_id', stylistId)
 
         if (error) throw error
@@ -74,7 +74,7 @@ export function useSavedStylists(stylistId?: string) {
         const { error } = await supabase
           .from('saved_stylists')
           .insert({
-            client_id: userProfile.id,
+            client_id: user.id,
             stylist_id: stylistId
           })
 
@@ -89,7 +89,7 @@ export function useSavedStylists(stylistId?: string) {
     } finally {
       setLoading(false)
     }
-  }, [isSaved, userProfile?.id, stylistId])
+  }, [isSaved, user?.id, stylistId])
 
   const saveStylist = useCallback(async () => {
     if (isSaved) return { success: true, saved: true }
@@ -108,21 +108,21 @@ export function useSavedStylists(stylistId?: string) {
     toggleSave,
     saveStylist,
     unsaveStylist,
-    isAuthenticated: !!userProfile?.id,
+    isAuthenticated: !!user?.id,
     isConfigured: isSupabaseConfigured()
   }
 }
 
 // Hook for multiple stylists (used in grid/browse pages)
 export function useSavedStylistIds() {
-  const { userProfile } = useAuth()
+  const { user } = useAuth()
   const [savedIds, setSavedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
 
   // Fetch all saved stylist IDs for the current user
   const fetchSavedIds = useCallback(async () => {
-    if (!isSupabaseConfigured() || !userProfile?.id) {
+    if (!isSupabaseConfigured() || !user?.id) {
       setLoading(false)
       setSavedIds([])
       return
@@ -133,7 +133,7 @@ export function useSavedStylistIds() {
       const { data, error } = await supabase
         .from('saved_stylists')
         .select('stylist_id')
-        .eq('client_id', userProfile.id)
+        .eq('client_id', user.id)
 
       if (error) {
         if (error.message?.includes('could not find the table')) {
@@ -150,14 +150,14 @@ export function useSavedStylistIds() {
     } finally {
       setLoading(false)
     }
-  }, [userProfile?.id])
+  }, [user?.id])
 
   useEffect(() => {
     fetchSavedIds()
   }, [fetchSavedIds])
 
   const toggleSave = useCallback(async (stylistId: string) => {
-    if (!isSupabaseConfigured() || !userProfile?.id) {
+    if (!isSupabaseConfigured() || !user?.id) {
       return { success: false, error: 'Not authenticated or Supabase not configured' }
     }
 
@@ -169,7 +169,7 @@ export function useSavedStylistIds() {
         const { error } = await supabase
           .from('saved_stylists')
           .delete()
-          .eq('client_id', userProfile.id)
+          .eq('client_id', user.id)
           .eq('stylist_id', stylistId)
 
         if (error) throw error
@@ -180,7 +180,7 @@ export function useSavedStylistIds() {
         const { error } = await supabase
           .from('saved_stylists')
           .insert({
-            client_id: userProfile.id,
+            client_id: user.id,
             stylist_id: stylistId
           })
 
@@ -195,7 +195,7 @@ export function useSavedStylistIds() {
     } finally {
       setSavingId(null)
     }
-  }, [savedIds, userProfile?.id])
+  }, [savedIds, user?.id])
 
   const isSaved = useCallback((stylistId: string) => {
     return savedIds.includes(stylistId)
@@ -208,7 +208,7 @@ export function useSavedStylistIds() {
     toggleSave,
     isSaved,
     refetch: fetchSavedIds,
-    isAuthenticated: !!userProfile?.id,
+    isAuthenticated: !!user?.id,
     isConfigured: isSupabaseConfigured()
   }
 }

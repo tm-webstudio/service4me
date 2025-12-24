@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { ProtectedAdminRoute } from "@/components/protected-admin-route"
+import { ProtectedRoute } from "@/lib/auth-v2"
 import { StylistProfile } from "@/components/stylist-profile"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
@@ -13,19 +13,19 @@ export default function PendingPreviewPage() {
 
   if (!stylistId) {
     return (
-      <ProtectedAdminRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
           <div className="max-w-md w-full rounded-lg border bg-white shadow-sm p-8 text-center">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Stylist not found</h2>
             <p className="text-gray-600">We couldn’t load this pending stylist preview.</p>
           </div>
         </div>
-      </ProtectedAdminRoute>
+      </ProtectedRoute>
     )
   }
 
   return (
-    <ProtectedAdminRoute>
+    <ProtectedRoute allowedRoles={['admin']}>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <main className="py-6 sm:py-10">
@@ -42,6 +42,6 @@ export default function PendingPreviewPage() {
         </main>
         <Footer />
       </div>
-    </ProtectedAdminRoute>
+    </ProtectedRoute>
   )
 }

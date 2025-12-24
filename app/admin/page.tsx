@@ -1,16 +1,16 @@
 import { AdminDashboard } from "@/components/admin-dashboard"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { ProtectedAdminRoute } from "@/components/protected-admin-route"
+import { ProtectedRoute } from "@/lib/auth-v2"
 
 export default function AdminPage() {
   return (
-    <ProtectedAdminRoute>
+    <ProtectedRoute allowedRoles={['admin']}>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <AdminDashboard />
         <Footer />
       </div>
-    </ProtectedAdminRoute>
+    </ProtectedRoute>
   )
 }

@@ -1,0 +1,95 @@
+"use client"
+
+import { ProtectedRoute, useAuth } from '@/lib/auth-v2'
+import { Navigation } from '@/components/navigation'
+import { Footer } from '@/components/footer'
+
+function StylistOnlyContent() {
+  const { user, signOut } = useAuth()
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="bg-white rounded-lg shadow-sm border p-8">
+          <div className="mb-6">
+            <span className="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-sm font-medium text-purple-700">
+              Stylist Access
+            </span>
+          </div>
+
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Stylist-Only Test Page
+          </h1>
+
+          <p className="text-gray-600 mb-8">
+            This page is protected and only accessible to users with the "stylist" role.
+          </p>
+
+          <div className="bg-gray-50 rounded-lg p-6 mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Profile</h2>
+            <dl className="space-y-2">
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="text-sm text-gray-900">{user?.email}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Full Name</dt>
+                <dd className="text-sm text-gray-900">{user?.fullName || 'Not set'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Role</dt>
+                <dd className="text-sm text-gray-900 font-semibold">{user?.role}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">User ID</dt>
+                <dd className="text-sm text-gray-900 font-mono text-xs">{user?.id}</dd>
+              </div>
+              {user?.stylistProfile && (
+                <>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Business Name</dt>
+                    <dd className="text-sm text-gray-900">{user.stylistProfile.businessName}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Location</dt>
+                    <dd className="text-sm text-gray-900">{user.stylistProfile.location || 'Not set'}</dd>
+                  </div>
+                </>
+              )}
+            </dl>
+          </div>
+
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-8">
+            <h3 className="text-sm font-semibold text-purple-900 mb-2">
+              Route Protection Test
+            </h3>
+            <p className="text-sm text-purple-800">
+              If you can see this page, the route protection is working correctly!
+              Only stylists should be able to access this page.
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => signOut()}
+              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  )
+}
+
+export default function TestProtectedStylistPage() {
+  return (
+      <ProtectedRoute allowedRoles={['stylist']}>
+        <StylistOnlyContent />
+      </ProtectedRoute>
+    </AuthProvider>
+  )
+}

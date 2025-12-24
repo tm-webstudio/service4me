@@ -19,7 +19,7 @@ import {
 import { StarDisplay } from "@/components/ui/star-rating"
 import { ReviewForm } from "@/components/review-form"
 import { ReviewsDisplay } from "@/components/reviews-display"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth } from "@/lib/auth-v2"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -70,7 +70,7 @@ interface StylistProfileProps {
 }
 
 export function StylistProfile({ stylistId }: StylistProfileProps) {
-  const { userProfile } = useAuth()
+  const { user } = useAuth()
   const { stylist, loading, error, refetch: refetchStylist } = useStylist(stylistId)
   const { services, loading: servicesLoading, error: servicesError, formatDuration } = useStylistServices(stylist?.id)
   const { isSaved: isFavorite, toggleSave, loading: savingFavorite, isAuthenticated } = useSavedStylists(stylist?.id)
@@ -121,7 +121,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   }
 
   const handleLeaveReviewClick = () => {
-    if (!userProfile) {
+    if (!user) {
       setIsAuthPromptOpen(true)
       return
     }
@@ -645,7 +645,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div className="pt-8 space-y-4 w-full">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-medium text-gray-900">Reviews</h2>
-              {(!userProfile || userProfile?.role === 'client') && !showReviewForm && !editingReview && (
+              {(!user || user?.role === 'client') && !showReviewForm && !editingReview && (
                 <SmallCtaButton onClick={handleLeaveReviewClick} variant="outline">
                   Leave a Review
                 </SmallCtaButton>
