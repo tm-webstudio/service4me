@@ -33,7 +33,7 @@ export function DashboardHero({
   return (
     <div
       className={cn(
-        "bg-gradient-to-r border rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-6 sm:mb-8",
+        "bg-gradient-to-r border rounded-lg px-4 py-4 sm:px-6 sm:py-8 mb-4",
         gradientFrom,
         gradientTo,
         borderClassName,

@@ -409,9 +409,9 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div>
             {/* Rating, business name and action buttons - all in one container */}
             <div className="flex items-start justify-between mb-2">
-              <div>
-                {/* Rating above business name */}
-                <div className="flex items-center mb-1">
+              <div className="flex-1 min-w-0">
+                {/* Mobile: Rating above business name */}
+                <div className="flex items-center mb-1 md:hidden">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium text-gray-700 ml-1 text-sm">
                     {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
@@ -420,10 +420,24 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     ({stylist.review_count || 0})
                   </span>
                 </div>
-                {/* Business name */}
-                <h1 className="text-xl md:text-2xl font-medium text-gray-900">{displayData.businessName}</h1>
+
+                {/* Desktop: Business name and rating side by side */}
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl md:text-2xl font-medium text-gray-900">{displayData.businessName}</h1>
+
+                  {/* Desktop: Rating to the right of business name */}
+                  <div className="hidden md:flex items-center">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium text-gray-700 ml-1 text-sm">
+                      {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
+                    </span>
+                    <span className="text-gray-500 ml-1 text-sm">
+                      ({stylist.review_count || 0})
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex space-x-2 flex-shrink-0">
+              <div className="flex space-x-2 flex-shrink-0 ml-2">
                 <Button
                   variant="outline"
                   size="icon"
@@ -446,11 +460,15 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Specialist badge and experience */}
             <div className="flex flex-row items-center gap-2 sm:gap-3 mb-4">
               <SpecialistBadge specialty={displayData.expertise} />
-              <span className="text-gray-400">•</span>
-              <div className="flex items-center text-gray-600 text-sm">
-                <Award className="w-4 h-4 mr-1" />
-                <span>{displayData.experience} experience</span>
-              </div>
+              {stylist.year_started && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <Award className="w-4 h-4 mr-1" />
+                    <span>{displayData.experience} experience</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Mobile Layout - Location and features grid */}
@@ -645,7 +663,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div className="pt-8 space-y-4 w-full">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-medium text-gray-900">Reviews</h2>
-              {(!user || user?.role === 'client') && !showReviewForm && !editingReview && (
+              {(!user || user?.role === 'client') && !showReviewForm && !editingReview && stylist.review_count > 0 && (
                 <SmallCtaButton onClick={handleLeaveReviewClick} variant="outline">
                   Leave a Review
                 </SmallCtaButton>
@@ -722,7 +740,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
           {/* Contact */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle className="text-base font-medium">Contact</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -744,28 +762,32 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
               )}
               {(stylist.instagram_handle || stylist.tiktok_handle) && (
                 <div className="border-t pt-4">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                     {stylist.instagram_handle && (
-                      <a 
-                        href={`https://instagram.com/${stylist.instagram_handle.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-gray-800"
-                        title={`Follow on Instagram: ${stylist.instagram_handle}`}
-                      >
-                        <Instagram className="w-5 h-5" />
-                      </a>
+                      <div className="flex items-center">
+                        <Instagram className="w-4 h-4 mr-2 text-gray-600 flex-shrink-0" />
+                        <a
+                          href={`https://instagram.com/${stylist.instagram_handle.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-700 hover:text-gray-900 text-sm"
+                        >
+                          {stylist.instagram_handle.replace('@', '')}
+                        </a>
+                      </div>
                     )}
                     {stylist.tiktok_handle && (
-                      <a 
-                        href={`https://tiktok.com/@${stylist.tiktok_handle.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-gray-800"
-                        title={`Follow on TikTok: ${stylist.tiktok_handle}`}
-                      >
-                        <TikTokIcon className="w-5 h-5" />
-                      </a>
+                      <div className="flex items-center">
+                        <TikTokIcon className="w-4 h-4 mr-2 text-gray-600 flex-shrink-0" />
+                        <a
+                          href={`https://tiktok.com/@${stylist.tiktok_handle.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-700 hover:text-gray-900 text-sm"
+                        >
+                          {stylist.tiktok_handle.replace('@', '')}
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save, ClipboardList, GripVertical } from "lucide-react"
 import { useRef, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DashboardHero } from "@/components/ui/dashboard-hero"
 
 const SPECIALTY_CATEGORIES = [
   "Wigs",
@@ -595,16 +596,19 @@ export function ListBusinessForm() {
   }
 
   return (
-    <div className="bg-gray-50 py-6 sm:pt-8 sm:pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-gray-50 pt-4 pb-6 sm:pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg shadow-sm px-3 py-4 sm:p-6 mb-4">
-          <div className="mb-2">
-            <p className="text-xs sm:text-sm font-medium text-red-600 uppercase tracking-wide">Join Our Platform</p>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">List Your Business</h1>
-          <p className="text-sm sm:text-base text-gray-900">Connect with clients looking for your services</p>
-        </div>
+        <DashboardHero
+          eyebrow="Join Our Platform"
+          eyebrowClassName="text-red-600"
+          title="List Your Business"
+          subtitle="Connect with clients looking for your services"
+          subtitleClassName="text-red-700/80"
+          gradientFrom="from-red-50"
+          gradientTo="to-pink-50"
+          borderClassName="border-red-100"
+        />
 
         {/* Progress Bar */}
         <Card className="mb-4">

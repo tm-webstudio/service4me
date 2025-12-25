@@ -6,7 +6,7 @@ export function StylistCardSkeleton() {
   return (
     <Card className="group cursor-pointer hover:shadow-sm transition-all duration-300 border h-full">
       <CardContent className="p-0 h-full">
-        <div className="relative aspect-square md:aspect-[4/3]">
+        <div className="relative aspect-[4/3]">
           <Skeleton className="w-full h-full rounded-t-lg" />
           {/* Heart icon skeleton */}
           <div className="absolute top-3 right-3">
@@ -86,7 +86,7 @@ export function StylistProfileSkeleton() {
 
         {/* Mobile Slideshow */}
         <div className="md:hidden relative">
-          <div className="relative aspect-square rounded-lg overflow-hidden">
+          <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
             <Skeleton className="w-full h-full" />
           </div>
         </div>
