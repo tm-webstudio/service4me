@@ -131,7 +131,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   // Loading state with skeletons
   if (loading) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
         <MapStylesImport />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content Skeleton */}
@@ -156,7 +156,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   // Error state
   if (error && !stylist) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
         <div className="text-center py-20">
           <p className="text-red-600 mb-4">Error loading stylist profile: {error}</p>
           <Button onClick={() => window.location.reload()} variant="outline">
@@ -170,7 +170,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   // No stylist found
   if (!stylist) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
         <div className="text-center py-20">
           <p className="text-gray-600 mb-4">Stylist not found.</p>
           <p className="text-sm text-gray-500">The stylist profile you're looking for doesn't exist.</p>
@@ -306,7 +306,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
   }
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
       <MapStylesImport />
 
       {/* Inactive Profile Notice */}

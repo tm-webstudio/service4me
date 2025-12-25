@@ -50,7 +50,7 @@ export function CollectionGrid() {
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Categories Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {categories.map((category, index) => (
           <Link key={index} href={`/browse?category=${encodeURIComponent(category.name)}`}>
             <Card className="group cursor-pointer hover:shadow-sm transition-shadow h-full">

@@ -203,18 +203,15 @@ export function FeaturedStylists() {
                               />
                             )}
                           </Button>
-                          {stylist.is_verified && (
-                            <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">Verified</Badge>
-                          )}
                         </div>
 
                         <div className="p-4">
-                          <div className="flex items-center justify-between mb-2 gap-2 min-w-0">
+                          <div className="flex items-center justify-between mb-1 gap-1 md:gap-2 min-w-0">
                             <h3 className="font-medium text-base text-gray-900 leading-tight truncate">{businessName}</h3>
                             <StarDisplay rating={rating} totalReviews={reviewCount} size="sm" className="flex-shrink-0" />
                           </div>
 
-                          <div className="flex items-center text-gray-600 mb-2">
+                          <div className="flex items-center text-gray-600 mb-1">
                             <MapPin className="w-4 h-4 mr-1" />
                             <span className="text-sm">{location}</span>
                           </div>

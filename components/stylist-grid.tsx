@@ -63,7 +63,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 md:pt-0 md:pb-8">
       {/* Browse Stylists Header with Sort */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 py-2 mb-6">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 py-2 mb-4">
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
           <h2 className="text-sm font-normal text-gray-900">
             {category ? `${category} Stylists` : "Browse Stylists"}
@@ -84,7 +84,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
 
       {/* Loading State with Skeletons */}
       {loading && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {Array.from({ length: 8 }).map((_, index) => (
             <StylistCardSkeleton key={index} />
           ))}
@@ -131,7 +131,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
 
       {/* Stylist Grid - Real Data */}
       {!loading && !error && filteredStylists.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {filteredStylists.map((stylist) => {
           const expertise = getExpertiseDisplay(stylist.specialties)
           const businessName = stylist.business_name || "Hair Studio"
@@ -174,19 +174,16 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
                       />
                     )}
                   </Button>
-                  {stylist.is_verified && (
-                    <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">Verified</Badge>
-                  )}
                 </div>
 
                 <div className="p-2 md:p-4">
                   {/* Mobile Layout - Title first, then stars below */}
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-2 min-w-0">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-1 gap-1 md:gap-2 min-w-0">
                     <h3 className="font-medium text-base text-gray-900 leading-tight truncate">{businessName}</h3>
                     <StarDisplay rating={rating} totalReviews={reviewCount} size="sm" className="flex-shrink-0" />
                   </div>
 
-                  <div className="flex items-center text-gray-600 mb-2">
+                  <div className="flex items-center text-gray-600 mb-1">
                     <MapPin className="w-4 h-4 mr-1" />
                     <span className="text-sm">{location}</span>
                   </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
@@ -8,6 +9,15 @@ import { useState } from "react"
 interface BrowseHeaderProps {
   category?: string
   location?: string
+}
+
+const categoryTitles: Record<string, string> = {
+  "Wigs": "Wig Stylists",
+  Braids: "Braid Stylists",
+  Locs: "Locs Stylists",
+  "Natural Hair": "Natural Hair Stylists",
+  "Bridal Hair": "Bridal Hair Stylists",
+  "Silk Press": "Silk Press Stylists",
 }
 
 const categoryDescriptions: Record<string, string> = {
@@ -39,10 +49,11 @@ export function BrowseHeader({ category, location }: BrowseHeaderProps) {
   let description = "Discover talented hairstylists in your area"
 
   if (category && location) {
-    title = `${category} in ${location}`
+    const categoryTitle = categoryTitles[category] || `${category} Stylists`
+    title = `${categoryTitle} in ${location}`
     description = `Find expert ${category.toLowerCase()} stylists in ${location}`
   } else if (category) {
-    title = category
+    title = categoryTitles[category] || `${category} Stylists`
     description = categoryDescriptions[category] || "Discover talented hairstylists specializing in this service"
   } else if (location) {
     title = `Stylists in ${location}`
@@ -50,36 +61,32 @@ export function BrowseHeader({ category, location }: BrowseHeaderProps) {
   }
 
   return (
-    <div className="bg-white border-b">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-        {/* Header Box */}
-        <div className="bg-gray-50 rounded-lg px-6 py-4 md:p-12">
-          <div className="text-center">
-            <h1 className="text-xl md:text-2xl font-medium text-gray-900 mb-2">{title}</h1>
-            <p className="text-sm md:text-base text-gray-600 max-w-3xl mx-auto">{description}</p>
+    <>
+      <PageHeader title={title} description={description} />
+
+      {/* Active Filters */}
+      {activeFilters.length > 0 && (
+        <div className="bg-white border-b">
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-wrap gap-2">
+              {activeFilters.map((filter) => (
+                <Badge key={filter} variant="secondary" className="flex items-center gap-1">
+                  {filter}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => removeFilter(filter)} />
+                </Badge>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveFilters([])}
+                className="text-red-600 hover:text-red-700"
+              >
+                Clear all
+              </Button>
+            </div>
           </div>
         </div>
-
-        {/* Active Filters */}
-        {activeFilters.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {activeFilters.map((filter) => (
-              <Badge key={filter} variant="secondary" className="flex items-center gap-1">
-                {filter}
-                <X className="w-3 h-3 cursor-pointer" onClick={() => removeFilter(filter)} />
-              </Badge>
-            ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setActiveFilters([])}
-              className="text-red-600 hover:text-red-700"
-            >
-              Clear all
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </>
   )
 }
