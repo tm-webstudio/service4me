@@ -8,12 +8,12 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8 mb-12 md:mb-20">
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-1 xl:col-span-2">
-            <div className="mb-4">
+            <div className="mb-2">
               <span className="font-bold text-xl text-gray-900">
                 Service<span className="text-red-600">4</span>Me
               </span>
             </div>
-            <p className="text-gray-600 mb-4 max-w-[320px] sm:max-w-[360px] text-sm md:text-sm">
+            <p className="text-gray-600 mb-5 max-w-[280px] sm:max-w-[320px] text-[14.5px]">
               Connecting clients with talented hairstylists. Discover, book, and review the best hair services in your
               area.
             </p>
@@ -33,7 +33,7 @@ export function Footer() {
           {/* Categories */}
           <div>
             <h3 className="font-semibold mb-4">Categories</h3>
-            <ul className="space-y-2 text-gray-600 mb-8 text-sm md:text-sm">
+            <ul className="space-y-2 text-gray-600 mb-8 text-[14.5px]">
               {["Braids", "Wigs", "Locs", "Natural Hair", "Silk Press", "Bridal Hair"].map((category) => (
                 <li key={category}>
                   <Link href={`/browse?category=${encodeURIComponent(category)}`} className="hover:text-gray-900">
@@ -47,7 +47,7 @@ export function Footer() {
           {/* Locations */}
           <div>
             <h3 className="font-semibold mb-4">Locations</h3>
-            <ul className="space-y-2 text-gray-600 mb-8 text-sm md:text-sm">
+            <ul className="space-y-2 text-gray-600 mb-8 text-[14.5px]">
               <li>
                 <Link href="/browse?location=North London" className="hover:text-gray-900">
                   North London
@@ -79,7 +79,7 @@ export function Footer() {
           {/* Company */}
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
-            <ul className="space-y-2 text-gray-600 mb-8 text-sm md:text-sm">
+            <ul className="space-y-2 text-gray-600 mb-8 text-[14.5px]">
               <li>
                 <Link href="/for-business" className="hover:text-gray-900">
                   List Your Business
@@ -95,15 +95,15 @@ export function Footer() {
         </div>
 
         <div className="border-t border-gray-300 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-600 text-sm md:text-sm">© 2026 Service4Me. All rights reserved.</p>
+          <p className="text-gray-600 text-sm">© 2026 Service4Me. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm md:text-sm">
+            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
               Privacy Policy
             </Link>
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm md:text-sm">
+            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
               Terms of Service
             </Link>
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm md:text-sm">
+            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
               Support
             </Link>
           </div>

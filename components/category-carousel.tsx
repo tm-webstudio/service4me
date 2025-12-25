@@ -69,7 +69,7 @@ export function CategoryCarousel() {
   return (
     <section className="bg-white py-6 md:py-10">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg md:text-xl font-medium text-gray-900">Browse by Category</h2>
           </div>
@@ -112,7 +112,7 @@ export function CategoryCarousel() {
           {/* Carousel */}
           <div
             ref={carouselRef}
-            className="flex overflow-x-auto gap-4 pb-4 scroll-smooth"
+            className="flex overflow-x-auto gap-4 scroll-smooth"
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
