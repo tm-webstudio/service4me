@@ -63,9 +63,9 @@ export function FeaturedStylists() {
   }
 
   return (
-    <section className="py-10 md:py-16 bg-gray-50">
+    <section className="py-6 md:py-10 bg-gray-50">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg md:text-xl font-medium text-gray-900">
               London Stylists
