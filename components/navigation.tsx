@@ -433,7 +433,7 @@ export function Navigation() {
                       )}
                       {/* Browse Stylists Collapsible */}
                       <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2" style={{ fontSize: '17px' }}>
+                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
                           Browse Stylists
                           <ChevronDown
                             className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
@@ -471,7 +471,7 @@ export function Navigation() {
 
                       {/* Locations Collapsible */}
                       <Collapsible open={londonOpen} onOpenChange={setLondonOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2" style={{ fontSize: '17px' }}>
+                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
                           Locations
                           <ChevronDown
                             className={`w-4 h-4 text-red-600 transition-transform duration-200 ${

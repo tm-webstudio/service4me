@@ -318,7 +318,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-5">
           {/* Gallery */}
@@ -539,7 +539,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             {/* Additional services badges */}
             {stylist.additional_services && stylist.additional_services.length > 0 && (
               <div className="flex flex-col gap-3 mb-4">
-                <div className="border-t border-gray-200"></div>
+                <h3 className="text-xs font-normal text-gray-600">Also Offers...</h3>
                 <div className="flex flex-wrap items-center gap-2">
                   {stylist.additional_services.map((service, index) => (
                     <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
@@ -547,14 +547,13 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     </div>
                   ))}
                 </div>
-                <div className="border-t border-gray-200"></div>
               </div>
             )}
           </div>
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-6 text-sm">{displayData.bio}</p>
+            <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl">{displayData.bio}</p>
 
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-4">
@@ -712,7 +711,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
           {/* Location */}
           <Card>
-            <CardContent className="px-3 py-4 sm:p-6">
+            <CardContent className="px-3 py-4 sm:p-5">
               {/* Profile Card */}
               <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100">
                 <Avatar className="h-16 w-16">
@@ -722,7 +721,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-1" style={{ fontSize: '17px' }}>{displayData.businessName}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1 text-base">{displayData.businessName}</h3>
                   <div className="flex items-center text-sm text-gray-500">
                     <MapPin className="w-3.5 h-3.5 mr-1" />
                     <span>{getLocationWithCode()}</span>

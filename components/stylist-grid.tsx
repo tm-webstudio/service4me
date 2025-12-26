@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
-import { MapPin, Heart, Loader2 } from "lucide-react"
+import { MapPin, Heart, Loader2, TrendingUp, Star } from "lucide-react"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
@@ -13,6 +13,9 @@ import { postcodeToAreaName } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
 import { EmptyState } from "@/components/ui/empty-state"
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
+import { useState } from "react"
+
+type SortOption = "rating" | "featured"
 
 interface StylistGridProps {
   category?: string
@@ -23,6 +26,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
   const router = useRouter()
   const { stylists, loading, error } = useStylists()
   const { savedIds, toggleSave, savingId, isAuthenticated } = useSavedStylistIds()
+  const [sortBy, setSortBy] = useState<SortOption>("featured")
 
   // Filter stylists based on category and location
   const filteredStylists = stylists.filter(stylist => {
@@ -39,6 +43,22 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
     }
 
     return matchesCategory && matchesLocation
+  })
+
+  // Sort filtered stylists based on selected option
+  const sortedStylists = [...filteredStylists].sort((a, b) => {
+    if (sortBy === "rating") {
+      // Sort by average rating (highest first), then by review count
+      if (b.average_rating !== a.average_rating) {
+        return (b.average_rating || 0) - (a.average_rating || 0)
+      }
+      return (b.review_count || 0) - (a.review_count || 0)
+    }
+    // Default: featured (verified first, then by creation date)
+    if (a.is_verified !== b.is_verified) {
+      return a.is_verified ? -1 : 1
+    }
+    return 0
   })
 
   // Helper function to format specialties for display
@@ -64,20 +84,31 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 md:pt-0 md:pb-8">
       {/* Browse Stylists Header with Sort */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 py-2 mb-4">
-        <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
-          <h2 className="text-sm font-normal text-gray-900">
-            {category ? `${category} Stylists` : "Browse Stylists"}
-            {filteredStylists.length > 0 && ` (${filteredStylists.length})`}
-          </h2>
-          <div className="flex items-center space-x-3">
-            <span className="text-sm font-medium text-gray-700 hidden md:inline">Sort by:</span>
-            <select className="border border-gray-200 rounded-lg h-10 px-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white">
-              <option>Recommended</option>
-              <option>Distance</option>
-              <option>Rating</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-            </select>
+        <div className="max-w-screen-2xl mx-auto flex items-center justify-end">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-normal text-gray-900">Sort by:</span>
+            <button
+              onClick={() => setSortBy("rating")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+                sortBy === "rating"
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Star className="w-3.5 h-3.5" />
+              Rating
+            </button>
+            <button
+              onClick={() => setSortBy("featured")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+                sortBy === "featured"
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              Featured
+            </button>
           </div>
         </div>
       </div>
@@ -102,7 +133,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
       )}
 
       {/* No Results State */}
-      {!loading && !error && filteredStylists.length === 0 && (
+      {!loading && !error && sortedStylists.length === 0 && (
         <EmptyState
           icon={<Heart className="h-8 w-8 text-gray-400" />}
           title={
@@ -130,9 +161,9 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
       )}
 
       {/* Stylist Grid - Real Data */}
-      {!loading && !error && filteredStylists.length > 0 && (
+      {!loading && !error && sortedStylists.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-        {filteredStylists.map((stylist) => {
+        {sortedStylists.map((stylist) => {
           const expertise = getExpertiseDisplay(stylist.specialties)
           const businessName = stylist.business_name || "Hair Studio"
           const location = stylist.location ? postcodeToAreaName(stylist.location) : "London, UK"
@@ -199,15 +230,6 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
             </Card>
           )
         })}
-        </div>
-      )}
-
-      {/* Load More - Only show if we have stylists */}
-      {!loading && !error && filteredStylists.length > 0 && (
-        <div className="text-center mt-12">
-          <Button variant="outline" size="lg">
-            Load More Stylists
-          </Button>
         </div>
       )}
     </div>
