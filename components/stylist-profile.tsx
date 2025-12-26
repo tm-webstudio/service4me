@@ -535,10 +535,15 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                 </>
               )}
             </div>
+          </div>
+
+          {/* Bio */}
+          <div>
+            <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl">{displayData.bio}</p>
 
             {/* Additional services badges */}
             {stylist.additional_services && stylist.additional_services.length > 0 && (
-              <div className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-col gap-3 mb-6">
                 <h3 className="text-xs font-normal text-gray-600">Also Offers...</h3>
                 <div className="flex flex-wrap items-center gap-2">
                   {stylist.additional_services.map((service, index) => (
@@ -549,11 +554,6 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Bio */}
-          <div>
-            <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl">{displayData.bio}</p>
 
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-4">
@@ -739,10 +739,10 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
           {/* Contact */}
           <Card>
-            <CardHeader className="pb-4">
+            <CardHeader className="p-4 sm:p-5 pb-4">
               <CardTitle className="text-base font-medium">Contact</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 sm:p-5 pt-0 space-y-4">
               {stylist.phone && (
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-3 text-gray-600" />
