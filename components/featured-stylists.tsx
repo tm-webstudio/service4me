@@ -11,7 +11,7 @@ import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
 import { useSavedStylistIds } from "@/hooks/use-saved-stylists"
-import { postcodeToAreaName } from "@/lib/postcode-utils"
+import { postcodeToAreaName, postcodeToAreaNameWithCode } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
 
 export function FeaturedStylists() {
@@ -160,7 +160,7 @@ export function FeaturedStylists() {
               {stylists.map((stylist) => {
                 const expertise = getExpertiseDisplay(stylist.specialties)
                 const businessName = stylist.business_name || "Hair Studio"
-                const location = stylist.location ? postcodeToAreaName(stylist.location) : "London, UK"
+                const location = stylist.location ? postcodeToAreaNameWithCode(stylist.location) : "London, UK"
                 const rating = stylist.average_rating || 0
                 const reviewCount = stylist.review_count || 0
                 

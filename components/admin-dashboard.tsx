@@ -445,7 +445,7 @@ export function AdminDashboard() {
         year_started: formData.year_started ? parseInt(formData.year_started) : null,
         booking_link: formData.booking_link || null,
         phone: formData.phone,
-        contact_email: formData.contact_email,
+        contact_email: formData.contact_email.toLowerCase(),
         instagram_handle: formData.instagram_handle || null,
         tiktok_handle: formData.tiktok_handle || null,
         business_type: formData.business_type,
@@ -955,7 +955,7 @@ Please change your password after first login.`
         year_started: formData.year_started ? parseInt(formData.year_started) : null,
         booking_link: formData.booking_link || null,
         phone: formData.phone,
-        contact_email: formData.contact_email,
+        contact_email: formData.contact_email.toLowerCase(),
         instagram_handle: formData.instagram_handle || null,
         tiktok_handle: formData.tiktok_handle || null,
         business_type: formData.business_type,
@@ -2133,17 +2133,21 @@ Please change your password after first login.`
               ) : undefined}
             />
             <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 space-y-4">
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
-                  <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-red-800">{error}</p>
-                </div>
-              )}
+              {(error || success) && (
+                <div className="max-w-3xl">
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
+                      <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  )}
 
-              {success && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-green-800">{success}</p>
+                  {success && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-green-800">{success}</p>
+                    </div>
+                  )}
                 </div>
               )}
 

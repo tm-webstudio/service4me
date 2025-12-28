@@ -352,7 +352,7 @@ export function BusinessFormFields({
               </Label>
               <Input
                 value={formData.contact_email}
-                onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value.toLowerCase() }))}
                 placeholder="contact@yourbusiness.com"
                 type="email"
               />

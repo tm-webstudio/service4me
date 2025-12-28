@@ -9,7 +9,7 @@ import { StarDisplay } from "@/components/ui/star-rating"
 import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
 import { useSavedStylistIds } from "@/hooks/use-saved-stylists"
-import { postcodeToAreaName } from "@/lib/postcode-utils"
+import { postcodeToAreaName, postcodeToAreaNameWithCode } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
 import { EmptyState } from "@/components/ui/empty-state"
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
@@ -166,7 +166,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
         {sortedStylists.map((stylist) => {
           const expertise = getExpertiseDisplay(stylist.specialties)
           const businessName = stylist.business_name || "Hair Studio"
-          const location = stylist.location ? postcodeToAreaName(stylist.location) : "London, UK"
+          const location = stylist.location ? postcodeToAreaNameWithCode(stylist.location) : "London, UK"
           const rating = stylist.average_rating || 0
           const reviewCount = stylist.review_count || 0
           
@@ -177,7 +177,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
               onClick={() => router.push(`/stylist/${stylist.id}`)}
             >
               <CardContent className="p-0 h-full">
-                <div className="relative aspect-square md:aspect-[4/3]">
+                <div className="relative aspect-[4/3]">
                   <img
                     src={getStylistImage(stylist)}
                     alt={businessName}
@@ -186,7 +186,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-3 right-3 bg-white/80 hover:bg-white"
+                    className="absolute top-2 right-2 md:top-3 md:right-3 w-7 h-7 md:w-9 md:h-9 bg-white/80 hover:bg-white"
                     disabled={savingId === stylist.id || !isAuthenticated}
                     title={!isAuthenticated ? "Sign in to save stylists" : savedIds.includes(stylist.id) ? "Remove from saved" : "Save stylist"}
                     onClick={(e) => {
@@ -196,10 +196,10 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
                     }}
                   >
                     {savingId === stylist.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                      <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin text-gray-600" />
                     ) : (
                       <Heart
-                        className={`w-4 h-4 ${
+                        className={`w-3.5 h-3.5 md:w-4 md:h-4 ${
                           savedIds.includes(stylist.id) ? "fill-red-500 text-red-500" : "text-gray-600"
                         }`}
                       />

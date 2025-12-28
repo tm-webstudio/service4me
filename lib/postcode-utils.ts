@@ -344,22 +344,22 @@ export function getPostcodeOutwardCode(postcode: string): string {
 /**
  * Convert a UK postcode to area name with outward code
  * @param postcode - UK postcode (e.g., "SW1A 1AA")
- * @returns Area name with outward code (e.g., "Westminster (SW1A)") or area name only
+ * @returns Area name with outward code (e.g., "Westminster, SW1A") or area name only
  */
 export function postcodeToAreaNameWithCode(postcode: string): string {
   if (!postcode || typeof postcode !== 'string') {
     return 'London'
   }
-  
+
   const areaName = postcodeToAreaName(postcode)
   const outwardCode = getPostcodeOutwardCode(postcode)
-  
+
   // If we successfully converted to an area name (not returning the original postcode)
   // and we have an outward code, combine them
   if (areaName !== postcode && outwardCode) {
-    return `${areaName} (${outwardCode})`
+    return `${areaName}, ${outwardCode}`
   }
-  
+
   // Otherwise just return the area name
   return areaName
 }

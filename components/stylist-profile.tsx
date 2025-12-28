@@ -282,7 +282,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
     image: `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(getBusinessName())}`,
     rating: getRating(),
     reviewCount: getReviewCount(),
-    location: getLocation(),
+    location: getLocationWithCode(),
     expertise: getExpertise(),
     experience: getExperience(),
     bio: getBio(),
@@ -539,7 +539,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl">{displayData.bio}</p>
+            <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
 
             {/* Additional services badges */}
             {stylist.additional_services && stylist.additional_services.length > 0 && (
