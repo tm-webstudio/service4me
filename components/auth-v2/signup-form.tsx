@@ -49,7 +49,7 @@ export function SignupFormV2() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Form state
-  const [userType, setUserType] = useState<UserRole>('stylist')
+  const [userType, setUserType] = useState<UserRole>('client')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [localError, setLocalError] = useState('')
