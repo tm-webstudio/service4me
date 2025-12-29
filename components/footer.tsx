@@ -14,8 +14,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-gray-600 mb-5 max-w-[280px] sm:max-w-[320px] text-[14.5px]">
-              Connecting clients with talented hairstylists. Discover, book, and review the best hair services in your
-              area.
+              Discover exceptional hairstylists near you. Explore portfolios, book appointments, and share your experience.
             </p>
             <div className="flex space-x-4 mb-4">
               <Link href="#" className="text-gray-500 hover:text-gray-900">
