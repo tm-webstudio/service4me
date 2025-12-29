@@ -144,47 +144,9 @@ export function StarDisplay({
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <div className="flex">
-        {Array.from({ length: 5 }, (_, i) => {
-          const starValue = i + 1
-          const starType = starValue <= Math.floor(rating) ? 'full' : 
-                          starValue === Math.floor(rating) + 1 && rating % 1 >= 0.5 ? 'half' : 'empty'
-          
-          if (starType === 'half') {
-            // Half star using CSS gradient
-            return (
-              <div key={i} className="relative">
-                <Star
-                  className={cn(sizeClasses[size], "text-gray-300")}
-                />
-                <Star
-                  className={cn(
-                    sizeClasses[size],
-                    "absolute top-0 left-0 fill-yellow-400 text-yellow-400"
-                  )}
-                  style={{
-                    clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
-                  }}
-                />
-              </div>
-            )
-          }
-          
-          return (
-            <Star
-              key={i}
-              className={cn(
-                sizeClasses[size],
-                starType === 'full'
-                  ? "fill-yellow-400 text-yellow-400" 
-                  : "text-gray-300"
-              )}
-            />
-          )
-        })}
-      </div>
+      <Star className={cn(sizeClasses[size], "fill-yellow-400 text-yellow-400")} />
       <span className={cn("font-medium text-gray-700", textSizeClasses[size])}>
-        {rating > 0 ? rating.toFixed(1) : "New"}
+        {rating.toFixed(1)}
       </span>
       {showCount && totalReviews !== undefined && (
         <span className={cn("text-gray-500", textSizeClasses[size])}>

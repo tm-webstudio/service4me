@@ -320,7 +320,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="lg:col-span-2 space-y-4">
           {/* Gallery */}
           <div className="relative">
             <Badge className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 z-10">
@@ -556,11 +556,10 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
             )}
 
             {/* Book Now Button and Instagram */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {stylist.booking_link ? (
                 <Button
-                  className="bg-red-600 hover:bg-red-700 px-12 py-6 w-full sm:w-2/5"
-                  size="lg"
+                  className="bg-red-600 hover:bg-red-700 px-8 py-2 w-full sm:w-2/5 h-11"
                   onClick={() => {
                     const url = stylist.booking_link?.startsWith('http')
                       ? stylist.booking_link
@@ -572,9 +571,8 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                   Book Now
                 </Button>
               ) : (
-                <Button 
-                  className="bg-gray-400 cursor-not-allowed px-12 py-6 w-full sm:w-2/5" 
-                  size="lg"
+                <Button
+                  className="bg-gray-400 cursor-not-allowed px-8 py-2 w-full sm:w-2/5 h-11"
                   disabled
                 >
                   <Calendar className="w-4 h-4 mr-2" />
@@ -585,10 +583,10 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="rounded-full h-12 w-12 flex items-center justify-center flex-shrink-0 bg-transparent"
+                  className="rounded-full h-11 w-11 flex items-center justify-center flex-shrink-0 bg-transparent"
                   onClick={() => window.open(`https://instagram.com/${stylist.instagram_handle?.replace('@', '')}`, '_blank', 'noopener,noreferrer')}
                 >
-                  <Instagram className="w-5 h-5 text-gray-600" />
+                  <Instagram className="w-4 h-4 text-gray-600" />
                 </Button>
               )}
             </div>

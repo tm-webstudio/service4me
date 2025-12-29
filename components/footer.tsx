@@ -97,13 +97,13 @@ export function Footer() {
         <div className="border-t border-gray-300 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-600 text-sm">© 2026 Service4Me. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
+            <Link href="/privacy-policy" className="text-gray-600 hover:text-gray-900 text-sm">
               Privacy Policy
             </Link>
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
+            <Link href="/terms" className="text-gray-600 hover:text-gray-900 text-sm">
               Terms of Service
             </Link>
-            <Link href="#" className="text-gray-600 hover:text-gray-900 text-sm">
+            <Link href="/support" className="text-gray-600 hover:text-gray-900 text-sm">
               Support
             </Link>
           </div>
