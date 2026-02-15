@@ -21,27 +21,7 @@ import { useAuth } from "@/lib/auth-v2"
 import { formatDistanceToNow, format } from "date-fns"
 import { BusinessFormFields, BusinessFormData, ServiceItem, initialBusinessFormData } from "@/components/business-form-fields"
 import { cn } from "@/lib/utils"
-
-const SPECIALTY_CATEGORIES = [
-  "Wigs",
-  "Braids",
-  "Locs",
-  "Natural Hair",
-  "Bridal Hair",
-  "Silk Press"
-]
-
-const ADDITIONAL_SERVICES = [
-  "Wigs",
-  "Braids",
-  "Locs",
-  "Natural Hair",
-  "Bridal Hair",
-  "Silk Press",
-  "Sew-Ins",
-  "Butterfly Locs",
-  "Ponytails"
-]
+import { SERVICE_TYPES, getServiceTypeLabel } from "@/lib/service-types"
 
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { DashboardHero } from "@/components/ui/dashboard-hero"
@@ -70,6 +50,7 @@ interface PendingStylist {
   accepts_same_day: boolean | null
   accepts_mobile: boolean | null
   additional_services: string[] | null
+  service_type?: string
 }
 
 export function AdminDashboard() {
@@ -81,6 +62,7 @@ export function AdminDashboard() {
   const [loadingStylists, setLoadingStylists] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [serviceTypeFilter, setServiceTypeFilter] = useState('all')
   const [isAddingService, setIsAddingService] = useState(false)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [hasFetchedStylists, setHasFetchedStylists] = useState(false)
@@ -156,20 +138,25 @@ export function AdminDashboard() {
     }
   }, [activeTab, hasFetchedStylists, fetchAllStylists])
 
-  // Filter stylists based on search and status
+  // Filter stylists based on search, status, and service type
   const filteredStylists = allStylists.filter(stylist => {
-    const matchesSearch = 
+    const matchesSearch =
       stylist.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       stylist.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      stylist.location?.toLowerCase().includes(searchTerm.toLowerCase())
-    
+      stylist.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getServiceTypeLabel(stylist.service_type || 'hairstylist').toLowerCase().includes(searchTerm.toLowerCase())
+
     const hasAccount = stylist.user_id !== null
-    const matchesStatus = 
+    const matchesStatus =
       statusFilter === 'all' ||
       (statusFilter === 'active' && hasAccount) ||
       (statusFilter === 'no-account' && !hasAccount)
-    
-    return matchesSearch && matchesStatus
+
+    const matchesServiceType =
+      serviceTypeFilter === 'all' ||
+      (stylist.service_type || 'hairstylist') === serviceTypeFilter
+
+    return matchesSearch && matchesStatus && matchesServiceType
   })
 
   // Get account status for a stylist
@@ -439,6 +426,7 @@ export function AdminDashboard() {
         business_name: formData.business_name,
         bio: formData.bio,
         location: formData.location.toUpperCase(),
+        service_type: formData.service_type || 'hairstylist',
         specialties: formData.specialties ? [formData.specialties] : [],
         primary_specialty: formData.specialties,
         additional_services: additionalServices,
@@ -741,7 +729,7 @@ Please change your password after first login.`
     }
   }
 
-  // Delete stylist
+  // Delete stylist (cascades: services, reviews, saved_stylists, profile, users, auth)
   const handleDeleteStylist = async () => {
     if (!deletingStylist) return
 
@@ -749,12 +737,15 @@ Please change your password after first login.`
     setDeleteError('')
 
     try {
-      const { error } = await supabase
-        .from('stylist_profiles')
-        .delete()
-        .eq('id', deletingStylist.id)
+      const response = await fetch(`/api/admin/stylist-profile?id=${deletingStylist.id}`, {
+        method: 'DELETE',
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete stylist')
+      }
 
       // Update the local state to remove the deleted stylist
       setAllStylists(prevStylists => prevStylists.filter(s => s.id !== deletingStylist.id))
@@ -825,6 +816,7 @@ Please change your password after first login.`
         tiktok_handle: stylist.tiktok_handle || '',
         location: stylist.location || '',
         business_type: stylist.business_type || '',
+        service_type: stylist.service_type || 'hairstylist',
         specialties: (stylist.specialties && stylist.specialties.length > 0) ? stylist.specialties[0] : '',
         bio: stylist.bio || '',
         year_started: resolvedYearStarted,
@@ -949,6 +941,7 @@ Please change your password after first login.`
         business_name: formData.business_name,
         bio: formData.bio,
         location: formData.location.toUpperCase(),
+        service_type: formData.service_type || 'hairstylist',
         specialties: formData.specialties ? [formData.specialties] : [],
         primary_specialty: formData.specialties,
         additional_services: additionalServices,
@@ -1585,9 +1578,14 @@ Please change your password after first login.`
                               </div>
 
                               <div className="flex items-center justify-between">
-                                <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
-                                  {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]}` : 'Hair'}
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="inline-block bg-red-50 border border-red-200 text-red-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
+                                    {getServiceTypeLabel(stylist.service_type || 'hairstylist')}
+                                  </span>
+                                  <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
+                                    {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]}` : 'Hair'}
+                                  </span>
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -1710,9 +1708,14 @@ Please change your password after first login.`
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
-                              {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]}` : 'Hair'}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="inline-block bg-red-50 border border-red-200 text-red-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
+                                {getServiceTypeLabel(stylist.service_type || 'hairstylist')}
+                              </span>
+                              <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
+                                {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]}` : 'Hair'}
+                              </span>
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1775,6 +1778,19 @@ Please change your password after first login.`
                     <SelectItem value="no-account">No Account</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {SERVICE_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Results Summary */}
@@ -1827,6 +1843,7 @@ Please change your password after first login.`
                         <tr>
                           <th className="text-left p-4 text-sm font-semibold text-gray-900">Stylist</th>
                           <th className="text-left p-4 text-sm font-semibold text-gray-900">Contact</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Service Type</th>
                           <th className="text-left p-4 text-sm font-semibold text-gray-900">Location</th>
                           <th className="text-left p-4 text-sm font-semibold text-gray-900">Account Status</th>
                           <th className="text-left p-4 text-sm font-semibold text-gray-900">Actions</th>
@@ -1871,6 +1888,13 @@ Please change your password after first login.`
                                     <div className="text-gray-500">{stylist.phone}</div>
                                   )}
                                 </div>
+                              </td>
+
+                              {/* Service Type */}
+                              <td className="p-4">
+                                <Badge variant="outline" className="text-xs whitespace-nowrap">
+                                  {getServiceTypeLabel(stylist.service_type || 'hairstylist')}
+                                </Badge>
                               </td>
 
                               {/* Location */}
@@ -2388,6 +2412,9 @@ Please change your password after first login.`
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Specialties & Services</h4>
                 <div className="flex flex-wrap gap-2">
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">
+                    {getServiceTypeLabel(selectedStylist.service_type || 'hairstylist')}
+                  </Badge>
                   {selectedStylist.primary_specialty && (
                     <Badge className="bg-red-100 text-red-700 hover:bg-red-200">
                       {selectedStylist.primary_specialty} (Primary)

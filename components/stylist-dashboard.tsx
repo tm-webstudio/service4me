@@ -93,6 +93,7 @@ export function StylistDashboard() {
       tiktok_handle: profile.tiktok_handle || '',
       location: profile.location || '',
       business_type: profile.business_type || '',
+      service_type: profile.service_type || 'hairstylist',
       specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
       bio: profile.bio || '',
       year_started: resolvedYearStarted,
@@ -145,6 +146,7 @@ export function StylistDashboard() {
         instagram_handle: profileFormData.instagram_handle,
         tiktok_handle: profileFormData.tiktok_handle,
         business_type: profileFormData.business_type,
+        service_type: profileFormData.service_type || 'hairstylist',
         accepts_same_day: profileFormData.accepts_same_day,
         accepts_mobile: profileFormData.accepts_mobile,
         year_started: yearStartedNumber,
@@ -240,6 +242,7 @@ export function StylistDashboard() {
         tiktok_handle: profile.tiktok_handle || '',
         location: profile.location || '',
         business_type: profile.business_type || '',
+        service_type: profile.service_type || 'hairstylist',
         specialties: (profile.specialties && profile.specialties.length > 0) ? profile.specialties[0] : '',
         bio: profile.bio || '',
         year_started: resetYearStarted,
@@ -375,13 +378,31 @@ export function StylistDashboard() {
   }
   
   if (error && !profile) {
+    const isNotFound = error.includes('No business profile')
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="text-center py-20">
-          <p className="text-red-600 mb-4">Error loading profile: {error}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            Try Again
-          </Button>
+          {isNotFound ? (
+            <>
+              <p className="text-gray-900 text-lg font-medium mb-2">No business profile linked to this account</p>
+              <p className="text-gray-500 mb-6 max-w-md mx-auto">This can happen if your profile was created separately. You can create a new listing or contact support to link an existing one.</p>
+              <div className="flex items-center justify-center gap-3">
+                <Button onClick={() => window.location.href = '/list-business'} className="bg-red-600 hover:bg-red-700">
+                  Create a Listing
+                </Button>
+                <Button onClick={() => window.location.reload()} variant="outline">
+                  Try Again
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Try Again
+              </Button>
+            </>
+          )}
         </div>
       </div>
     )
