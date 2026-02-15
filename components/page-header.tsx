@@ -6,7 +6,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, description }: PageHeaderProps) {
   return (
     <div className="bg-white border-b">
-      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Header Box */}
         <div className="bg-gray-50 rounded-lg p-8 md:p-12">
           <div className="text-center">

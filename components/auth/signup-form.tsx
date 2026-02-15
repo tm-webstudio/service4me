@@ -263,7 +263,7 @@ export function SignupForm() {
   // Success screen after email confirmation required
   if (signupSuccess) {
     return (
-      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-3 sm:px-6 lg:px-8">
+      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <Card className="border shadow-sm">
             <CardContent className="pt-6">
@@ -298,7 +298,7 @@ export function SignupForm() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-3 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="text-xl sm:text-2xl font-medium text-gray-900">

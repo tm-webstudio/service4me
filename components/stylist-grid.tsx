@@ -89,9 +89,9 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
   }
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 pt-0 pb-6 md:pt-0 md:pb-8">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 md:pt-0 md:pb-8">
       {/* Browse Professionals Header with Sort and Filter */}
-      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-3 sm:px-6 lg:px-8 border-b border-gray-200 py-2 mb-4">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 py-2 mb-4">
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>

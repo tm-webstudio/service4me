@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 export function ContactSection() {
   return (
     <section className="py-0">
-      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 mt-3">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 mt-3">
         <div className="relative rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 py-10 md:py-20 px-5 mb-6 mb-6x">
           <div className="max-w-4xl mx-auto">
             {/* Header */}

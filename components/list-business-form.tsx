@@ -578,7 +578,7 @@ export function ListBusinessForm() {
   }
 
   return (
-    <div className="bg-gray-50 pt-4 pb-6 sm:pb-8 px-3 sm:px-6 lg:px-8">
+    <div className="bg-gray-50 pt-4 pb-6 sm:pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <DashboardHero

@@ -7,7 +7,7 @@ import Link from "next/link"
 export function BusinessCTA() {
   return (
     <section className="py-20 bg-gradient-to-r from-red-600 to-red-700">
-      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 text-center">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-center mb-6">
             <Sparkles className="w-12 h-12 text-red-200" />
