@@ -11,3 +11,6 @@ playwright-report/
 
 # Screenshots (keep in docs/screenshots instead)
 *.png
+
+# macOS system files
+.DS_Store
