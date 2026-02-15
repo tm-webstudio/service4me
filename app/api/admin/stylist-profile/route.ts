@@ -100,3 +100,108 @@ export async function PATCH(request: NextRequest) {
     )
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const profileId = searchParams.get('id')
+
+    if (!profileId) {
+      return NextResponse.json(
+        { error: 'Profile id is required' },
+        { status: 400 }
+      )
+    }
+
+    console.log('🔍 [ADMIN API] Deleting stylist profile and all related data:', profileId)
+
+    const supabaseAdmin = createSupabaseAdmin()
+
+    // 1. Get the profile to find the user_id before deleting
+    const { data: profileRows, error: fetchError } = await supabaseAdmin
+      .from('stylist_profiles')
+      .select('user_id')
+      .eq('id', profileId)
+      .limit(1)
+
+    if (fetchError) {
+      console.error('🔍 [ADMIN API] Error fetching profile:', fetchError)
+      return NextResponse.json(
+        { error: 'Failed to fetch profile', details: fetchError },
+        { status: 500 }
+      )
+    }
+
+    const userId = profileRows?.[0]?.user_id
+
+    // 2. Delete related records (order matters due to foreign keys)
+    const { error: servicesError } = await supabaseAdmin
+      .from('services')
+      .delete()
+      .eq('stylist_id', profileId)
+
+    if (servicesError) {
+      console.error('🔍 [ADMIN API] Error deleting services:', servicesError)
+    }
+
+    const { error: reviewsError } = await supabaseAdmin
+      .from('reviews')
+      .delete()
+      .eq('stylist_id', profileId)
+
+    if (reviewsError) {
+      console.error('🔍 [ADMIN API] Error deleting reviews:', reviewsError)
+    }
+
+    const { error: savedError } = await supabaseAdmin
+      .from('saved_stylists')
+      .delete()
+      .eq('stylist_id', profileId)
+
+    if (savedError) {
+      console.error('🔍 [ADMIN API] Error deleting saved_stylists:', savedError)
+    }
+
+    // 3. Delete the stylist profile itself
+    const { error: profileError } = await supabaseAdmin
+      .from('stylist_profiles')
+      .delete()
+      .eq('id', profileId)
+
+    if (profileError) {
+      console.error('🔍 [ADMIN API] Error deleting profile:', profileError)
+      return NextResponse.json(
+        { error: 'Failed to delete stylist profile', details: profileError },
+        { status: 500 }
+      )
+    }
+
+    // 4. Delete the users table entry and auth user (if user_id exists)
+    if (userId) {
+      const { error: usersError } = await supabaseAdmin
+        .from('users')
+        .delete()
+        .eq('id', userId)
+
+      if (usersError) {
+        console.error('🔍 [ADMIN API] Error deleting users entry:', usersError)
+      }
+
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+
+      if (authError) {
+        console.error('🔍 [ADMIN API] Error deleting auth user:', authError)
+      }
+    }
+
+    console.log('🔍 [ADMIN API] Stylist and all related data deleted successfully:', profileId)
+    return NextResponse.json({ success: true })
+
+  } catch (error) {
+    console.error('🔍 [ADMIN API] Unexpected error during delete:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

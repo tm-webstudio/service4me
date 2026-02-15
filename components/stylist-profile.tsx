@@ -19,7 +19,7 @@ import {
 import { StarDisplay } from "@/components/ui/star-rating"
 import { ReviewForm } from "@/components/review-form"
 import { ReviewsDisplay } from "@/components/reviews-display"
-import { useAuth } from "@/lib/auth-v2"
+import { useAuth } from "@/lib/auth"
 import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
+import { getServiceTypeLabel } from "@/lib/service-types"
 import {
   Star,
   MapPin,
@@ -200,7 +201,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
     if (stylist.specialties && stylist.specialties.length > 0) {
       return `${stylist.specialties[0]} Specialist`
     }
-    return "Hair Specialist"
+    return getServiceTypeLabel((stylist as any).service_type || 'hairstylist')
   }
   const getExperience = () => {
     // Calculate years from year_started if available

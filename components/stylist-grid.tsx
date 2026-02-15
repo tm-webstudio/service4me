@@ -14,35 +14,43 @@ import { StylistCardSkeleton } from "@/components/ui/skeletons"
 import { EmptyState } from "@/components/ui/empty-state"
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { useState } from "react"
+import { SERVICE_TYPES, getServiceTypeLabel } from "@/lib/service-types"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type SortOption = "rating" | "featured"
 
 interface StylistGridProps {
   category?: string
   location?: string
+  serviceType?: string
 }
 
-export function StylistGrid({ category, location }: StylistGridProps = {}) {
+export function StylistGrid({ category, location, serviceType }: StylistGridProps = {}) {
   const router = useRouter()
   const { stylists, loading, error } = useStylists()
   const { savedIds, toggleSave, savingId, isAuthenticated } = useSavedStylistIds()
   const [sortBy, setSortBy] = useState<SortOption>("featured")
+  const [serviceTypeFilter, setServiceTypeFilter] = useState<string>(serviceType || "all")
 
-  // Filter stylists based on category and location
+  // Filter stylists based on category, location, and service type
   const filteredStylists = stylists.filter(stylist => {
     let matchesCategory = true
     let matchesLocation = true
+    let matchesServiceType = true
 
     if (category) {
       matchesCategory = stylist.specialties.includes(category)
     }
 
     if (location) {
-      // Check if stylist location contains the filter location
       matchesLocation = stylist.location?.toLowerCase().includes(location.toLowerCase()) || false
     }
 
-    return matchesCategory && matchesLocation
+    if (serviceTypeFilter && serviceTypeFilter !== "all") {
+      matchesServiceType = (stylist.service_type || 'hairstylist') === serviceTypeFilter
+    }
+
+    return matchesCategory && matchesLocation && matchesServiceType
   })
 
   // Sort filtered stylists based on selected option
@@ -62,11 +70,11 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
   })
 
   // Helper function to format specialties for display
-  const getExpertiseDisplay = (specialties: string[]) => {
-    if (!specialties || specialties.length === 0) {
-      return "Hair Specialist"
+  const getExpertiseDisplay = (stylist: StylistProfile) => {
+    if (stylist.specialties && stylist.specialties.length > 0) {
+      return `${stylist.specialties[0]} Specialist`
     }
-    return `${specialties[0]} Specialist`
+    return getServiceTypeLabel(stylist.service_type || 'hairstylist')
   }
 
   // Helper function to get stylist image (portfolio or placeholder)
@@ -82,9 +90,24 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6 md:pt-0 md:pb-8">
-      {/* Browse Stylists Header with Sort */}
+      {/* Browse Professionals Header with Sort and Filter */}
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 py-2 mb-4">
-        <div className="max-w-screen-2xl mx-auto flex items-center justify-end">
+        <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+              <SelectTrigger className="w-[160px] h-8 text-xs">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {SERVICE_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-sm font-normal text-gray-900">Sort by:</span>
             <button
@@ -137,14 +160,14 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
         <EmptyState
           icon={<Heart className="h-8 w-8 text-gray-400" />}
           title={
-            category || location
-              ? `No stylists found for ${category || location}.`
-              : "No stylists available yet."
+            category || location || (serviceTypeFilter && serviceTypeFilter !== 'all')
+              ? `No professionals found${category ? ` for ${category}` : ''}${serviceTypeFilter && serviceTypeFilter !== 'all' ? ` in ${getServiceTypeLabel(serviceTypeFilter)}` : ''}${location ? ` in ${location}` : ''}.`
+              : "No professionals available yet."
           }
           description={
-            category || location
-              ? "Try browsing all stylists or a different category."
-              : "Tap browse to discover stylists you might like."
+            category || location || (serviceTypeFilter && serviceTypeFilter !== 'all')
+              ? "Try browsing all professionals or a different category."
+              : "Tap browse to discover professionals you might like."
           }
           className="py-10 space-y-1"
           titleClassName="text-base font-medium text-gray-900"
@@ -164,7 +187,7 @@ export function StylistGrid({ category, location }: StylistGridProps = {}) {
       {!loading && !error && sortedStylists.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {sortedStylists.map((stylist) => {
-          const expertise = getExpertiseDisplay(stylist.specialties)
+          const expertise = getExpertiseDisplay(stylist)
           const businessName = stylist.business_name || "Hair Studio"
           const location = stylist.location ? postcodeToAreaNameWithCode(stylist.location) : "London, UK"
           const rating = stylist.average_rating || 0

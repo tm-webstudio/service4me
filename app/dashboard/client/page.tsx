@@ -1,7 +1,7 @@
 import { Navigation } from "@/components/navigation"
 import { ClientDashboard } from "@/components/client-dashboard"
 import { Footer } from "@/components/footer"
-import { ProtectedRoute } from "@/lib/auth-v2"
+import { ProtectedRoute } from "@/lib/auth"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {

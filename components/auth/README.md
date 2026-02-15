@@ -134,7 +134,7 @@ export default function AdminDashboard() {
 ## Test Pages
 
 ### Login Test Page
-URL: `http://localhost:3000/login-v2`
+URL: `http://localhost:3000/login`
 
 **Test scenarios:**
 1. Sign in with valid credentials

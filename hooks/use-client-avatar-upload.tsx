@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/auth-v2'
+import { useAuth } from '@/lib/auth'
 
 interface UploadProgress {
   progress: number

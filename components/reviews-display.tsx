@@ -27,7 +27,7 @@ import {
   MoreVertical
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { useAuth } from "@/lib/auth-v2"
+import { useAuth } from "@/lib/auth"
 import { formatDistanceToNow } from "date-fns"
 import { updateStylistRating } from "@/lib/rating-utils"
 

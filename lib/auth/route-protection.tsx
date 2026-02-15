@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
   allowedRoles: UserRole[]
   /**
    * Where to redirect if not authenticated
-   * Default: '/login-v2'
+   * Default: '/login'
    */
   loginPath?: string
   /**
@@ -41,7 +41,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   allowedRoles,
-  loginPath = '/login-v2',
+  loginPath = '/login',
   showLoadingScreen = true
 }: ProtectedRouteProps) {
   const { status, user } = useAuth()

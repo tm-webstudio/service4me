@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
-import { useAuth } from "@/lib/auth-v2"
+import { useAuth } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
 import { updateStylistRating } from "@/lib/rating-utils"
 

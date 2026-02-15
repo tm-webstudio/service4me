@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { ProtectedRoute } from "@/lib/auth-v2"
+import { ProtectedRoute } from "@/lib/auth"
 import { StylistProfile } from "@/components/stylist-profile"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"

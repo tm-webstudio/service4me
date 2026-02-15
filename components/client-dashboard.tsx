@@ -25,8 +25,8 @@ import {
   X
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-v2"
-import { AuthStatus } from "@/lib/auth-v2/types"
+import { useAuth } from "@/lib/auth"
+import { AuthStatus } from "@/lib/auth/types"
 import { useClientAvatarUpload } from "@/hooks/use-client-avatar-upload"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { formatDistanceToNow } from "date-fns"

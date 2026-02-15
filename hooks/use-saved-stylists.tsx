@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { useAuth } from '@/lib/auth-v2'
+import { useAuth } from '@/lib/auth'
 
 // Hook for single stylist (used in profile page)
 export function useSavedStylists(stylistId?: string) {

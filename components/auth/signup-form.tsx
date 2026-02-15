@@ -1,12 +1,12 @@
 "use client"
 
 /**
- * Signup Form - V2
+ * Signup Form
  *
- * New signup form using auth-v2 system
+ * Signup form using auth system
  * Features:
  * - Dual role support (Client/Stylist)
- * - Uses new auth context
+ * - Uses auth context
  * - Clear error handling
  * - Proper loading states
  * - Role-based redirects
@@ -16,7 +16,7 @@
 import { useState, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth, type UserRole } from '@/lib/auth-v2'
+import { useAuth, type UserRole } from '@/lib/auth'
 import { useClientAvatarUpload } from '@/hooks/use-client-avatar-upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,7 +42,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react'
 
-export function SignupFormV2() {
+export function SignupForm() {
   const router = useRouter()
   const { signUp, isLoading, error: authError, getDashboardUrl } = useAuth()
   const { uploadAvatar, validateFile } = useClientAvatarUpload()
@@ -150,7 +150,7 @@ export function SignupFormV2() {
       return
     }
 
-    console.log('[SIGNUP-FORM-V2] Submitting client signup for:', clientData.email)
+    console.log('[SIGNUP-FORM] Submitting client signup for:', clientData.email)
 
     try {
       // Sign up using auth-v2
@@ -158,7 +158,7 @@ export function SignupFormV2() {
         fullName: `${clientData.firstName} ${clientData.lastName}`.trim()
       })
 
-      console.log('[SIGNUP-FORM-V2] Client signup successful')
+      console.log('[SIGNUP-FORM] Client signup successful')
 
       // Check if email confirmation is required
       // If so, show success message
@@ -178,18 +178,18 @@ export function SignupFormV2() {
           try {
             // Get user ID from auth context after signup
             // For now, we'll skip this and let user upload from dashboard
-            console.log('[SIGNUP-FORM-V2] Profile image upload will be handled in dashboard')
+            console.log('[SIGNUP-FORM] Profile image upload will be handled in dashboard')
           } catch (uploadErr) {
-            console.error('[SIGNUP-FORM-V2] Failed to upload profile image:', uploadErr)
+            console.error('[SIGNUP-FORM] Failed to upload profile image:', uploadErr)
             // Don't block signup
           }
         }
 
-        console.log('[SIGNUP-FORM-V2] Redirecting to:', dashboardUrl)
+        console.log('[SIGNUP-FORM] Redirecting to:', dashboardUrl)
         router.push(dashboardUrl)
       }
     } catch (error: any) {
-      console.error('[SIGNUP-FORM-V2] Client signup failed:', error)
+      console.error('[SIGNUP-FORM] Client signup failed:', error)
       // Error is already set in auth context
     }
   }
@@ -227,7 +227,7 @@ export function SignupFormV2() {
       return
     }
 
-    console.log('[SIGNUP-FORM-V2] Submitting stylist signup for:', stylistData.email)
+    console.log('[SIGNUP-FORM] Submitting stylist signup for:', stylistData.email)
 
     try {
       // Sign up using auth-v2
@@ -238,7 +238,7 @@ export function SignupFormV2() {
         location: stylistData.location
       })
 
-      console.log('[SIGNUP-FORM-V2] Stylist signup successful')
+      console.log('[SIGNUP-FORM] Stylist signup successful')
 
       // Check if email confirmation is required
       const dashboardUrl = getDashboardUrl()
@@ -248,11 +248,11 @@ export function SignupFormV2() {
         setSuccessEmail(stylistData.email)
         setSignupSuccess(true)
       } else {
-        console.log('[SIGNUP-FORM-V2] Redirecting to:', dashboardUrl)
+        console.log('[SIGNUP-FORM] Redirecting to:', dashboardUrl)
         router.push(dashboardUrl)
       }
     } catch (error: any) {
-      console.error('[SIGNUP-FORM-V2] Stylist signup failed:', error)
+      console.error('[SIGNUP-FORM] Stylist signup failed:', error)
       // Error is already set in auth context
     }
   }
@@ -283,7 +283,7 @@ export function SignupFormV2() {
                   complete your registration.
                 </p>
                 <div>
-                  <Link href="/login-v2">
+                  <Link href="/login">
                     <Button className="w-full bg-red-600 hover:bg-red-700">
                       Go to Sign In
                     </Button>
@@ -848,7 +848,7 @@ export function SignupFormV2() {
             <div className="mt-6 text-center">
               <span className="text-sm text-gray-600">Already have an account? </span>
               <Link
-                href="/login-v2"
+                href="/login"
                 className="text-sm text-red-600 hover:text-red-500 font-medium"
               >
                 Sign in
@@ -859,7 +859,7 @@ export function SignupFormV2() {
 
         {/* Dev Note */}
         <div className="text-center text-xs text-gray-400">
-          Auth V2 - New authentication system
+          Secure authentication system
         </div>
       </div>
     </div>

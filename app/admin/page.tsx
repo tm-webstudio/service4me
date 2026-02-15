@@ -1,7 +1,7 @@
 import { AdminDashboard } from "@/components/admin-dashboard"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { ProtectedRoute } from "@/lib/auth-v2"
+import { ProtectedRoute } from "@/lib/auth"
 
 export default function AdminPage() {
   return (

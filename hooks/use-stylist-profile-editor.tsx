@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { useAuth } from '@/lib/auth-v2'
+import { useAuth } from '@/lib/auth'
 import type { StylistProfile } from './use-stylists'
 
 interface ProfileUpdateData {

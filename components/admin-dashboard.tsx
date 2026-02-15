@@ -17,7 +17,7 @@ import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
-import { useAuth } from "@/lib/auth-v2"
+import { useAuth } from "@/lib/auth"
 import { formatDistanceToNow, format } from "date-fns"
 import { BusinessFormFields, BusinessFormData, ServiceItem, initialBusinessFormData } from "@/components/business-form-fields"
 import { cn } from "@/lib/utils"

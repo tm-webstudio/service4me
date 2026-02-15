@@ -1,11 +1,11 @@
 "use client"
 
 /**
- * Login Form - V2
+ * Login Form
  *
- * New login form using auth-v2 system
+ * Login form using auth system
  * Features:
- * - Uses new auth context
+ * - Uses auth context
  * - Clear error handling
  * - Proper loading states
  * - Role-based redirects
@@ -15,7 +15,7 @@
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth-v2'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,7 +24,7 @@ import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from 'lucide-react'
 
-export function LoginFormV2() {
+export function LoginForm() {
   const router = useRouter()
   const { signIn, isLoading, error: authError, getDashboardUrl } = useAuth()
 
@@ -47,22 +47,22 @@ export function LoginFormV2() {
       return
     }
 
-    console.log('[LOGIN-FORM-V2] Submitting login for:', email)
+    console.log('[LOGIN-FORM] Submitting login for:', email)
 
     try {
       // Sign in using auth-v2
       await signIn(email, password)
 
-      console.log('[LOGIN-FORM-V2] Sign in successful, redirecting...')
+      console.log('[LOGIN-FORM] Sign in successful, redirecting...')
 
       // Get dashboard URL based on user role
       const dashboardUrl = getDashboardUrl()
-      console.log('[LOGIN-FORM-V2] Redirecting to:', dashboardUrl)
+      console.log('[LOGIN-FORM] Redirecting to:', dashboardUrl)
 
       // Redirect to dashboard
       router.push(dashboardUrl)
     } catch (error: any) {
-      console.error('[LOGIN-FORM-V2] Sign in failed:', error)
+      console.error('[LOGIN-FORM] Sign in failed:', error)
       // Error is already set in auth context
       // Just log it here for debugging
     }
@@ -231,7 +231,7 @@ export function LoginFormV2() {
 
         {/* Dev Note */}
         <div className="text-center text-xs text-gray-400">
-          Auth V2 - New authentication system
+          Secure authentication system
         </div>
       </div>
     </div>

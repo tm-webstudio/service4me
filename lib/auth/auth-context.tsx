@@ -77,10 +77,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (userError) {
         console.error('[AUTH-V2] Error fetching user profile:', userError)
+        console.error('[AUTH-V2] Error details:', {
+          message: userError.message,
+          code: userError.code,
+          details: userError.details,
+          hint: userError.hint
+        })
 
         // Profile not found
         if (userError.code === 'PGRST116') {
           console.warn('[AUTH-V2] Profile not found for user:', userId)
+          return null
+        }
+
+        // If error object is empty or malformed, try to provide helpful context
+        if (!userError.message && !userError.code) {
+          console.error('[AUTH-V2] Malformed error object, user might not have permission to read profile')
           return null
         }
 

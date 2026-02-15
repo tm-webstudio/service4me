@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useAuth } from "@/lib/auth-v2"
-import { AuthStatus } from "@/lib/auth-v2/types"
+import { useAuth } from "@/lib/auth"
+import { AuthStatus } from "@/lib/auth/types"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -342,7 +342,7 @@ export function Navigation() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link href="/login-v2">
+                <Link href="/login">
                   <Button variant="outline" size="sm">
                     <User className="w-4 h-4" />
                   </Button>
@@ -521,7 +521,7 @@ export function Navigation() {
                           </Button>
                         </>
                       ) : (
-                        <Link href="/login-v2">
+                        <Link href="/login">
                           <Button
                             variant="outline"
                             className="w-full justify-center bg-transparent mb-3 text-[0.85rem]"
