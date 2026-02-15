@@ -17,27 +17,7 @@ import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home,
 import { useRef, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DashboardHero } from "@/components/ui/dashboard-hero"
-
-const SPECIALTY_CATEGORIES = [
-  "Wigs",
-  "Braids",
-  "Locs",
-  "Natural Hair",
-  "Bridal Hair",
-  "Silk Press"
-]
-
-const ADDITIONAL_SERVICES = [
-  "Wigs",
-  "Braids",
-  "Locs",
-  "Natural Hair",
-  "Bridal Hair",
-  "Silk Press",
-  "Sew-Ins",
-  "Butterfly Locs",
-  "Ponytails"
-]
+import { SERVICE_TYPES, getSpecialtiesForType, getAdditionalServicesForType } from "@/lib/service-types"
 
 export function ListBusinessForm() {
   const [currentStep, setCurrentStep] = useState(1)
@@ -71,6 +51,7 @@ export function ListBusinessForm() {
     phone: "",
     businessInstagram: "",
     businessTiktok: "",
+    serviceType: "",
 
     // Step 2: Business Details
     location: "",
@@ -116,7 +97,7 @@ export function ListBusinessForm() {
   const handleNext = () => {
     // Validate current step before proceeding
     if (currentStep === 1) {
-      if (!formData.firstName || !formData.lastName || !formData.businessName || !formData.email || !formData.phone) {
+      if (!formData.firstName || !formData.lastName || !formData.businessName || !formData.email || !formData.phone || !formData.serviceType) {
         setError("Please fill in all required fields")
         return
       }
@@ -487,6 +468,7 @@ export function ListBusinessForm() {
           // Business details
           location: formData.location,
           business_type: formData.businessType || null,
+          service_type: formData.serviceType || 'hairstylist',
           primary_specialty: formData.specialty,
           specialties: formData.specialty ? [formData.specialty] : [],
           additional_services: additionalServices,
@@ -814,6 +796,27 @@ export function ListBusinessForm() {
                         />
                       </div>
                     </div>
+                    <div>
+                      <Label htmlFor="serviceType" className="text-sm font-medium text-gray-900 mb-2 block">
+                        Service Type <span className="text-red-600">*</span>
+                      </Label>
+                      <Select value={formData.serviceType} onValueChange={(value) => setFormData({ ...formData, serviceType: value, specialty: '' })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your service type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SERVICE_TYPES.map((type) => (
+                            <SelectItem
+                              key={type.value}
+                              value={type.value}
+                              disabled={type.value !== 'hairstylist'}
+                            >
+                              {type.label}{type.value !== 'hairstylist' ? ' (Coming Soon)' : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -880,7 +883,7 @@ export function ListBusinessForm() {
                           <SelectValue placeholder="Select your specialty" />
                         </SelectTrigger>
                         <SelectContent>
-                          {SPECIALTY_CATEGORIES.map((specialty) => (
+                          {getSpecialtiesForType(formData.serviceType || 'hairstylist').map((specialty) => (
                             <SelectItem key={specialty} value={specialty}>
                               {specialty}
                             </SelectItem>
@@ -913,7 +916,7 @@ export function ListBusinessForm() {
                     </Label>
                     <p className="text-xs text-gray-400 mb-4">Select other services you provide apart from your specialty</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
-                      {ADDITIONAL_SERVICES.filter(category => category !== formData.specialty).map((service) => (
+                      {getAdditionalServicesForType(formData.serviceType || 'hairstylist').filter(category => category !== formData.specialty).map((service) => (
                         <div
                           key={service}
                           onClick={() => toggleAdditionalService(service)}

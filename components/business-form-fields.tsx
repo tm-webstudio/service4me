@@ -11,27 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { User, Settings, Upload, X, Image as ImageIcon, Plus, Scissors, Loader2, GripVertical } from "lucide-react"
-
-const SPECIALTY_CATEGORIES = [
-  "Wigs",
-  "Braids",
-  "Locs",
-  "Natural Hair",
-  "Bridal Hair",
-  "Silk Press"
-]
-
-const ADDITIONAL_SERVICES = [
-  "Wigs",
-  "Braids",
-  "Locs",
-  "Natural Hair",
-  "Bridal Hair",
-  "Silk Press",
-  "Sew-Ins",
-  "Butterfly Locs",
-  "Ponytails"
-]
+import { SERVICE_TYPES, getSpecialtiesForType, getAdditionalServicesForType } from "@/lib/service-types"
 
 export interface BusinessFormData {
   first_name: string
@@ -43,6 +23,7 @@ export interface BusinessFormData {
   tiktok_handle: string
   location: string
   business_type: string
+  service_type: string
   specialties: string
   bio: string
   year_started: string
@@ -415,22 +396,29 @@ export function BusinessFormFields({
             <Settings className="w-4 h-4 text-red-600" />
             <h3 className="text-base font-semibold text-gray-900">Business Details</h3>
           </div>
-          {/* Specialty & Location Type */}
+          {/* Service Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                Specialty <span className="text-red-600">*</span>
+                Service Type <span className="text-red-600">*</span>
               </Label>
-              <Select value={formData.specialties} onValueChange={(value) => setFormData(prev => ({ ...prev, specialties: value }))}>
+              <Select value={formData.service_type} onValueChange={(value) => setFormData(prev => ({ ...prev, service_type: value, specialties: '' }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select your specialty" />
+                  <SelectValue placeholder="Select your service type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SPECIALTY_CATEGORIES.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
+                  {SERVICE_TYPES.map((type) => {
+                    const isDisabled = !isAdminForm && type.value !== 'hairstylist'
+                    return (
+                      <SelectItem
+                        key={type.value}
+                        value={type.value}
+                        disabled={isDisabled}
+                      >
+                        {type.label}{isDisabled ? ' (Coming Soon)' : ''}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -451,6 +439,27 @@ export function BusinessFormFields({
             </div>
           </div>
 
+          {/* Specialty & Additional Services - dynamic based on service type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label className="text-sm font-medium text-gray-900 mb-2 block">
+                Specialty <span className="text-red-600">*</span>
+              </Label>
+              <Select value={formData.specialties} onValueChange={(value) => setFormData(prev => ({ ...prev, specialties: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your specialty" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getSpecialtiesForType(formData.service_type || 'hairstylist').map((specialty) => (
+                    <SelectItem key={specialty} value={specialty}>
+                      {specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Additional Services */}
           <div>
             <Label className="text-sm font-medium text-gray-900 mb-1 block">
@@ -458,7 +467,7 @@ export function BusinessFormFields({
             </Label>
             <p className="text-xs text-gray-400 mb-4">Select other services you provide apart from your specialty</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
-              {ADDITIONAL_SERVICES.filter(category => category !== formData.specialties).map((service) => (
+              {getAdditionalServicesForType(formData.service_type || 'hairstylist').filter(category => category !== formData.specialties).map((service) => (
                 <div
                   key={service}
                   onClick={() => toggleAdditionalService(service)}
@@ -987,6 +996,7 @@ export const initialBusinessFormData: BusinessFormData = {
   tiktok_handle: '',
   location: '',
   business_type: '',
+  service_type: '',
   specialties: '',
   bio: '',
   year_started: '',
