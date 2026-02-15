@@ -50,7 +50,7 @@ export function LoginForm() {
     console.log('[LOGIN-FORM] Submitting login for:', email)
 
     try {
-      // Sign in using auth-v2
+      // Sign in using auth
       await signIn(email, password)
 
       console.log('[LOGIN-FORM] Sign in successful, redirecting...')
@@ -219,7 +219,7 @@ export function LoginForm() {
                   Don't have an account?{' '}
                 </span>
                 <Link
-                  href="/signup-v2"
+                  href="/signup"
                   className="text-sm text-red-600 hover:text-red-500 font-medium"
                 >
                   Sign up

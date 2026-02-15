@@ -1,8 +1,7 @@
 /**
- * Authentication Types - V2
+ * Authentication Types
  *
- * New authentication system with proper type safety
- * Based on design document: NEW_AUTH_ARCHITECTURE_DESIGN.md
+ * Authentication system with proper type safety
  */
 
 import type { User, Session } from '@supabase/supabase-js'

@@ -122,7 +122,7 @@ export function ProtectedClientRoute({ children }: ProtectedClientRouteProps) {
   }
 
   // User authenticated - check role
-  // SINGLE SOURCE OF TRUTH: user.role from auth-v2
+  // SINGLE SOURCE OF TRUTH: user.role from auth
   const isClient = user.role === 'client' || !user.role // Default to client if no role
 
   if (!isClient) {

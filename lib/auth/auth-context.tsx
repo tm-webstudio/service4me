@@ -1,9 +1,9 @@
 "use client"
 
 /**
- * Authentication Context - V2
+ * Authentication Context
  *
- * New authentication system with:
+ * Authentication system with:
  * - Single source of truth
  * - Sequential initialization (no race conditions)
  * - Proper error handling
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Fetch user profile from database
    */
   const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
-    console.log('[AUTH-V2] Fetching user profile for:', userId)
+    console.log('[AUTH] Fetching user profile for:', userId)
 
     try {
       // Fetch from users table
@@ -76,8 +76,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (userError) {
-        console.error('[AUTH-V2] Error fetching user profile:', userError)
-        console.error('[AUTH-V2] Error details:', {
+        console.error('[AUTH] Error fetching user profile:', userError)
+        console.error('[AUTH] Error details:', {
           message: userError.message,
           code: userError.code,
           details: userError.details,
@@ -86,13 +86,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Profile not found
         if (userError.code === 'PGRST116') {
-          console.warn('[AUTH-V2] Profile not found for user:', userId)
+          console.warn('[AUTH] Profile not found for user:', userId)
           return null
         }
 
         // If error object is empty or malformed, try to provide helpful context
         if (!userError.message && !userError.code) {
-          console.error('[AUTH-V2] Malformed error object, user might not have permission to read profile')
+          console.error('[AUTH] Malformed error object, user might not have permission to read profile')
           return null
         }
 
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // If stylist, fetch stylist profile
       if (profile.role === 'stylist') {
-        console.log('[AUTH-V2] Fetching stylist profile for:', userId)
+        console.log('[AUTH] Fetching stylist profile for:', userId)
 
         const { data: stylistData, error: stylistError } = await supabase
           .from('stylist_profiles')
@@ -133,11 +133,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             contactEmail: dbStylist.contact_email
           }
         } else {
-          console.warn('[AUTH-V2] Stylist profile not found:', stylistError)
+          console.warn('[AUTH] Stylist profile not found:', stylistError)
         }
       }
 
-      console.log('[AUTH-V2] Profile fetched successfully:', {
+      console.log('[AUTH] Profile fetched successfully:', {
         id: profile.id,
         role: profile.role,
         hasStylistProfile: !!profile.stylistProfile
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return profile
     } catch (error) {
-      console.error('[AUTH-V2] Unexpected error fetching profile:', error)
+      console.error('[AUTH] Unexpected error fetching profile:', error)
       throw error
     }
   }, [])
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     role: UserRole,
     additionalData?: SignUpData
   ): Promise<UserProfile | null> => {
-    console.log('[AUTH-V2] Creating profile from auth for:', userId)
+    console.log('[AUTH] Creating profile from auth for:', userId)
 
     try {
       const { data, error } = await supabase
@@ -175,16 +175,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (error) {
-        console.error('[AUTH-V2] Failed to create profile:', error)
+        console.error('[AUTH] Failed to create profile:', error)
         throw error
       }
 
-      console.log('[AUTH-V2] Profile created successfully')
+      console.log('[AUTH] Profile created successfully')
 
       // Fetch the complete profile (including stylist data if applicable)
       return await fetchUserProfile(userId)
     } catch (error) {
-      console.error('[AUTH-V2] Error creating profile from auth:', error)
+      console.error('[AUTH] Error creating profile from auth:', error)
       throw error
     }
   }, [fetchUserProfile])
@@ -196,12 +196,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const initialize = useCallback(async () => {
     // Prevent multiple initialization attempts
     if (initAttemptedRef.current) {
-      console.log('[AUTH-V2] Initialization already attempted, skipping')
+      console.log('[AUTH] Initialization already attempted, skipping')
       return
     }
 
     initAttemptedRef.current = true
-    console.log('[AUTH-V2] Starting initialization...')
+    console.log('[AUTH] Starting initialization...')
 
     try {
       // Step 1: Check Supabase configuration
@@ -213,11 +213,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Step 2: Get current session
-      console.log('[AUTH-V2] Checking for existing session...')
+      console.log('[AUTH] Checking for existing session...')
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
       if (sessionError) {
-        console.error('[AUTH-V2] Session error:', sessionError)
+        console.error('[AUTH] Session error:', sessionError)
         throw {
           code: 'SESSION_ERROR',
           ...ERROR_CATALOG.SESSION_ERROR,
@@ -227,7 +227,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Step 3: No session = unauthenticated
       if (!session) {
-        console.log('[AUTH-V2] No session found, user is unauthenticated')
+        console.log('[AUTH] No session found, user is unauthenticated')
         setAuthState({
           status: AuthStatus.UNAUTHENTICATED,
           user: null,
@@ -237,14 +237,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return
       }
 
-      console.log('[AUTH-V2] Session found for user:', session.user.id)
+      console.log('[AUTH] Session found for user:', session.user.id)
 
       // Step 4: Fetch user profile
       let profile = await fetchUserProfile(session.user.id)
 
       // Step 5: If profile doesn't exist, create it from auth metadata
       if (!profile) {
-        console.log('[AUTH-V2] Profile not found, creating from auth metadata...')
+        console.log('[AUTH] Profile not found, creating from auth metadata...')
         const role = (session.user.user_metadata?.role as UserRole) || 'client'
         profile = await createProfileFromAuth(
           session.user.id,
@@ -265,7 +265,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Step 6: Set authenticated state
-      console.log('[AUTH-V2] Initialization complete - user authenticated')
+      console.log('[AUTH] Initialization complete - user authenticated')
       setAuthState({
         status: AuthStatus.AUTHENTICATED,
         user: profile,
@@ -273,7 +273,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         error: null
       })
     } catch (error) {
-      console.error('[AUTH-V2] Initialization failed:', error)
+      console.error('[AUTH] Initialization failed:', error)
       const authError = normalizeError(error)
       logError(authError)
 
@@ -293,12 +293,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     event: AuthChangeEvent,
     session: Session | null
   ) => {
-    console.log('[AUTH-V2] Auth state change:', event, 'Has session:', !!session)
+    console.log('[AUTH] Auth state change:', event, 'Has session:', !!session)
 
     try {
       switch (event) {
         case 'SIGNED_OUT':
-          console.log('[AUTH-V2] User signed out')
+          console.log('[AUTH] User signed out')
           setAuthState({
             status: AuthStatus.UNAUTHENTICATED,
             user: null,
@@ -308,7 +308,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           break
 
         case 'TOKEN_REFRESHED':
-          console.log('[AUTH-V2] Token refreshed')
+          console.log('[AUTH] Token refreshed')
           // Update session but keep user data
           setAuthState(prev => ({
             ...prev,
@@ -317,7 +317,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           break
 
         case 'USER_UPDATED':
-          console.log('[AUTH-V2] User updated, refreshing profile...')
+          console.log('[AUTH] User updated, refreshing profile...')
           if (session?.user) {
             const profile = await fetchUserProfile(session.user.id)
             if (profile) {
@@ -333,14 +333,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         case 'SIGNED_IN':
           // Sign in is handled by signIn() method
           // Don't handle here to avoid race conditions
-          console.log('[AUTH-V2] SIGNED_IN event (handled by signIn method)')
+          console.log('[AUTH] SIGNED_IN event (handled by signIn method)')
           break
 
         default:
-          console.log('[AUTH-V2] Unhandled auth event:', event)
+          console.log('[AUTH] Unhandled auth event:', event)
       }
     } catch (error) {
-      console.error('[AUTH-V2] Error handling auth state change:', error)
+      console.error('[AUTH] Error handling auth state change:', error)
       const authError = normalizeError(error)
       logError(authError)
 
@@ -371,7 +371,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Sign in with email and password
    */
   const signIn = useCallback(async (email: string, password: string): Promise<void> => {
-    console.log('[AUTH-V2] Sign in started for:', email)
+    console.log('[AUTH] Sign in started for:', email)
 
     // Store operation for retry
     lastOperationRef.current = {
@@ -394,7 +394,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
-        console.error('[AUTH-V2] Sign in failed:', error)
+        console.error('[AUTH] Sign in failed:', error)
         throw error
       }
 
@@ -402,7 +402,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error('Sign in succeeded but no user data returned')
       }
 
-      console.log('[AUTH-V2] Sign in successful, fetching profile...')
+      console.log('[AUTH] Sign in successful, fetching profile...')
 
       // Fetch user profile
       const profile = await fetchUserProfile(data.user.id)
@@ -444,9 +444,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         })
       }
 
-      console.log('[AUTH-V2] Sign in complete')
+      console.log('[AUTH] Sign in complete')
     } catch (error) {
-      console.error('[AUTH-V2] Sign in error:', error)
+      console.error('[AUTH] Sign in error:', error)
       const authError = normalizeError(error)
       logError(authError)
 
@@ -470,7 +470,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     role: UserRole,
     additionalData?: SignUpData
   ): Promise<void> => {
-    console.log('[AUTH-V2] Sign up started for:', email, 'as', role)
+    console.log('[AUTH] Sign up started for:', email, 'as', role)
 
     // Store operation for retry
     lastOperationRef.current = {
@@ -502,7 +502,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
-        console.error('[AUTH-V2] Sign up failed:', error)
+        console.error('[AUTH] Sign up failed:', error)
         throw error
       }
 
@@ -510,11 +510,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error('Sign up succeeded but no user data returned')
       }
 
-      console.log('[AUTH-V2] Sign up successful, user:', data.user.id)
+      console.log('[AUTH] Sign up successful, user:', data.user.id)
 
       // If email confirmation is required, don't create profile yet
       if (!data.user.email_confirmed_at && data.user.confirmation_sent_at) {
-        console.log('[AUTH-V2] Email confirmation required')
+        console.log('[AUTH] Email confirmation required')
         setAuthState({
           status: AuthStatus.UNAUTHENTICATED,
           user: null,
@@ -541,7 +541,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // If stylist, update stylist profile with additional data
       if (role === 'stylist' && additionalData?.businessName) {
-        console.log('[AUTH-V2] Updating stylist profile...')
+        console.log('[AUTH] Updating stylist profile...')
         await supabase
           .from('stylist_profiles')
           .update({
@@ -561,9 +561,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         error: null
       })
 
-      console.log('[AUTH-V2] Sign up complete')
+      console.log('[AUTH] Sign up complete')
     } catch (error) {
-      console.error('[AUTH-V2] Sign up error:', error)
+      console.error('[AUTH] Sign up error:', error)
       const authError = normalizeError(error)
       logError(authError)
 
@@ -582,7 +582,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Sign out
    */
   const signOut = useCallback(async (): Promise<void> => {
-    console.log('[AUTH-V2] Sign out started')
+    console.log('[AUTH] Sign out started')
 
     try {
       // Optimistically clear state immediately for better UX
@@ -597,7 +597,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { error } = await supabase.auth.signOut()
 
       if (error) {
-        console.error('[AUTH-V2] Sign out error:', error)
+        console.error('[AUTH] Sign out error:', error)
         // Still set unauthenticated even if error
       }
 
@@ -609,9 +609,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         error: null
       })
 
-      console.log('[AUTH-V2] Sign out complete')
+      console.log('[AUTH] Sign out complete')
     } catch (error) {
-      console.error('[AUTH-V2] Sign out unexpected error:', error)
+      console.error('[AUTH] Sign out unexpected error:', error)
       // Still set unauthenticated even if error
       setAuthState({
         status: AuthStatus.UNAUTHENTICATED,
@@ -626,10 +626,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Refresh user profile
    */
   const refreshProfile = useCallback(async (): Promise<void> => {
-    console.log('[AUTH-V2] Refresh profile started')
+    console.log('[AUTH] Refresh profile started')
 
     if (!authState.session?.user) {
-      console.warn('[AUTH-V2] Cannot refresh profile - no session')
+      console.warn('[AUTH] Cannot refresh profile - no session')
       return
     }
 
@@ -641,10 +641,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           ...prev,
           user: profile
         }))
-        console.log('[AUTH-V2] Profile refreshed successfully')
+        console.log('[AUTH] Profile refreshed successfully')
       }
     } catch (error) {
-      console.error('[AUTH-V2] Error refreshing profile:', error)
+      console.error('[AUTH] Error refreshing profile:', error)
       const authError = normalizeError(error)
       logError(authError)
 
@@ -659,7 +659,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Clear error
    */
   const clearError = useCallback((): void => {
-    console.log('[AUTH-V2] Clearing error')
+    console.log('[AUTH] Clearing error')
     setAuthState(prev => ({
       ...prev,
       error: null,
@@ -671,16 +671,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Retry last operation
    */
   const retry = useCallback(async (): Promise<void> => {
-    console.log('[AUTH-V2] Retry requested')
+    console.log('[AUTH] Retry requested')
 
     if (!lastOperationRef.current) {
-      console.warn('[AUTH-V2] No operation to retry')
+      console.warn('[AUTH] No operation to retry')
       return
     }
 
     const { type, args } = lastOperationRef.current
 
-    console.log('[AUTH-V2] Retrying:', type)
+    console.log('[AUTH] Retrying:', type)
 
     switch (type) {
       case 'signIn':
@@ -690,7 +690,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await signUp(args[0], args[1], args[2], args[3])
         break
       default:
-        console.warn('[AUTH-V2] Unknown operation type:', type)
+        console.warn('[AUTH] Unknown operation type:', type)
     }
   }, [signIn, signUp])
 

@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * useAuth Hook - V2
+ * useAuth Hook
  *
  * Simple hook to access auth context
  */

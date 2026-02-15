@@ -1,7 +1,7 @@
 /**
- * Auth V2 Components - Main Export
+ * Auth Components - Main Export
  *
- * Central export point for auth-v2 UI components
+ * Central export point for auth UI components
  */
 
 // Forms

@@ -1,7 +1,7 @@
 /**
- * Auth V2 - Main Export
+ * Auth - Main Export
  *
- * Central export point for new authentication system
+ * Central export point for authentication system
  */
 
 // Context and Provider

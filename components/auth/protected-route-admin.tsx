@@ -122,7 +122,7 @@ export function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
   }
 
   // User authenticated - check role
-  // SINGLE SOURCE OF TRUTH: user.role from auth-v2
+  // SINGLE SOURCE OF TRUTH: user.role from auth
   const isAdmin = user.role === 'admin'
 
   if (!isAdmin) {

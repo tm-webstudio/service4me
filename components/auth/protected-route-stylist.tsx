@@ -122,7 +122,7 @@ export function ProtectedStylistRoute({ children }: ProtectedStylistRouteProps) 
   }
 
   // User authenticated - check role
-  // SINGLE SOURCE OF TRUTH: user.role from auth-v2
+  // SINGLE SOURCE OF TRUTH: user.role from auth
   const isStylist = user.role === 'stylist'
 
   if (!isStylist) {

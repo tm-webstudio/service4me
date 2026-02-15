@@ -121,7 +121,7 @@ export function Navigation() {
   }
 
   const handleDashboard = () => {
-    // Single source of truth: user.role from auth-v2
+    // Single source of truth: user.role from auth
     if (!user) return
 
     if (user.role === 'admin') {
@@ -198,7 +198,7 @@ export function Navigation() {
 
       <nav className="border-b bg-white sticky top-0 z-50">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto] lg:grid-cols-[1fr,auto,1fr] items-center h-16 gap-6 md:gap-8 lg:gap-10">
+          <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto] lg:grid-cols-[1fr,auto,1fr] items-center h-14 md:h-16 gap-6 md:gap-8 lg:gap-10">
             {/* Logo */}
             <div className="flex justify-start">
               <Link href="/" className="flex items-center">

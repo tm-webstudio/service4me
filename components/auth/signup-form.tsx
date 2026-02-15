@@ -153,7 +153,7 @@ export function SignupForm() {
     console.log('[SIGNUP-FORM] Submitting client signup for:', clientData.email)
 
     try {
-      // Sign up using auth-v2
+      // Sign up using auth
       await signUp(clientData.email, clientData.password, 'client', {
         fullName: `${clientData.firstName} ${clientData.lastName}`.trim()
       })
@@ -230,7 +230,7 @@ export function SignupForm() {
     console.log('[SIGNUP-FORM] Submitting stylist signup for:', stylistData.email)
 
     try {
-      // Sign up using auth-v2
+      // Sign up using auth
       await signUp(stylistData.email, stylistData.password, 'stylist', {
         fullName: `${stylistData.firstName} ${stylistData.lastName}`.trim(),
         phone: stylistData.phone,

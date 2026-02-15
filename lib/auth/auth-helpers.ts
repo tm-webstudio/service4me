@@ -1,5 +1,5 @@
 /**
- * Authentication Helper Utilities - V2
+ * Authentication Helper Utilities
  *
  * Utility functions for error handling, normalization, and helpers
  */
