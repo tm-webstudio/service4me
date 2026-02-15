@@ -32,6 +32,7 @@ export interface StylistProfile {
   accepts_mobile?: boolean | null
   logo_url?: string
   additional_services?: string[]
+  service_type?: string
 }
 
 export function useStylists() {
@@ -70,7 +71,8 @@ export function useStylists() {
               contact_email: stylist.contact_email,
               instagram_handle: stylist.instagram_handle,
               tiktok_handle: stylist.tiktok_handle,
-              portfolio_images: stylist.portfolio_images || []
+              portfolio_images: stylist.portfolio_images || [],
+              service_type: stylist.service_type || 'hairstylist'
             }))
 
             setStylists(transformedData)
@@ -114,7 +116,8 @@ export function useStylists() {
             contact_email: stylist.contact_email,
             instagram_handle: stylist.instagram_handle,
             tiktok_handle: stylist.tiktok_handle,
-            portfolio_images: stylist.portfolio_images || []
+            portfolio_images: stylist.portfolio_images || [],
+            service_type: stylist.service_type || 'hairstylist'
           }))
 
           setStylists(transformedData)

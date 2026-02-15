@@ -72,17 +72,41 @@ export function useStylistProfileEditor() {
         }
 
         console.log('🔍 [PROFILE-EDITOR] Trying direct Supabase client...')
-        const { data, error } = await supabase
+        // Try by user_id first
+        let { data: rows, error } = await supabase
           .from('stylist_profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single()
+          .order('created_at', { ascending: false })
+          .limit(1)
 
         if (error) {
           console.log('❌ [PROFILE-EDITOR] Direct client failed:', error.message)
           throw error
         }
 
+        // Fallback: try matching by contact_email if no profile found by user_id
+        if (!rows || rows.length === 0) {
+          console.log('🔍 [PROFILE-EDITOR] No profile by user_id, trying by email:', user.email)
+          const { data: emailRows, error: emailError } = await supabase
+            .from('stylist_profiles')
+            .select('*')
+            .eq('contact_email', user.email)
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+          if (!emailError && emailRows && emailRows.length > 0) {
+            console.log('✅ [PROFILE-EDITOR] Found profile by email, linking user_id')
+            // Link the profile to this user
+            await supabase
+              .from('stylist_profiles')
+              .update({ user_id: user.id })
+              .eq('id', emailRows[0].id)
+            rows = emailRows
+          }
+        }
+
+        const data = rows?.[0]
         if (data) {
           console.log('✅ [PROFILE-EDITOR] Direct client successful')
           console.log('🔍 [PROFILE-EDITOR] Raw data from database:', JSON.stringify(data, null, 2))
@@ -115,7 +139,8 @@ export function useStylistProfileEditor() {
             accepts_same_day: data.accepts_same_day,
             accepts_mobile: data.accepts_mobile,
             logo_url: data.logo_url,
-            additional_services: data.additional_services || []
+            additional_services: data.additional_services || [],
+            service_type: data.service_type || 'hairstylist'
           }
 
           setProfile(transformedData)
@@ -124,7 +149,9 @@ export function useStylistProfileEditor() {
           return
         }
 
-        throw new Error('Profile not found')
+        console.log('⚠️ [PROFILE-EDITOR] No profile found for user:', user.id)
+        setError('No business profile found for your account. Please contact support or create a new listing.')
+        lastFetchedUserId.current = user.id
 
       } catch (err: any) {
         console.error('❌ [PROFILE-EDITOR] Failed to fetch profile:', err?.message)
@@ -165,16 +192,17 @@ export function useStylistProfileEditor() {
       console.log('✅ [PROFILE-EDITOR] User authenticated in Supabase:', currentUser.id)
       
       // First check current data
-      const { data: beforeData, error: beforeError } = await supabase
+      const { data: beforeRows, error: beforeError } = await supabase
         .from('stylist_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single()
-      
+        .order('created_at', { ascending: false })
+        .limit(1)
+
       if (beforeError) {
         console.log('❌ [PROFILE-EDITOR] Could not fetch current data before update:', beforeError)
       } else {
-        console.log('📊 [PROFILE-EDITOR] Current data before update:', JSON.stringify(beforeData, null, 2))
+        console.log('📊 [PROFILE-EDITOR] Current data before update:', JSON.stringify(beforeRows?.[0], null, 2))
       }
       
       const { data, error } = await supabase
@@ -195,16 +223,17 @@ export function useStylistProfileEditor() {
         console.log('📊 [PROFILE-EDITOR] Updated data returned:', JSON.stringify(data, null, 2))
         
         // Verify the update by fetching again
-        const { data: verifyData, error: verifyError } = await supabase
+        const { data: verifyRows, error: verifyError } = await supabase
           .from('stylist_profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single()
-        
+          .order('created_at', { ascending: false })
+          .limit(1)
+
         if (verifyError) {
           console.log('❌ [PROFILE-EDITOR] Could not verify update:', verifyError)
         } else {
-          console.log('🔍 [PROFILE-EDITOR] Verification fetch:', JSON.stringify(verifyData, null, 2))
+          console.log('🔍 [PROFILE-EDITOR] Verification fetch:', JSON.stringify(verifyRows?.[0], null, 2))
         }
         
         // Update local state with the verified data
@@ -238,17 +267,19 @@ export function useStylistProfileEditor() {
         return
       }
       
-      const { data, error } = await supabase
+      const { data: refreshRows, error } = await supabase
         .from('stylist_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .order('created_at', { ascending: false })
+        .limit(1)
 
       if (error) {
         console.log('❌ [PROFILE-EDITOR] Error refreshing profile:', error.message)
         return
       }
 
+      const data = refreshRows?.[0]
       if (data) {
         const transformedData: StylistProfile = {
           id: data.id,
@@ -303,23 +334,22 @@ export function useStylistProfileEditor() {
     try {
       console.log('🔍 [PROFILE-EDITOR] Updating portfolio images directly...')
       
-      const { data, error } = await supabase
+      const { data: updateRows, error } = await supabase
         .from('stylist_profiles')
         .update({ portfolio_images: portfolioImages })
         .eq('user_id', user.id)
         .select()
-        .single()
 
       if (error) {
         console.log('❌ [PROFILE-EDITOR] Portfolio images update failed:', error.message)
         throw error
       }
 
-      if (data) {
+      if (updateRows && updateRows.length > 0) {
         console.log('✅ [PROFILE-EDITOR] Portfolio images updated successfully!')
         // Update local state immediately
         setProfile(prev => prev ? { ...prev, portfolio_images: portfolioImages } : prev)
-        return data
+        return updateRows[0]
       }
 
       throw new Error('Portfolio images update failed - no data returned')
