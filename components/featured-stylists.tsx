@@ -64,7 +64,7 @@ export function FeaturedStylists() {
 
   return (
     <section className="py-6 md:py-10 bg-gray-50">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg md:text-xl font-medium text-gray-900">
@@ -90,7 +90,7 @@ export function FeaturedStylists() {
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] xl:w-[calc((100%-48px)/4)] 2xl:w-[calc((100%-56px)/4.5)]"
+                className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] xl:w-[calc((100%-56px)/4.5)] 2xl:w-[calc((100%-64px)/5)]"
               >
                 <StylistCardSkeleton />
               </div>
@@ -167,7 +167,7 @@ export function FeaturedStylists() {
                 return (
                   <div
                     key={stylist.id}
-                    className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] xl:w-[calc((100%-48px)/4)] 2xl:w-[calc((100%-56px)/4.5)]"
+                    className="flex-none w-[calc(83.33%-8px)] sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] xl:w-[calc((100%-56px)/4.5)] 2xl:w-[calc((100%-64px)/5)]"
                     style={{ scrollSnapAlign: "start" }}
                   >
                     <Card 

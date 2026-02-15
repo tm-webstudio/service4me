@@ -96,7 +96,7 @@ export function BrowseHeader({ category, location, serviceType }: BrowseHeaderPr
       {/* Active Filters */}
       {activeFilters.length > 0 && (
         <div className="bg-white border-b">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-wrap gap-2">
               {activeFilters.map((filter) => (
                 <Badge key={filter} variant="secondary" className="flex items-center gap-1">

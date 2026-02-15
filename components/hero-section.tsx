@@ -51,7 +51,7 @@ export function HeroSection() {
 
   return (
     <section className="py-0">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 md:mt-4">
+      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 mt-3 md:mt-4">
         <div
           className="relative rounded-lg h-[540px] md:h-[600px] min-[1281px]:h-[700px] flex pb-16 flex-col items-start justify-start md:justify-center p-5 md:px-12"
           style={{

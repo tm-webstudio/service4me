@@ -368,7 +368,7 @@ export function StylistDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-red-600" />
           <span className="ml-2 text-gray-600">Loading your profile...</span>
@@ -380,7 +380,7 @@ export function StylistDashboard() {
   if (error && !profile) {
     const isNotFound = error.includes('No business profile')
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="text-center py-20">
           {isNotFound ? (
             <>
@@ -410,7 +410,7 @@ export function StylistDashboard() {
   
   if (!profile) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="text-center py-20">
           <p className="text-gray-600 mb-4">No profile found.</p>
           <p className="text-sm text-gray-500">Please contact support if this error persists.</p>
@@ -434,7 +434,7 @@ export function StylistDashboard() {
   const isActive = optimisticActive !== null ? optimisticActive : profile?.is_active
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
       <DashboardHero
         eyebrow="Stylist Dashboard"
         eyebrowClassName="text-blue-600"
