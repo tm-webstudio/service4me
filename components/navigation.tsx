@@ -50,7 +50,7 @@ export function Navigation() {
   const locationsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const messages = [
-    "Onboarding London Stylists. Apply Now",
+    "Onboarding London Hair Stylists. Apply Now",
     "Book Your Next Hair Appointment Today",
     "New Stylists Added Weekly",
   ]

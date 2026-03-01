@@ -16,7 +16,8 @@ import { StylistCardSkeleton } from "@/components/ui/skeletons"
 
 export function FeaturedStylists() {
   const router = useRouter()
-  const { stylists, loading, error } = useStylists()
+  const { stylists: allStylists, loading, error } = useStylists()
+  const stylists = allStylists.filter(s => !s.service_type || s.service_type === 'hairstylist')
   const { savedIds, toggleSave, savingId, isAuthenticated } = useSavedStylistIds()
   const carouselRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -68,7 +69,7 @@ export function FeaturedStylists() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg md:text-xl font-medium text-gray-900">
-              London Stylists
+              London Hair Stylists
             </h2>
           </div>
           <SmallCtaButton

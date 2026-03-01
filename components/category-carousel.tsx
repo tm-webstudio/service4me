@@ -71,7 +71,7 @@ export function CategoryCarousel() {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-lg md:text-xl font-medium text-gray-900">Browse by Category</h2>
+            <h2 className="text-lg md:text-xl font-medium text-gray-900">Browse Hair Stylists</h2>
           </div>
           <Link href="/browse">
             <SmallCtaButton variant="outline">
