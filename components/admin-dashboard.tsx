@@ -474,8 +474,8 @@ export function AdminDashboard() {
       let servicesSaveFailed = false
       let servicesFailReason = ''
 
-      if (mockServices.length > 0) {
-        console.log('🔧 [ADMIN] Saving', mockServices.length, 'services...')
+      if (formServices.length > 0) {
+        console.log('🔧 [ADMIN] Saving', formServices.length, 'services...')
         try {
           const response = await fetch('/api/admin/services', {
             method: 'POST',
@@ -484,7 +484,7 @@ export function AdminDashboard() {
             },
             body: JSON.stringify({
               stylist_id: stylistId,
-              services: mockServices
+              services: formServices
             })
           })
 
@@ -504,18 +504,18 @@ export function AdminDashboard() {
           // Continue with profile creation even if services fail
         }
       }
-      
+
       let successMessage = `Stylist profile created and added to pending verification! Business: ${formData.business_name}.`
 
       if (galleryImages.length > 0) {
         successMessage += ` ${galleryImages.length} portfolio images saved.`
       }
 
-      if (mockServices.length > 0) {
+      if (formServices.length > 0) {
         if (servicesSaveFailed) {
-          successMessage += ` ${mockServices.length} services were configured but could not be saved to database (${servicesFailReason}).`
+          successMessage += ` ${formServices.length} services were configured but could not be saved to database (${servicesFailReason}).`
         } else {
-          successMessage += ` ${mockServices.length} services added.`
+          successMessage += ` ${formServices.length} services added.`
         }
       }
 

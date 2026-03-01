@@ -226,7 +226,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
         name: service.name,
         price: service.price, // Already converted to pounds in the hook
         duration: formatDuration(service.duration),
-        image: service.image_url || "/placeholder.svg?height=200&width=300",
+        image: service.image_url || null,
         id: service.id
       }))
     }
@@ -630,15 +630,17 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                   <Card key={service.id || index}>
                     <CardContent className="p-2.5">
                       <div className="flex items-stretch space-x-3">
-                        <img
-                          src={service.image || "/placeholder.svg"}
-                          alt={service.name}
-                          className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.src = '/placeholder.svg?height=200&width=200&text=Service'
-                          }}
-                        />
+                        {service.image && (
+                          <img
+                            src={service.image}
+                            alt={service.name}
+                            className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                            }}
+                          />
+                        )}
                         <div className="flex-1 flex flex-col justify-between min-h-[64px]">
                           <h3 className="font-medium text-sm">{service.name}</h3>
                           <div className="flex items-center text-gray-600 text-sm">

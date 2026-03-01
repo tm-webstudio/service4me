@@ -1,11 +1,14 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import { Search, ArrowUpRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export function HeroSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [query, setQuery] = useState("")
+  const router = useRouter()
 
   useEffect(() => {
     const scrollContainer = scrollRef.current
@@ -53,50 +56,57 @@ export function HeroSection() {
     <section className="py-0">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 md:mt-4">
         <div
-          className="relative rounded-lg h-[540px] md:h-[600px] min-[1281px]:h-[700px] flex pb-16 flex-col items-start justify-start md:justify-center p-5 md:px-12"
-          style={{
-            backgroundImage: `url('/images/hero-mobile-new.jpg')`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          }}
+          className="relative rounded-lg h-[540px] md:h-[600px] min-[1281px]:h-[700px] flex pb-16 flex-col items-center justify-start md:justify-center p-5 md:px-12 bg-gray-700 pt-10 md:pt-0"
         >
-          {/* Desktop background image */}
-          <div
-            className="absolute inset-0 rounded-lg hidden md:block"
-            style={{
-              backgroundImage: `url('/images/hero-desktop-new.jpg')`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-            }}
+          {/* Mobile background image */}
+          <img
+            src="/hero-mobile.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover rounded-lg md:hidden"
           />
 
-          <div className="w-full relative z-10">
-            <div className="max-w-[90%] md:max-w-[48%] lg:max-w-[48%] xl:max-w-[34%]">
+          <div className="w-full relative z-10 flex flex-col items-center text-center">
+            <div className="max-w-[90%] md:max-w-[60%] lg:max-w-[50%]">
               <h1
-                className="font-medium text-white mb-2 text-[2.125rem] md:mb-3 md:text-5xl tracking-tight"
+                className="font-normal text-white mb-2 text-[1.75rem] md:mb-3 md:text-4xl tracking-tight"
                 style={{ lineHeight: "108%" }}
               >
-                Find Your Next Hair Stylist.
+                Book Your Next Beauty Appointment.
               </h1>
               <p
-                className="text-white mb-4 text-base lg:text-lg"
+                className="font-light text-white mb-4 text-base lg:text-lg"
                 style={{ lineHeight: "1.3rem" }}
               >
-                Discover trusted talented hairstylists in your area
+                Discover trusted service providers in your area
               </p>
             </div>
 
-            {/* Find a Stylist Button */}
-            <Link href="/collections" className="w-full md:w-auto">
-              <Button
-                size="lg"
-                className="bg-red-600 hover:bg-red-700 text-white rounded-md w-full md:w-auto px-12 py-3 text-base font-semibold"
+            {/* Search Bar */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const q = query.trim()
+                router.push(q ? `/browse?q=${encodeURIComponent(q)}` : "/browse")
+              }}
+              className="w-full max-w-[98%] md:max-w-xl flex items-center bg-white rounded-md overflow-hidden"
+            >
+              <span className="pl-4 pr-2 text-gray-400 flex-shrink-0">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="search east london braider..."
+                className="flex-1 py-3.5 pr-2 text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+              />
+              <button
+                type="submit"
+                className="bg-red-600 hover:bg-red-700 transition-colors h-full px-4 py-3.5 flex items-center justify-center flex-shrink-0"
               >
-                Find a Stylist
-              </Button>
-            </Link>
+                <ArrowUpRight className="w-5 h-5 text-white" />
+              </button>
+            </form>
           </div>
 
           {/* Location Tags - Auto-scrolling Bottom Bar */}

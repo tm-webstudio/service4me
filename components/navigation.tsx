@@ -202,9 +202,7 @@ export function Navigation() {
             {/* Logo */}
             <div className="flex justify-start">
               <Link href="/" className="flex items-center">
-                <span className="font-bold text-gray-900 tracking-tight text-xl" style={{ fontSize: "26px" }}>
-                  S<span className="text-red-600">4</span>M
-                </span>
+                <img src="/s4m-logo.svg" alt="S4M" className="h-[1.625rem] w-auto" />
               </Link>
             </div>
 
