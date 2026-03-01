@@ -95,7 +95,7 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
-              <SelectTrigger className="w-[160px] h-8 text-xs">
+              <SelectTrigger className="w-[120px] sm:w-[160px] h-8 text-xs">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
@@ -108,11 +108,11 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-normal text-gray-900">Sort by:</span>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline text-sm font-normal text-gray-900">Sort by:</span>
             <button
               onClick={() => setSortBy("rating")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 sortBy === "rating"
                   ? "bg-red-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -123,7 +123,7 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
             </button>
             <button
               onClick={() => setSortBy("featured")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 sortBy === "featured"
                   ? "bg-red-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"

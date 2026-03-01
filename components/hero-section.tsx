@@ -56,7 +56,7 @@ export function HeroSection() {
     <section className="py-0">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 md:mt-4">
         <div
-          className="relative rounded-lg h-[540px] md:h-[600px] min-[1281px]:h-[700px] flex pb-16 flex-col items-center justify-start md:justify-center p-5 md:px-12 bg-gray-700 pt-10 md:pt-0"
+          className="relative rounded-lg h-[540px] md:h-[600px] min-[1281px]:h-[700px] flex pb-16 flex-col items-center justify-start md:justify-center p-5 md:px-12 bg-gray-700 pt-6 md:pt-0"
         >
           {/* Mobile background image */}
           <img
@@ -68,7 +68,7 @@ export function HeroSection() {
           <div className="w-full relative z-10 flex flex-col items-center text-center">
             <div className="max-w-[90%] md:max-w-[60%] lg:max-w-[50%]">
               <h1
-                className="font-normal text-white mb-2 text-[1.75rem] md:mb-3 md:text-4xl tracking-tight"
+                className="font-medium text-white mb-2 text-[1.75rem] md:mb-3 md:text-4xl tracking-tight"
                 style={{ lineHeight: "108%" }}
               >
                 Book Your Next Beauty Appointment.
