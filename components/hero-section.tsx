@@ -64,6 +64,12 @@ export function HeroSection() {
             alt=""
             className="absolute inset-0 w-full h-full object-cover rounded-lg md:hidden"
           />
+          {/* Desktop background image */}
+          <img
+            src="/hero-desktop.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover rounded-lg hidden md:block"
+          />
 
           <div className="w-full relative z-10 flex flex-col items-center text-center">
             <div className="max-w-[90%] md:max-w-[60%] lg:max-w-[50%]">
@@ -71,7 +77,7 @@ export function HeroSection() {
                 className="font-medium text-white mb-2 text-[1.75rem] md:mb-3 md:text-4xl tracking-tight"
                 style={{ lineHeight: "108%" }}
               >
-                Book Your Next Beauty Appointment.
+                Book Your Next<br className="hidden md:block" /> Beauty Appointment.
               </h1>
               <p
                 className="font-light text-white mb-4 text-base lg:text-lg"
