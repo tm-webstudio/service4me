@@ -485,7 +485,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 <>
                   <span className="text-gray-400">•</span>
                   <div className="flex items-center text-gray-600 text-sm">
-                    <Award className="w-4 h-4 mr-1" />
+                    <Award className="w-4 h-4 mr-1.5" />
                     <span>{displayData.experience} experience</span>
                   </div>
                 </>
@@ -498,25 +498,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {/* 2x2 Grid for location and features */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center text-gray-600 text-sm">
-                  <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                  <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
                   <span className="truncate">{displayData.location}</span>
                 </div>
                 {stylist.business_type && (
                   <div className="flex items-center text-gray-600 text-sm">
-                    <Briefcase className="w-4 h-4 mr-1 flex-shrink-0" />
+                    <Briefcase className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="capitalize truncate">{stylist.business_type.replace(/-/g, ' ')}</span>
-                  </div>
-                )}
-                {stylist.accepts_mobile && (
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Car className="w-4 h-4 mr-1 flex-shrink-0" />
-                    <span className="truncate">Mobile Appointments</span>
-                  </div>
-                )}
-                {stylist.accepts_same_day && (
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
-                    <span className="truncate">Same Day Appointments</span>
                   </div>
                 )}
               </div>
@@ -525,33 +513,15 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             {/* Desktop Layout - Location and features row with bullets */}
             <div className="hidden sm:flex items-center text-gray-600 mb-4 text-sm flex-wrap gap-y-1">
               <div className="flex items-center">
-                <MapPin className="w-4 h-4 mr-1" />
+                <MapPin className="w-4 h-4 mr-1.5" />
                 <span>{displayData.location}</span>
               </div>
               {stylist.business_type && (
                 <>
                   <span className="mx-2 text-gray-400">•</span>
                   <div className="flex items-center">
-                    <Briefcase className="w-4 h-4 mr-1" />
+                    <Briefcase className="w-4 h-4 mr-1.5" />
                     <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
-                  </div>
-                </>
-              )}
-              {stylist.accepts_mobile && (
-                <>
-                  <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center">
-                    <Car className="w-4 h-4 mr-1" />
-                    <span>Mobile Appointments</span>
-                  </div>
-                </>
-              )}
-              {stylist.accepts_same_day && (
-                <>
-                  <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
-                    <span>Same Day Appointments</span>
                   </div>
                 </>
               )}
@@ -561,6 +531,24 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           {/* Bio */}
           <div>
             <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
+
+            {/* Mobile: Mobile & Same Day Appointments above Book Now */}
+            {(stylist.accepts_mobile || stylist.accepts_same_day) && (
+              <div className="flex flex-row gap-x-4 mb-2.5">
+                {stylist.accepts_mobile && (
+                  <div className="flex items-center text-gray-600 text-sm min-w-0">
+                    <Car className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                    <span className="truncate">Mobile Appointments</span>
+                  </div>
+                )}
+                {stylist.accepts_same_day && (
+                  <div className="flex items-center text-gray-600 text-sm min-w-0">
+                    <Clock className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                    <span className="truncate">Same Day Appointments</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-3">
@@ -574,7 +562,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                     window.location.href = url;
                   }}
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
+                  <Calendar className="w-4 h-4 mr-1.5" />
                   Book Now
                 </Button>
               ) : (
@@ -582,7 +570,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                   className="bg-gray-400 cursor-not-allowed px-8 py-2 w-full sm:w-2/5 h-11"
                   disabled
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
+                  <Calendar className="w-4 h-4 mr-1.5" />
                   Booking Unavailable
                 </Button>
               )}
@@ -662,7 +650,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                         <div className="flex-1 flex flex-col justify-between min-h-[64px]">
                           <h3 className="font-medium text-sm">{service.name}</h3>
                           <div className="flex items-center text-gray-600 text-sm">
-                            <Clock className="w-4 h-4 mr-1" />
+                            <Clock className="w-4 h-4 mr-1.5" />
                             <span>{service.duration}</span>
                           </div>
                         </div>
