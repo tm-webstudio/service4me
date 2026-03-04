@@ -28,17 +28,17 @@ export default function PendingPreviewPage() {
     <ProtectedRoute allowedRoles={['admin']}>
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="py-6 sm:py-10">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <main className="py-3">
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md px-4 py-3 flex items-center gap-3">
               <AlertTriangle className="h-5 w-5 text-yellow-700" />
               <div>
-                <p className="text-sm font-medium">Pending stylist preview</p>
-                <p className="text-xs text-yellow-700/90">Visible to admins only. Not live on the site.</p>
+                <p className="text-sm md:text-base font-medium">Pending stylist preview</p>
+                <p className="text-sm text-yellow-700/90">Visible to admins only. Not live on the site.</p>
               </div>
             </div>
-            <StylistProfile stylistId={stylistId} />
           </div>
+          <StylistProfile stylistId={stylistId} hideInactiveBanner />
         </main>
         <Footer />
       </div>

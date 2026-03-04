@@ -74,13 +74,13 @@ export function HeroSection() {
           <div className="w-full relative z-10 flex flex-col items-center text-center">
             <div className="max-w-[90%] md:max-w-[60%] lg:max-w-[50%]">
               <h1
-                className="font-medium text-white mb-2 text-[1.75rem] md:mb-3 md:text-4xl tracking-tight"
+                className="font-medium text-white mb-2 text-[1.75rem] md:mb-3 md:text-5xl tracking-tight"
                 style={{ lineHeight: "108%" }}
               >
                 Book Your Next<br className="hidden md:block" /> Beauty Appointment.
               </h1>
               <p
-                className="font-light text-white mb-4 text-base lg:text-lg"
+                className="font-extralight text-white mb-4 md:mb-6 text-base lg:text-lg"
                 style={{ lineHeight: "1.3rem" }}
               >
                 Discover trusted service providers in your area
@@ -94,7 +94,7 @@ export function HeroSection() {
                 const q = query.trim()
                 router.push(q ? `/browse?q=${encodeURIComponent(q)}` : "/browse")
               }}
-              className="w-full max-w-[98%] md:max-w-xl flex items-center bg-white rounded-md overflow-hidden"
+              className="w-full max-w-[98%] md:max-w-3xl flex items-center bg-white rounded-md overflow-hidden h-12 md:h-14"
             >
               <span className="pl-4 pr-2 text-gray-400 flex-shrink-0">
                 <Search className="w-4 h-4" />
@@ -104,11 +104,11 @@ export function HeroSection() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="search east london braider..."
-                className="flex-1 py-3.5 pr-2 text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+                className="flex-1 h-full pr-2 text-base text-gray-800 placeholder-gray-400 bg-transparent outline-none"
               />
               <button
                 type="submit"
-                className="bg-red-600 hover:bg-red-700 transition-colors h-full px-4 py-3.5 flex items-center justify-center flex-shrink-0"
+                className="bg-red-600 hover:bg-red-700 transition-colors h-full px-4 flex items-center justify-center flex-shrink-0"
               >
                 <ArrowUpRight className="w-5 h-5 text-white" />
               </button>

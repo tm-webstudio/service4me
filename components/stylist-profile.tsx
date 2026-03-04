@@ -68,9 +68,10 @@ const defaultHours = {
 
 interface StylistProfileProps {
   stylistId: string
+  hideInactiveBanner?: boolean
 }
 
-export function StylistProfile({ stylistId }: StylistProfileProps) {
+export function StylistProfile({ stylistId, hideInactiveBanner = false }: StylistProfileProps) {
   const { user } = useAuth()
   const { stylist, loading, error, refetch: refetchStylist } = useStylist(stylistId)
   const { services, loading: servicesLoading, error: servicesError, formatDuration } = useStylistServices(stylist?.id)
@@ -311,7 +312,7 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
       <MapStylesImport />
 
       {/* Inactive Profile Notice */}
-      {!stylist.is_active && (
+      {!stylist.is_active && !hideInactiveBanner && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-yellow-800 font-medium">
             This stylist profile is currently inactive and may not appear in search results.
@@ -402,6 +403,26 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     />
                   ))}
                 </div>
+                {/* Mobile: save/share buttons on carousel */}
+                <div className="absolute top-3 right-3 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleSave}
+                    disabled={savingFavorite || !isAuthenticated}
+                    title={!isAuthenticated ? "Sign in to save stylists" : isFavorite ? "Remove from saved" : "Save stylist"}
+                    className="bg-white/80 backdrop-blur-sm border-white/50"
+                  >
+                    {savingFavorite ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Heart className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+                    )}
+                  </Button>
+                  <Button variant="outline" size="icon" className="bg-white/80 backdrop-blur-sm border-white/50">
+                    <Share className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -409,10 +430,24 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           {/* Business Info */}
           <div>
             {/* Rating, business name and action buttons - all in one container */}
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1 min-w-0">
-                {/* Mobile: Rating above business name */}
-                <div className="flex items-center mb-1 md:hidden">
+            <div className="relative mb-2">
+              {/* Mobile: name left, rating right */}
+              <div className="flex items-start justify-between md:block">
+                <h1 className="text-xl md:text-2xl font-medium text-gray-900 flex-1 min-w-0 md:pr-24">
+                  {displayData.businessName}
+                  {/* Desktop: rating inline after name */}
+                  <span className="hidden md:inline-flex items-center ml-3 align-middle">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium text-gray-700 ml-1 text-sm">
+                      {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
+                    </span>
+                    <span className="text-gray-500 ml-1 text-sm">
+                      ({stylist.review_count || 0})
+                    </span>
+                  </span>
+                </h1>
+                {/* Mobile: rating pinned right */}
+                <div className="flex items-center md:hidden ml-3 mt-1 flex-shrink-0">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium text-gray-700 ml-1 text-sm">
                     {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
@@ -421,24 +456,9 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
                     ({stylist.review_count || 0})
                   </span>
                 </div>
-
-                {/* Desktop: Business name and rating side by side */}
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl md:text-2xl font-medium text-gray-900">{displayData.businessName}</h1>
-
-                  {/* Desktop: Rating to the right of business name */}
-                  <div className="hidden md:flex items-center">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium text-gray-700 ml-1 text-sm">
-                      {stylist.average_rating > 0 ? stylist.average_rating.toFixed(1) : "New"}
-                    </span>
-                    <span className="text-gray-500 ml-1 text-sm">
-                      ({stylist.review_count || 0})
-                    </span>
-                  </div>
-                </div>
               </div>
-              <div className="flex space-x-2 flex-shrink-0 ml-2">
+              {/* Desktop: save/share top-right */}
+              <div className="hidden md:flex absolute top-0 right-0 gap-2">
                 <Button
                   variant="outline"
                   size="icon"
@@ -542,20 +562,6 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
           <div>
             <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
 
-            {/* Additional services badges */}
-            {stylist.additional_services && stylist.additional_services.length > 0 && (
-              <div className="flex flex-col gap-3 mb-6">
-                <h3 className="text-xs font-normal text-gray-600">Also Offers...</h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  {stylist.additional_services.map((service, index) => (
-                    <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
-                      {service}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Book Now Button and Instagram */}
             <div className="flex items-center space-x-3">
               {stylist.booking_link ? (
@@ -595,7 +601,19 @@ export function StylistProfile({ stylistId }: StylistProfileProps) {
 
           {/* Services & Pricing */}
           <div className="space-y-4 pt-6 w-full sm:w-1/2">
-            <h2 className="text-base font-medium text-gray-900">Services & Pricing</h2>
+            <div>
+              <h2 className="text-base font-medium text-gray-900">Services & Pricing</h2>
+              {stylist.additional_services && stylist.additional_services.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <span className="text-xs text-gray-500">Additional services:</span>
+                  {stylist.additional_services.map((service, index) => (
+                    <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
+                      {service}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {servicesLoading ? (
               <div className="grid gap-4">
                 {[1, 2, 3].map((i) => (

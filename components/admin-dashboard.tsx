@@ -131,12 +131,12 @@ export function AdminDashboard() {
     }
   }, [])
 
-  // Load stylists when component mounts or when manage tab is accessed
+  // Load all stylists on mount and when manage tab is accessed
   useEffect(() => {
-    if (activeTab === 'manage' && !hasFetchedStylists) {
+    if (!hasFetchedStylists) {
       fetchAllStylists()
     }
-  }, [activeTab, hasFetchedStylists, fetchAllStylists])
+  }, [hasFetchedStylists, fetchAllStylists])
 
   // Filter stylists based on search, status, and service type
   const filteredStylists = allStylists.filter(stylist => {
