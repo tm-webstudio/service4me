@@ -494,7 +494,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
             {/* Mobile Layout - Location and type inline */}
             <div className="flex items-center sm:hidden text-sm mb-4 flex-wrap gap-y-1">
-              <div className="flex items-center text-gray-700">
+              <div className="flex items-center text-gray-800">
                 <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
                 <span className="truncate">{displayData.location}</span>
               </div>
@@ -511,7 +511,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
             {/* Desktop Layout - Location and features row with bullets */}
             <div className="hidden sm:flex items-center mb-4 text-sm flex-wrap gap-y-1">
-              <div className="flex items-center text-gray-700">
+              <div className="flex items-center text-gray-800">
                 <MapPin className="w-4 h-4 mr-1.5" />
                 <span>{displayData.location}</span>
               </div>
@@ -529,7 +529,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
+            <p className="text-gray-800 leading-relaxed mb-6 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
 
             {/* Mobile: Mobile & Same Day Appointments above Book Now */}
             {(stylist.accepts_mobile || stylist.accepts_same_day) && (
@@ -648,7 +648,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                         )}
                         <div className="flex-1 flex flex-col justify-between min-h-[64px]">
                           <h3 className="font-medium text-sm">{service.name}</h3>
-                          <div className="flex items-center text-gray-700 text-sm">
+                          <div className="flex items-center text-gray-800 text-sm">
                             <Clock className="w-4 h-4 mr-1.5" />
                             <span>{service.duration}</span>
                           </div>
