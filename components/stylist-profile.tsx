@@ -479,7 +479,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             </div>
 
             {/* Specialist badge and experience */}
-            <div className="flex flex-row items-center gap-2 sm:gap-3 mb-4">
+            <div className="flex flex-row items-center gap-2 sm:gap-3 mb-2">
               <SpecialistBadge specialty={displayData.expertise} />
               {stylist.year_started && (
                 <>
@@ -749,7 +749,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             <CardHeader className="p-4 sm:p-5 pb-4">
               <CardTitle className="text-base font-medium">Contact</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-5 pt-0 space-y-4">
+            <CardContent className="p-4 sm:p-5 pt-0 sm:pt-0 space-y-4">
               {stylist.phone && (
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 mr-3 text-gray-600" />
