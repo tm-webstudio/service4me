@@ -484,7 +484,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {stylist.year_started && (
                 <>
                   <span className="text-gray-400">•</span>
-                  <div className="flex items-center text-gray-600 text-sm">
+                  <div className="flex items-center text-gray-500 text-sm">
                     <Award className="w-4 h-4 mr-1.5" />
                     <span>{displayData.experience} experience</span>
                   </div>
@@ -492,34 +492,33 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               )}
             </div>
 
-            {/* Mobile Layout - Location and features grid */}
-            <div className="flex flex-col sm:hidden mb-4">
-
-              {/* 2x2 Grid for location and features */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center text-gray-600 text-sm">
-                  <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                  <span className="truncate">{displayData.location}</span>
-                </div>
-                {stylist.business_type && (
-                  <div className="flex items-center text-gray-600 text-sm">
+            {/* Mobile Layout - Location and type inline */}
+            <div className="flex items-center sm:hidden text-sm mb-4 flex-wrap gap-y-1">
+              <div className="flex items-center text-gray-600">
+                <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                <span className="truncate">{displayData.location}</span>
+              </div>
+              {stylist.business_type && (
+                <>
+                  <span className="mx-2 text-gray-400">•</span>
+                  <div className="flex items-center text-gray-500">
                     <Briefcase className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="capitalize truncate">{stylist.business_type.replace(/-/g, ' ')}</span>
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
 
             {/* Desktop Layout - Location and features row with bullets */}
-            <div className="hidden sm:flex items-center text-gray-600 mb-4 text-sm flex-wrap gap-y-1">
-              <div className="flex items-center">
+            <div className="hidden sm:flex items-center mb-4 text-sm flex-wrap gap-y-1">
+              <div className="flex items-center text-gray-600">
                 <MapPin className="w-4 h-4 mr-1.5" />
                 <span>{displayData.location}</span>
               </div>
               {stylist.business_type && (
                 <>
                   <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center">
+                  <div className="flex items-center text-gray-500">
                     <Briefcase className="w-4 h-4 mr-1.5" />
                     <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
                   </div>
@@ -536,13 +535,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             {(stylist.accepts_mobile || stylist.accepts_same_day) && (
               <div className="flex flex-row gap-x-4 mb-2.5">
                 {stylist.accepts_mobile && (
-                  <div className="flex items-center text-gray-600 text-sm min-w-0">
+                  <div className="flex items-center text-gray-500 text-sm min-w-0">
                     <Car className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Mobile Appointments</span>
                   </div>
                 )}
                 {stylist.accepts_same_day && (
-                  <div className="flex items-center text-gray-600 text-sm min-w-0">
+                  <div className="flex items-center text-gray-500 text-sm min-w-0">
                     <Clock className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Same Day Appointments</span>
                   </div>
