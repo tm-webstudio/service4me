@@ -238,7 +238,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
         name: specialty,
         price: getHourlyRate() + (index * 20),
         duration: "2-3 hours",
-        image: "/placeholder.svg?height=200&width=300",
+        image: null,
         id: `fallback-${index}`
       }))
     }
@@ -249,14 +249,14 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
         name: "Hair Styling",
         price: getHourlyRate(),
         duration: "1-2 hours",
-        image: "/placeholder.svg?height=200&width=300",
+        image: null,
         id: 'fallback-1'
       },
       {
         name: "Hair Care",
         price: getHourlyRate() + 20,
         duration: "2-3 hours",
-        image: "/placeholder.svg?height=200&width=300",
+        image: null,
         id: 'fallback-2'
       }
     ]
@@ -308,7 +308,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   }
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-4">
       <MapStylesImport />
 
       {/* Inactive Profile Notice */}
@@ -322,7 +322,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-2">
           {/* Gallery */}
           <div className="relative">
             <Badge className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 z-10">
@@ -529,19 +529,19 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-6 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
+            <p className="text-gray-700 leading-relaxed mb-4 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
 
             {/* Mobile: Mobile & Same Day Appointments above Book Now */}
             {(stylist.accepts_mobile || stylist.accepts_same_day) && (
-              <div className="flex flex-row gap-x-4 mb-2.5">
+              <div className="flex flex-row gap-x-3 mb-2.5">
                 {stylist.accepts_mobile && (
-                  <div className="flex items-center text-gray-500 text-sm min-w-0">
+                  <div className="flex items-center text-gray-500 text-[13px] min-w-0">
                     <Car className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Mobile Appointments</span>
                   </div>
                 )}
                 {stylist.accepts_same_day && (
-                  <div className="flex items-center text-gray-500 text-sm min-w-0">
+                  <div className="flex items-center text-gray-500 text-[13px] min-w-0">
                     <Clock className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Same Day Appointments</span>
                   </div>
@@ -633,18 +633,20 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               <div className="grid gap-4">
                 {displayData.services.map((service, index) => (
                   <Card key={service.id || index}>
-                    <CardContent className="p-2.5">
+                    <CardContent className="p-3">
                       <div className="flex items-stretch space-x-3">
                         {service.image && (
-                          <img
-                            src={service.image}
-                            alt={service.name}
-                            className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.style.display = 'none'
-                            }}
-                          />
+                          <div className="w-16 h-16 flex-shrink-0">
+                            <img
+                              src={service.image}
+                              alt={service.name}
+                              className="w-16 h-16 object-cover rounded-lg"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                if (target.parentElement) target.parentElement.style.display = 'none'
+                              }}
+                            />
+                          </div>
                         )}
                         <div className="flex-1 flex flex-col justify-between min-h-[64px]">
                           <h3 className="font-medium text-sm">{service.name}</h3>
