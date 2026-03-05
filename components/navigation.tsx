@@ -50,6 +50,7 @@ export function Navigation() {
   const locationsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const navRef = useRef<HTMLElement>(null)
   const [menuTopPx, setMenuTopPx] = useState(56)
+  const scrollYRef = useRef(0)
 
   const messages = [
     "Onboarding London Hair Stylists. Apply Now",
@@ -145,32 +146,22 @@ export function Navigation() {
     }
   }, [])
 
-  // Measure nav bottom to position menu correctly (accounts for announcement banner)
-  useEffect(() => {
-    if (isOpen && navRef.current) {
-      setMenuTopPx(navRef.current.getBoundingClientRect().bottom)
-    }
-  }, [isOpen])
-
-  // Prevent body scroll when menu is open
+  // Prevent body scroll when menu is open, preserving scroll position
   useEffect(() => {
     if (isOpen) {
+      scrollYRef.current = window.scrollY
       document.body.style.overflow = "hidden"
       document.body.style.position = "fixed"
       document.body.style.width = "100%"
-      document.body.style.top = "0"
-    } else {
-      document.body.style.overflow = ""
-      document.body.style.position = ""
-      document.body.style.width = ""
-      document.body.style.top = ""
-    }
+      document.body.style.top = `-${scrollYRef.current}px`
 
-    return () => {
-      document.body.style.overflow = ""
-      document.body.style.position = ""
-      document.body.style.width = ""
-      document.body.style.top = ""
+      return () => {
+        document.body.style.overflow = ""
+        document.body.style.position = ""
+        document.body.style.width = ""
+        document.body.style.top = ""
+        window.scrollTo(0, scrollYRef.current)
+      }
     }
   }, [isOpen])
 
@@ -379,7 +370,12 @@ export function Navigation() {
                 variant="outline"
                 size="sm"
                 className="border-gray-300 bg-transparent"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                  if (!isOpen && navRef.current) {
+                    setMenuTopPx(navRef.current.getBoundingClientRect().bottom)
+                  }
+                  setIsOpen(!isOpen)
+                }}
               >
                 {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
