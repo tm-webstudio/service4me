@@ -195,6 +195,10 @@ const POSTCODE_AREAS: PostcodeArea[] = [
   { code: 'RM8', area: 'Becontree Heath', region: 'East London' },
   { code: 'RM9', area: 'Dagenham', region: 'East London' },
   { code: 'RM10', area: 'Dagenham', region: 'East London' },
+  { code: 'RM11', area: 'Hornchurch', region: 'East London' },
+  { code: 'RM12', area: 'Hornchurch', region: 'East London' },
+  { code: 'RM13', area: 'Rainham', region: 'East London' },
+  { code: 'RM14', area: 'Upminster', region: 'East London' },
   { code: 'SM1', area: 'Sutton', region: 'South London' },
   { code: 'SM2', area: 'Sutton', region: 'South London' },
   { code: 'SM3', area: 'Cheam', region: 'South London' },
@@ -289,8 +293,8 @@ export function postcodeToAreaName(postcode: string): string {
     return broadMatch.area
   }
   
-  // If no match found, return the postcode itself
-  return postcode
+  // If no match found, return just the outward code (e.g. "RM13") not the full postcode
+  return postcodeArea || postcode
 }
 
 /**

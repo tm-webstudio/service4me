@@ -430,7 +430,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           {/* Business Info */}
           <div>
             {/* Rating, business name and action buttons - all in one container */}
-            <div className="relative mb-2">
+            <div className="relative mb-1.5">
               {/* Mobile: name left, rating right */}
               <div className="flex items-start justify-between md:block">
                 <h1 className="text-xl md:text-2xl font-medium text-gray-900 flex-1 min-w-0 md:pr-24">
@@ -590,16 +590,6 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           <div className="space-y-4 pt-6 w-full sm:w-1/2">
             <div>
               <h2 className="text-base font-medium text-gray-900">Services & Pricing</h2>
-              {stylist.additional_services && stylist.additional_services.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <span className="text-xs text-gray-500">Additional services:</span>
-                  {stylist.additional_services.map((service, index) => (
-                    <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
-                      {service}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
             {servicesLoading ? (
               <div className="grid gap-4">
@@ -661,6 +651,16 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                       </div>
                     </CardContent>
                   </Card>
+                ))}
+              </div>
+            )}
+            {stylist.additional_services && stylist.additional_services.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-gray-500">Additional services:</span>
+                {stylist.additional_services.map((service, index) => (
+                  <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
+                    {service}
+                  </div>
                 ))}
               </div>
             )}
