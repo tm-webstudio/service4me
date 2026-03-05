@@ -48,6 +48,8 @@ export function Navigation() {
 
   const browseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const locationsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const navRef = useRef<HTMLElement>(null)
+  const [menuTopPx, setMenuTopPx] = useState(56)
 
   const messages = [
     "Onboarding London Hair Stylists. Apply Now",
@@ -143,6 +145,13 @@ export function Navigation() {
     }
   }, [])
 
+  // Measure nav bottom to position menu correctly (accounts for announcement banner)
+  useEffect(() => {
+    if (isOpen && navRef.current) {
+      setMenuTopPx(navRef.current.getBoundingClientRect().bottom)
+    }
+  }, [isOpen])
+
   // Prevent body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
@@ -196,7 +205,7 @@ export function Navigation() {
         </div>
       </div>
 
-      <nav className="border-b bg-white sticky top-0 z-50">
+      <nav ref={navRef} className="border-b bg-white sticky top-0 z-50">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto] lg:grid-cols-[1fr,auto,1fr] items-center h-14 md:h-16 gap-6 md:gap-8 lg:gap-10">
             {/* Logo */}
@@ -370,184 +379,159 @@ export function Navigation() {
                 variant="outline"
                 size="sm"
                 className="border-gray-300 bg-transparent"
-                onClick={() => setIsOpen(true)}
+                onClick={() => setIsOpen(!isOpen)}
               >
-                <Menu className="w-5 h-5" />
+                {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
-
-              {/* Custom Mobile Menu Overlay - iPhone Optimized */}
-              {isOpen && (
-                <div className="fixed inset-0 z-[100] md:hidden">
-                  {/* Backdrop */}
-                  <div
-                    className="fixed inset-0 bg-black/50 transition-opacity duration-300"
-                    onClick={() => setIsOpen(false)}
-                  />
-
-                  {/* Menu Panel */}
-                  <div
-                    className={`fixed top-0 right-0 bottom-0 w-[300px] sm:w-[400px] bg-white shadow-lg transform transition-transform duration-300 ease-out ${
-                      isOpen ? "translate-x-0" : "translate-x-full"
-                    }`}
-                    style={{
-                      height: "100svh",
-                      maxHeight: "100svh",
-                      display: "flex",
-                      flexDirection: "column",
-                      position: "fixed",
-                    } as React.CSSProperties}
-                  >
-                    {/* Header - Fixed at top */}
-                    <div className="flex items-center justify-between pl-6 pr-4 py-4 border-b bg-white flex-shrink-0">
-                      <span className="font-bold text-gray-900 tracking-tight text-xl">
-                        S<span className="text-red-600">4</span>M
-                      </span>
-                      <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="p-2">
-                        <X className="w-5 h-5" />
-                      </Button>
-                    </div>
-
-                    {/* Scrollable Content Area */}
-                    <div
-                      className="flex-1 overflow-y-auto p-6 space-y-4 mobile-menu-scroll"
-                      style={{
-                        WebkitOverflowScrolling: "touch",
-                      }}
-                    >
-                      {/* User Profile Section (Mobile) */}
-                      {user && (
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                              <User className="w-5 h-5 text-red-600" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{user.fullName || user.email}</div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
-                              <div className="text-sm text-blue-600 capitalize">{user.role}</div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {/* Browse Stylists Collapsible */}
-                      <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
-                          Browse Stylists
-                          <ChevronDown
-                            className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
-                              browseStylistsOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-1">
-                          <div className="pl-1 space-y-3">
-                            {categories.map((category) => (
-                              <Link
-                                key={category.name}
-                                href={`/browse?category=${encodeURIComponent(category.name)}`}
-                                className="flex items-center space-x-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
-                                onClick={() => setIsOpen(false)}
-                              >
-                                <div className="w-10 h-12 rounded-md overflow-hidden flex-shrink-0">
-                                  <Image
-                                    src={category.image || "/placeholder.svg"}
-                                    alt={category.name}
-                                    width={40}
-                                    height={50}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900">{category.name}</div>
-                                  <div className="text-xs text-gray-500">{category.description}</div>
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-
-                      {/* Locations Collapsible */}
-                      <Collapsible open={londonOpen} onOpenChange={setLondonOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
-                          Locations
-                          <ChevronDown
-                            className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
-                              londonOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-2">
-                          <div className="pl-2 pt-2 space-y-3">
-                            {londonAreas.map((area) => (
-                              <Link
-                                key={area}
-                                href={`/browse?location=${encodeURIComponent(area)}`}
-                                className="block text-gray-700 hover:text-red-600 transition-colors py-1"
-                                onClick={() => setIsOpen(false)}
-                              >
-                                {area}
-                              </Link>
-                            ))}
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-
-                      {/* Additional spacing at bottom for better scrolling */}
-                      <div className="h-4"></div>
-                    </div>
-
-                    {/* Bottom CTA Section - Fixed at bottom */}
-                    <div className="border-t p-6 bg-white flex-shrink-0">
-                      {user ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-center bg-transparent text-[0.85rem] mb-3"
-                            onClick={handleDashboard}
-                          >
-                            <LayoutDashboard className="w-4 h-4 mr-1" />
-                            Dashboard
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-center bg-transparent text-[0.85rem] mb-4"
-                            onClick={handleSignOut}
-                          >
-                            <LogOut className="w-4 h-4 mr-1" />
-                            Sign Out
-                          </Button>
-                        </>
-                      ) : (
-                        <Link href="/login">
-                          <Button
-                            variant="outline"
-                            className="w-full justify-center bg-transparent mb-3 text-[0.85rem]"
-                            onClick={() => setIsOpen(false)}
-                          >
-                            <User className="w-4 h-4" />
-                            Sign In
-                          </Button>
-                        </Link>
-                      )}
-                      {(!user || user.role !== 'stylist') && (
-                        <Link href="/list-business">
-                          <Button
-                            className="w-full bg-red-600 hover:bg-red-700 text-[0.825rem]"
-                            onClick={() => setIsOpen(false)}
-                          >
-                            List Your Business
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </nav>
+
+      {/* Mobile Menu Panel - outside nav to avoid sticky containing block constraints */}
+      {isOpen && (
+        <div
+          className="fixed left-0 right-0 bottom-0 bg-white shadow-lg z-[100] md:hidden"
+          style={{
+            top: `${menuTopPx}px`,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Scrollable Content Area */}
+          <div
+            className="flex-1 overflow-y-auto p-6 space-y-4 mobile-menu-scroll"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {/* User Profile Section (Mobile) */}
+            {user && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{user.fullName || user.email}</div>
+                    <div className="text-sm text-gray-500">{user.email}</div>
+                    <div className="text-sm text-blue-600 capitalize">{user.role}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Browse Stylists Collapsible */}
+            <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen}>
+              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
+                Browse Stylists
+                <ChevronDown
+                  className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
+                    browseStylistsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-1">
+                <div className="flex flex-col gap-1 max-w-[250px]">
+                  {categories.map((category) => (
+                    <Link
+                      key={category.name}
+                      href={`/browse?category=${encodeURIComponent(category.name)}`}
+                      className="flex items-center space-x-2 py-2 px-2 hover:bg-gray-50 rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="w-10 h-12 rounded-md overflow-hidden flex-shrink-0">
+                        <Image
+                          src={category.image || "/placeholder.svg"}
+                          alt={category.name}
+                          width={40}
+                          height={50}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 text-sm leading-tight">{category.name}</div>
+                        <div className="text-xs text-gray-500 leading-tight mt-0.5 line-clamp-2">{category.description}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Locations Collapsible */}
+            <Collapsible open={londonOpen} onOpenChange={setLondonOpen}>
+              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
+                Locations
+                <ChevronDown
+                  className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
+                    londonOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="pl-2 pt-2 space-y-3">
+                  {londonAreas.map((area) => (
+                    <Link
+                      key={area}
+                      href={`/browse?location=${encodeURIComponent(area)}`}
+                      className="block text-gray-700 hover:text-red-600 transition-colors py-1"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {area}
+                    </Link>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            <div className="h-4"></div>
+          </div>
+
+          {/* Bottom CTA Section */}
+          <div className="border-t p-6 bg-white flex-shrink-0">
+            {user ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full justify-center bg-transparent text-[0.85rem] mb-3"
+                  onClick={handleDashboard}
+                >
+                  <LayoutDashboard className="w-4 h-4 mr-1" />
+                  Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-center bg-transparent text-[0.85rem] mb-4"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="w-4 h-4 mr-1" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Link href="/login">
+                <Button
+                  variant="outline"
+                  className="w-full justify-center bg-transparent mb-3 text-[0.85rem]"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <User className="w-4 h-4" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
+            {(!user || user.role !== 'stylist') && (
+              <Link href="/list-business">
+                <Button
+                  className="w-full bg-red-600 hover:bg-red-700 text-[0.825rem]"
+                  onClick={() => setIsOpen(false)}
+                >
+                  List Your Business
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
