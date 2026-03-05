@@ -239,7 +239,7 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
 
                   <div className="flex items-center text-gray-600 mb-1">
                     <MapPin className="w-4 h-4 mr-1" />
-                    <span className="text-sm">{location}</span>
+                    <span className="text-[13px] md:text-sm">{location}</span>
                   </div>
 
                   <div>

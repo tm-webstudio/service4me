@@ -484,7 +484,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {stylist.year_started && (
                 <>
                   <span className="text-gray-400">•</span>
-                  <div className="flex items-center text-gray-500 text-sm">
+                  <div className="flex items-center text-gray-500 text-[13px]">
                     <Award className="w-4 h-4 mr-1.5" />
                     <span>{displayData.experience} experience</span>
                   </div>
@@ -501,7 +501,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {stylist.business_type && (
                 <>
                   <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center text-gray-500">
+                  <div className="flex items-center text-gray-500 text-[13px]">
                     <Briefcase className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="capitalize truncate">{stylist.business_type.replace(/-/g, ' ')}</span>
                   </div>
@@ -518,7 +518,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {stylist.business_type && (
                 <>
                   <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center text-gray-500">
+                  <div className="flex items-center text-gray-500 text-[13px]">
                     <Briefcase className="w-4 h-4 mr-1.5" />
                     <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
                   </div>
