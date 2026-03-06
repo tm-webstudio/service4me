@@ -247,11 +247,11 @@ export function ReviewsDisplay({
       <Card>
         <CardContent className="pt-8 pb-8 md:pt-16 md:pb-16">
           <EmptyState
-            icon={<MessageSquare className="h-8 w-8 text-gray-400" />}
+            icon={<MessageSquare className="h-6 w-6 text-gray-400" />}
             title="No reviews yet"
             description="Be the first to leave a review for this stylist."
             className="py-0"
-            titleClassName="text-base font-medium text-gray-900"
+            titleClassName="text-sm font-medium text-gray-900"
             descriptionClassName="text-sm text-gray-500"
             action={onLeaveReview ? (
               <SmallCtaButton onClick={onLeaveReview} variant="outline">

@@ -430,10 +430,10 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           {/* Business Info */}
           <div>
             {/* Rating, business name and action buttons - all in one container */}
-            <div className="relative mb-1.5">
+            <div className="relative mb-1">
               {/* Mobile: name left, rating right */}
               <div className="flex items-start justify-between md:block">
-                <h1 className="text-xl md:text-2xl font-medium text-gray-900 flex-1 min-w-0 md:pr-24">
+                <h1 className="text-[21px] md:text-2xl font-medium text-gray-900 flex-1 min-w-0 md:pr-24">
                   {displayData.businessName}
                   {/* Desktop: rating inline after name */}
                   <span className="hidden md:inline-flex items-center ml-3 align-middle">
@@ -484,7 +484,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {stylist.year_started && (
                 <>
                   <span className="text-gray-400">•</span>
-                  <div className="flex items-center text-gray-500 text-[13px]">
+                  <div className="flex items-center text-gray-500 text-sm">
                     <Award className="w-4 h-4 mr-1.5" />
                     <span>{displayData.experience} experience</span>
                   </div>
@@ -501,7 +501,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {stylist.business_type && (
                 <>
                   <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center text-gray-500 text-[13px]">
+                  <div className="flex items-center text-gray-500 text-sm">
                     <Briefcase className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="capitalize truncate">{stylist.business_type.replace(/-/g, ' ')}</span>
                   </div>
@@ -518,7 +518,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {stylist.business_type && (
                 <>
                   <span className="mx-2 text-gray-400">•</span>
-                  <div className="flex items-center text-gray-500 text-[13px]">
+                  <div className="flex items-center text-gray-500 text-sm">
                     <Briefcase className="w-4 h-4 mr-1.5" />
                     <span className="capitalize">{stylist.business_type.replace(/-/g, ' ')}</span>
                   </div>
@@ -667,7 +667,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           </div>
 
           {/* Reviews */}
-          <div className="pt-8 space-y-4 w-full">
+          <div className="pt-6 space-y-4 w-full">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-medium text-gray-900">Reviews</h2>
               {(!user || user?.role === 'client') && !showReviewForm && !editingReview && stylist.review_count > 0 && (

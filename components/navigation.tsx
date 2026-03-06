@@ -402,7 +402,7 @@ export function Navigation() {
 
             {/* Browse Stylists Collapsible */}
             <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen} className="border-b border-gray-200">
-              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-4 text-base">
+              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-5 text-base">
                 Browse Stylists
                 <ChevronDown
                   className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
@@ -440,7 +440,7 @@ export function Navigation() {
 
             {/* Locations Collapsible */}
             <Collapsible open={londonOpen} onOpenChange={setLondonOpen} className="border-b border-gray-200">
-              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-4 text-base">
+              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-5 text-base">
                 Locations
                 <ChevronDown
                   className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
@@ -471,7 +471,7 @@ export function Navigation() {
           <div className="border-t pt-3 px-6 pb-4 bg-white flex-shrink-0">
             {user ? (
               <>
-                <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                <div className="bg-gray-50 rounded-lg p-3 mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                       <User className="w-5 h-5 text-red-600" />
