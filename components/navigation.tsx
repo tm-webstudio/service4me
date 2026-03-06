@@ -396,28 +396,13 @@ export function Navigation() {
         >
           {/* Scrollable Content Area */}
           <div
-            className="flex-1 overflow-y-auto p-6 space-y-4 mobile-menu-scroll"
+            className="flex-1 overflow-y-auto px-6 py-4 space-y-0 mobile-menu-scroll"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            {/* User Profile Section (Mobile) */}
-            {user && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{user.fullName || user.email}</div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                    <div className="text-sm text-blue-600 capitalize">{user.role}</div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Browse Stylists Collapsible */}
-            <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
+            <Collapsible open={browseStylistsOpen} onOpenChange={setBrowseStylistsOpen} className="border-b border-gray-200">
+              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-4 text-base">
                 Browse Stylists
                 <ChevronDown
                   className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
@@ -454,8 +439,8 @@ export function Navigation() {
             </Collapsible>
 
             {/* Locations Collapsible */}
-            <Collapsible open={londonOpen} onOpenChange={setLondonOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-2 text-base">
+            <Collapsible open={londonOpen} onOpenChange={setLondonOpen} className="border-b border-gray-200">
+              <CollapsibleTrigger className="flex items-center justify-between w-full font-medium text-gray-900 hover:text-red-600 transition-colors py-4 text-base">
                 Locations
                 <ChevronDown
                   className={`w-4 h-4 text-red-600 transition-transform duration-200 ${
@@ -483,20 +468,31 @@ export function Navigation() {
           </div>
 
           {/* Bottom CTA Section */}
-          <div className="border-t p-6 bg-white flex-shrink-0">
+          <div className="border-t pt-3 px-6 pb-4 bg-white flex-shrink-0">
             {user ? (
               <>
+                <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">{user.fullName || user.email}</div>
+                      <div className="text-sm text-gray-500">{user.email}</div>
+                      <div className="text-sm text-blue-600 capitalize">{user.role}</div>
+                    </div>
+                  </div>
+                </div>
                 <Button
                   variant="outline"
-                  className="w-full justify-center bg-transparent text-[0.85rem] mb-3"
+                  className="w-full justify-center bg-transparent text-[0.85rem] mb-2"
                   onClick={handleDashboard}
                 >
                   <LayoutDashboard className="w-4 h-4 mr-1" />
                   Dashboard
                 </Button>
                 <Button
-                  variant="outline"
-                  className="w-full justify-center bg-transparent text-[0.85rem] mb-4"
+                  className="w-full justify-center bg-red-600 hover:bg-red-700 text-white text-[0.85rem] mb-2"
                   onClick={handleSignOut}
                 >
                   <LogOut className="w-4 h-4 mr-1" />
@@ -515,7 +511,7 @@ export function Navigation() {
                 </Button>
               </Link>
             )}
-            {(!user || user.role !== 'stylist') && (
+            {!user && (
               <Link href="/list-business">
                 <Button
                   className="w-full bg-red-600 hover:bg-red-700 text-[0.825rem]"
