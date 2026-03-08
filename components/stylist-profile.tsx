@@ -322,7 +322,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-2">
+        <div className="lg:col-span-2 space-y-2 md:space-y-3 md:mb-2">
           {/* Gallery */}
           <div className="relative">
             <Badge className="absolute top-4 left-4 bg-red-600 hover:bg-red-700 z-10">
@@ -433,7 +433,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             <div className="relative mb-1">
               {/* Mobile: name left, rating right */}
               <div className="flex items-start justify-between md:block">
-                <h1 className="text-[21px] md:text-2xl font-medium text-gray-900 flex-1 min-w-0 md:pr-24">
+                <h1 className="text-[21px] md:text-[1.75rem] font-medium text-gray-900 flex-1 min-w-0 md:pr-24">
                   {displayData.businessName}
                   {/* Desktop: rating inline after name */}
                   <span className="hidden md:inline-flex items-center ml-3 align-middle">
@@ -529,19 +529,19 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-4 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
+            <p className="text-gray-700 leading-relaxed mb-4 text-sm md:text-[0.9375rem] max-w-2xl whitespace-pre-line">{displayData.bio}</p>
 
             {/* Mobile: Mobile & Same Day Appointments above Book Now */}
             {(stylist.accepts_mobile || stylist.accepts_same_day) && (
               <div className="flex flex-row gap-x-3 mb-2.5">
                 {stylist.accepts_mobile && (
-                  <div className="flex items-center text-gray-500 text-[13px] min-w-0">
+                  <div className="flex items-center text-gray-500 text-sm min-w-0">
                     <Car className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Mobile Appointments</span>
                   </div>
                 )}
                 {stylist.accepts_same_day && (
-                  <div className="flex items-center text-gray-500 text-[13px] min-w-0">
+                  <div className="flex items-center text-gray-500 text-sm min-w-0">
                     <Clock className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Same Day Appointments</span>
                   </div>
@@ -646,7 +646,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                           </div>
                         </div>
                         <div className="self-stretch flex items-end text-right">
-                          <div className="text-sm font-medium text-gray-700">£{service.price}</div>
+                          <div className="text-sm font-medium text-gray-700"><span className="text-xs font-normal text-gray-500">from </span>£{service.price}</div>
                         </div>
                       </div>
                     </CardContent>
