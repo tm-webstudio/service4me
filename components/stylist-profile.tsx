@@ -232,34 +232,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
       }))
     }
     
-    // Fallback to placeholder services based on specialties if no real services
-    if (stylist.specialties && stylist.specialties.length > 0) {
-      return stylist.specialties.map((specialty, index) => ({
-        name: specialty,
-        price: getHourlyRate() + (index * 20),
-        duration: "2-3 hours",
-        image: null,
-        id: `fallback-${index}`
-      }))
-    }
-
-    // Final fallback
-    return [
-      {
-        name: "Hair Styling",
-        price: getHourlyRate(),
-        duration: "1-2 hours",
-        image: null,
-        id: 'fallback-1'
-      },
-      {
-        name: "Hair Care",
-        price: getHourlyRate() + 20,
-        duration: "2-3 hours",
-        image: null,
-        id: 'fallback-2'
-      }
-    ]
+    return []
   }
 
   // Portfolio images from database
@@ -615,11 +588,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 <p className="text-gray-500 mb-2">Unable to load services</p>
                 <p className="text-sm text-gray-400">Using placeholder services</p>
               </div>
-            ) : displayData.services.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No services available</p>
-              </div>
-            ) : (
+            ) : displayData.services.length === 0 ? null : (
               <div className="grid gap-4">
                 {displayData.services.map((service, index) => (
                   <Card key={service.id || index}>

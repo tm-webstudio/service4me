@@ -91,7 +91,7 @@ export function FeaturedStylists() {
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="flex-none w-[calc((100%-16px)/1.2)] md:w-[calc((100%-64px)/4.5)]"
+                className="flex-none w-[calc((100%-16px)/1.2)] md:w-[calc((100%-32px)/2.8)] xl:w-[calc((100%-64px)/4.6)] 2xl:w-[calc((100%-80px)/5.2)]"
               >
                 <StylistCardSkeleton />
               </div>
@@ -168,7 +168,7 @@ export function FeaturedStylists() {
                 return (
                   <div
                     key={stylist.id}
-                    className="flex-none w-[calc((100%-16px)/1.2)] md:w-[calc((100%-64px)/4.5)]"
+                    className="flex-none w-[calc((100%-16px)/1.2)] md:w-[calc((100%-32px)/2.8)] xl:w-[calc((100%-64px)/4.6)] 2xl:w-[calc((100%-80px)/5.2)]"
                     style={{ scrollSnapAlign: "start" }}
                   >
                     <Card 
@@ -176,7 +176,7 @@ export function FeaturedStylists() {
                       onClick={() => router.push(`/stylist/${stylist.id}`)}
                     >
                       <CardContent className="p-0 h-full">
-                        <div className="relative h-[280px]">
+                        <div className="relative h-[260px]">
                           <img
                             src={getStylistImage(stylist)}
                             alt={businessName}

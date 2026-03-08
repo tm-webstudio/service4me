@@ -202,7 +202,7 @@ export function Navigation() {
             {/* Logo */}
             <div className="flex justify-start">
               <Link href="/" className="flex items-center">
-                <img src="/s4m-logo.svg" alt="S4M" className="h-[22px] w-auto" />
+                <img src="/s4m-logo.svg" alt="S4M" className="h-[22px] md:h-[24px] w-auto" />
               </Link>
             </div>
 
