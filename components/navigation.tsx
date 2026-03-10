@@ -79,6 +79,7 @@ export function Navigation() {
       clearTimeout(browseTimeoutRef.current)
     }
     setShowBrowseMega(true)
+    setShowLocationsMega(false)
   }
 
   const handleBrowseMouseLeave = () => {
@@ -92,6 +93,7 @@ export function Navigation() {
       clearTimeout(locationsTimeoutRef.current)
     }
     setShowLocationsMega(true)
+    setShowBrowseMega(false)
   }
 
   const handleLocationsMouseLeave = () => {
@@ -196,7 +198,7 @@ export function Navigation() {
         </div>
       </div>
 
-      <nav ref={navRef} className="border-b bg-white sticky top-0 z-50">
+      <nav ref={navRef} className="relative border-b bg-white sticky top-0 z-50">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto] lg:grid-cols-[1fr,auto,1fr] items-center h-14 md:h-16 gap-6 md:gap-8 lg:gap-10">
             {/* Logo */}
@@ -208,70 +210,16 @@ export function Navigation() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center md:justify-start lg:justify-center space-x-8 md:col-start-2">
-              {/* Browse Stylists Mega Menu */}
-              <div className="relative" onMouseEnter={handleBrowseMouseEnter} onMouseLeave={handleBrowseMouseLeave}>
+              {/* Browse Stylists Trigger */}
+              <div onMouseEnter={handleBrowseMouseEnter} onMouseLeave={handleBrowseMouseLeave}>
                 <button className="flex items-center text-gray-700 hover:text-red-600 font-medium transition-colors py-4">
                   Browse Stylists
                   <ChevronDown className="w-4 h-4 ml-1 text-red-600" />
                 </button>
-
-                {showBrowseMega && (
-                  <div
-                    className="absolute top-full left-1/2 transform -translate-x-1/2 pt-1 w-[800px] z-50"
-                    onMouseEnter={handleBrowseMouseEnter}
-                    onMouseLeave={handleBrowseMouseLeave}
-                  >
-                    <div className="bg-white border border-gray-200 rounded-b-lg shadow-sm">
-                      <div className="p-6">
-                        <h3 className="font-semibold text-gray-900 text-lg mb-4">Hair Styling Categories</h3>
-                        <div className="grid grid-cols-3 gap-4">
-                          {categories.map((category) => (
-                            <Link
-                              key={category.name}
-                              href={`/browse?category=${encodeURIComponent(category.name)}`}
-                              className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                            >
-                              <div className="w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                                <Image
-                                  src={category.image || "/placeholder.svg"}
-                                  alt={category.name}
-                                  width={64}
-                                  height={80}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="font-medium text-gray-900 group-hover:text-red-600 transition-colors">
-                                  {category.name}
-                                </h3>
-                                <p className="text-sm text-gray-500 mt-1">{category.description}</p>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-100">
-                          <Link
-                            href="/browse"
-                            className="inline-flex items-center text-red-600 hover:text-red-700 font-medium text-sm"
-                          >
-                            View All Stylists
-                            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Locations Mega Menu */}
-              <div
-                className="relative"
-                onMouseEnter={handleLocationsMouseEnter}
-                onMouseLeave={handleLocationsMouseLeave}
-              >
+              <div className="relative" onMouseEnter={handleLocationsMouseEnter} onMouseLeave={handleLocationsMouseLeave}>
                 <button className="flex items-center text-gray-700 hover:text-red-600 font-medium transition-colors py-4">
                   Locations
                   <ChevronDown className="w-4 h-4 ml-1 text-red-600" />
@@ -286,13 +234,13 @@ export function Navigation() {
                     <div className="bg-white border border-gray-200 rounded-b-lg shadow-sm">
                       <div className="p-6">
                         <div className="space-y-4">
-                          <h3 className="font-semibold text-gray-900 text-lg mb-4">London Areas</h3>
+                          <h3 className="font-semibold text-gray-900 text-base mb-4">London Areas</h3>
                           <div className="space-y-2">
                             {londonAreas.map((area) => (
                               <Link
                                 key={area}
                                 href={`/browse?location=${encodeURIComponent(area)}`}
-                                className="block text-gray-700 hover:text-red-600 transition-colors py-2 px-3 rounded-lg hover:bg-gray-50"
+                                className="block text-sm text-gray-700 hover:text-red-600 transition-colors py-2 px-3 rounded-lg hover:bg-gray-50"
                               >
                                 {area}
                               </Link>
@@ -382,6 +330,60 @@ export function Navigation() {
             </div>
           </div>
         </div>
+
+        {/* Browse Stylists Mega Menu Panel */}
+        {showBrowseMega && (
+          <div
+            className="absolute top-full left-0 right-0 z-50"
+            onMouseEnter={handleBrowseMouseEnter}
+            onMouseLeave={handleBrowseMouseLeave}
+          >
+            <div className="bg-white border-t border-gray-200 shadow-lg">
+              <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="py-6">
+                  <h3 className="font-semibold text-gray-900 text-base mb-4">Hair Styling Categories</h3>
+                  <div className="grid grid-cols-3 gap-x-8 gap-y-3 max-w-3xl">
+                    {categories.map((category) => (
+                      <Link
+                        key={category.name}
+                        href={`/browse?category=${encodeURIComponent(category.name)}`}
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="w-[4.5rem] h-[4.5rem] overflow-hidden flex-shrink-0">
+                          <Image
+                            src={category.image || "/placeholder.svg"}
+                            alt={category.name}
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-medium text-gray-900 text-sm group-hover:text-red-600 transition-colors">
+                            {category.name}
+                          </h4>
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{category.description}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <Link
+                      href="/browse"
+                      className="inline-flex items-center text-red-600 hover:text-red-700 font-medium text-sm"
+                    >
+                      View All Stylists
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </nav>
 
       {/* Mobile Menu Panel - outside nav to avoid sticky containing block constraints */}

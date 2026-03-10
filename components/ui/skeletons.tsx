@@ -56,11 +56,12 @@ export function StylistCardSkeleton() {
 // Skeleton for stylist profile header
 export function StylistProfileSkeleton() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-2 md:space-y-3">
       {/* Gallery skeleton */}
       <div className="relative">
+        {/* Verified badge */}
         <div className="absolute top-4 left-4 z-10">
-          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="h-6 w-28 rounded-full" />
         </div>
 
         {/* Desktop Gallery Grid */}
@@ -80,6 +81,8 @@ export function StylistProfileSkeleton() {
             </div>
             <div className="col-span-1 aspect-square relative">
               <Skeleton className="w-full h-full rounded-lg" />
+              {/* Show all photos button */}
+              <Skeleton className="absolute bottom-4 right-4 h-9 w-32 rounded-md" />
             </div>
           </div>
         </div>
@@ -88,76 +91,167 @@ export function StylistProfileSkeleton() {
         <div className="md:hidden relative">
           <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
             <Skeleton className="w-full h-full" />
+            {/* Mobile save/share buttons */}
+            <div className="absolute top-3 right-3 flex gap-2">
+              <Skeleton className="w-9 h-9 rounded-md" />
+              <Skeleton className="w-9 h-9 rounded-md" />
+            </div>
+            {/* Dots */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="w-2 h-2 rounded-full" />
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Business Info skeleton */}
       <div>
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mb-2">
-              <div className="flex items-center mb-2 sm:mb-0">
-                <Skeleton className="w-5 h-5 mr-1 rounded-full" />
-                <Skeleton className="h-4 w-12" />
-                <Skeleton className="h-4 w-8 ml-1" />
-              </div>
-              <div className="flex items-center">
-                <Skeleton className="w-4 h-4 mr-1 rounded-full" />
-                <Skeleton className="h-4 w-20" />
-              </div>
+        {/* Name + rating row */}
+        <div className="relative mb-1">
+          <div className="flex items-start justify-between md:block">
+            <Skeleton className="h-7 md:h-8 w-3/5 md:w-2/3" />
+            {/* Mobile rating */}
+            <div className="flex items-center md:hidden ml-3 mt-1 flex-shrink-0">
+              <Skeleton className="w-4 h-4 rounded-full" />
+              <Skeleton className="h-4 w-8 ml-1" />
+              <Skeleton className="h-4 w-6 ml-1" />
             </div>
-            <div className="flex items-center mb-2">
-              <Skeleton className="w-4 h-4 mr-1 rounded-full" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <Skeleton className="h-6 w-32 rounded-full" />
           </div>
+          {/* Desktop save/share buttons */}
+          <div className="hidden md:flex absolute top-0 right-0 gap-2">
+            <Skeleton className="w-10 h-10 rounded-md" />
+            <Skeleton className="w-10 h-10 rounded-md" />
+          </div>
+        </div>
 
-          <div className="flex space-x-2">
-            <Skeleton className="w-10 h-10 rounded-md" />
-            <Skeleton className="w-10 h-10 rounded-md" />
-          </div>
+        {/* Specialist badge + experience */}
+        <div className="flex items-center gap-2 sm:gap-3 mb-2">
+          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="w-1 h-1 rounded-full" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+
+        {/* Mobile: Location + type */}
+        <div className="flex items-center sm:hidden mb-4">
+          <Skeleton className="w-4 h-4 mr-1.5 rounded-full" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="w-1 h-1 mx-2 rounded-full" />
+          <Skeleton className="w-4 h-4 mr-1.5 rounded-full" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+
+        {/* Desktop: Location + type */}
+        <div className="hidden sm:flex items-center mb-4">
+          <Skeleton className="w-4 h-4 mr-1.5 rounded-full" />
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="w-1 h-1 mx-2 rounded-full" />
+          <Skeleton className="w-4 h-4 mr-1.5 rounded-full" />
+          <Skeleton className="h-4 w-24" />
         </div>
       </div>
 
       {/* Bio skeleton */}
       <div>
         <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-5/6 mb-2" />
-        <Skeleton className="h-4 w-4/5 mb-6" />
+        <Skeleton className="h-4 w-11/12 mb-2" />
+        <Skeleton className="h-4 w-4/5 mb-4" />
 
-        {/* Book Now Button skeleton */}
-        <div className="flex items-center space-x-4">
-          <Skeleton className="h-12 w-full sm:w-2/5 rounded-md" />
-          <Skeleton className="h-12 w-12 rounded-full" />
+        {/* Mobile & Same Day tags */}
+        <div className="flex gap-3 mb-2.5">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+
+        {/* Book Now Button + Instagram */}
+        <div className="flex items-center space-x-3">
+          <Skeleton className="h-11 w-full sm:w-2/5 rounded-md" />
+          <Skeleton className="h-11 w-11 rounded-full flex-shrink-0" />
+        </div>
+      </div>
+
+      {/* Services skeleton */}
+      <div className="space-y-4 pt-6 w-full sm:w-1/2">
+        <Skeleton className="h-5 w-32" />
+        <div className="grid gap-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-3">
+                <div className="flex items-stretch space-x-3">
+                  <Skeleton className="w-16 h-16 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 flex flex-col justify-between min-h-[64px]">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3.5 w-16" />
+                  </div>
+                  <div className="self-stretch flex items-end">
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Additional services tags */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-3.5 w-28" />
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-6 w-20 rounded-sm" />
+          ))}
+        </div>
+      </div>
+
+      {/* Reviews skeleton */}
+      <div className="pt-6 space-y-4 w-full">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+        </div>
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="border rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  <div className="flex mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Skeleton key={star} className="w-3.5 h-3.5 mr-0.5 rounded-full" />
+                    ))}
+                  </div>
+                  <Skeleton className="h-3.5 w-full mb-1.5" />
+                  <Skeleton className="h-3.5 w-5/6" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   )
 }
 
-// Skeleton for services section
+// Skeleton for services section (used inline when services load separately)
 export function ServicesSkeleton() {
   return (
-    <div className="space-y-6 max-w-lg">
-      <Skeleton className="h-6 w-40" />
-      <div className="grid gap-4">
+    <div className="space-y-4 w-full sm:w-1/2">
+      <Skeleton className="h-5 w-32" />
+      <div className="grid gap-3">
         {[1, 2, 3].map((i) => (
           <Card key={i}>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-4">
-                <Skeleton className="w-20 h-20 rounded-lg flex-shrink-0" />
-                <div className="flex-1">
-                  <Skeleton className="h-5 w-3/4 mb-2" />
-                  <div className="flex items-center mb-2">
-                    <Skeleton className="w-4 h-4 mr-1 rounded-full" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
+            <CardContent className="p-3">
+              <div className="flex items-stretch space-x-3">
+                <Skeleton className="w-16 h-16 rounded-lg flex-shrink-0" />
+                <div className="flex-1 flex flex-col justify-between min-h-[64px]">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3.5 w-16" />
                 </div>
-                <div className="text-right">
-                  <Skeleton className="h-5 w-12" />
+                <div className="self-stretch flex items-end">
+                  <Skeleton className="h-4 w-12" />
                 </div>
               </div>
             </CardContent>
@@ -219,37 +313,34 @@ export function ContactCardSkeleton() {
   )
 }
 
-// Skeleton for reviews section
+// Skeleton for reviews section (standalone)
 export function ReviewsSkeleton() {
   return (
-    <div className="mt-12 space-y-6">
+    <div className="pt-6 space-y-4">
       <div className="flex items-center justify-between">
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-10 w-32 rounded-md" />
+        <Skeleton className="h-5 w-16" />
+        <Skeleton className="h-8 w-28 rounded-md" />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <div className="flex items-start space-x-4">
-                <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
-                  <div className="flex items-center mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Skeleton key={star} className="w-4 h-4 mr-1 rounded-full" />
-                    ))}
-                  </div>
-                  <Skeleton className="h-4 w-full mb-1" />
-                  <Skeleton className="h-4 w-5/6 mb-1" />
-                  <Skeleton className="h-4 w-4/5" />
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="border rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
                 </div>
+                <div className="flex mb-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Skeleton key={star} className="w-3.5 h-3.5 mr-0.5 rounded-full" />
+                  ))}
+                </div>
+                <Skeleton className="h-3.5 w-full mb-1.5" />
+                <Skeleton className="h-3.5 w-5/6" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     </div>

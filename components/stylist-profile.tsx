@@ -11,10 +11,8 @@ import { postcodeToAreaName, postcodeToAreaNameWithCode } from "@/lib/postcode-u
 import { StylistLocationMap, MapStylesImport } from "@/components/stylist-location-map"
 import {
   StylistProfileSkeleton,
-  ServicesSkeleton,
   LocationCardSkeleton,
   ContactCardSkeleton,
-  ReviewsSkeleton
 } from "@/components/ui/skeletons"
 import { StarDisplay } from "@/components/ui/star-rating"
 import { ReviewForm } from "@/components/review-form"
@@ -133,13 +131,12 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   // Loading state with skeletons
   if (loading) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-4">
         <MapStylesImport />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Main Content Skeleton */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="lg:col-span-2">
             <StylistProfileSkeleton />
-            <ServicesSkeleton />
           </div>
 
           {/* Sidebar Skeleton */}
@@ -148,9 +145,6 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             <ContactCardSkeleton />
           </div>
         </div>
-
-        {/* Reviews Skeleton */}
-        <ReviewsSkeleton />
       </div>
     )
   }
