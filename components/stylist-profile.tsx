@@ -222,16 +222,19 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   // Get real services from database with fallbacks
   const getServices = () => {
     // If we have real services from database, use them
+    // Filter out unfilled service cards (price must be > 0 to appear on the profile)
     if (services && services.length > 0) {
-      return services.map(service => ({
-        name: service.name,
-        price: service.price, // Already converted to pounds in the hook
-        duration: formatDuration(service.duration),
-        image: service.image_url || null,
-        id: service.id
-      }))
+      return services
+        .filter(service => service.price > 0)
+        .map(service => ({
+          name: service.name,
+          price: service.price, // Already converted to pounds in the hook
+          duration: formatDuration(service.duration),
+          image: service.image_url || null,
+          id: service.id
+        }))
     }
-    
+
     return []
   }
 
@@ -562,7 +565,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           {/* Services & Pricing */}
           <div className="space-y-4 pt-6 w-full sm:w-1/2">
             <div>
-              <h2 className="text-base font-medium text-gray-900">Services & Pricing</h2>
+              <h2 className="text-base font-medium text-gray-900">Services Offered</h2>
             </div>
             {servicesLoading ? (
               <div className="grid gap-4">
@@ -625,7 +628,9 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             )}
             {stylist.additional_services && stylist.additional_services.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-500">Additional services:</span>
+                <span className="text-xs text-gray-500">
+                  {displayData.services.length > 0 ? 'Additional services:' : 'Available services:'}
+                </span>
                 {stylist.additional_services.map((service, index) => (
                   <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
                     {service}

@@ -416,6 +416,11 @@ export function AdminDashboard() {
         throw new Error('Booking link must start with http:// or https://')
       }
 
+      // Validate minimum portfolio photos
+      if (galleryImages.length < 5) {
+        throw new Error('Please upload at least 5 portfolio photos')
+      }
+
       // Use the actual uploaded image URLs
       const portfolioImages = galleryImages
 

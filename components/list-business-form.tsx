@@ -111,6 +111,11 @@ export function ListBusinessForm() {
         setError("Please fill in all required fields")
         return
       }
+    } else if (currentStep === 3) {
+      if (galleryImages.length < 5) {
+        setError("Please upload at least 5 portfolio photos")
+        return
+      }
     }
 
     setError("")
@@ -220,16 +225,35 @@ export function ListBusinessForm() {
   }
 
   const handleRemoveService = (id: string) => {
+    // If removing an auto-created service from additional services checkbox, uncheck it too
+    if (id.startsWith('additional-')) {
+      const serviceToRemove = services.find(s => s.id === id)
+      if (serviceToRemove) {
+        setAdditionalServices(prev => prev.filter(s => s !== serviceToRemove.name))
+      }
+    }
     setServices(prev => prev.filter(service => service.id !== id))
   }
 
-  // Additional services handler
+  // Additional services handler — also creates/removes a service card
   const toggleAdditionalService = (service: string) => {
-    setAdditionalServices(prev =>
-      prev.includes(service)
-        ? prev.filter(s => s !== service)
-        : [...prev, service]
-    )
+    if (additionalServices.includes(service)) {
+      // Unchecking: remove from additional services and remove the auto-created service card
+      setAdditionalServices(prev => prev.filter(s => s !== service))
+      setServices(prev => prev.filter(s => !(s.name === service && s.id.startsWith('additional-'))))
+    } else {
+      // Checking: add to additional services and create a blank service card
+      setAdditionalServices(prev => [...prev, service])
+      const alreadyExists = services.some(s => s.name === service)
+      if (!alreadyExists) {
+        setServices(prev => [...prev, {
+          id: `additional-${Date.now()}-${service.replace(/\s+/g, '-').toLowerCase()}`,
+          name: service,
+          price: 0,
+          duration: 0,
+        }])
+      }
+    }
   }
 
   // Logo handlers
@@ -1286,36 +1310,50 @@ export function ListBusinessForm() {
                     {/* Services List */}
                     {services.length > 0 && (
                       <div className="space-y-2">
-                        {services.map((service) => (
-                          <div key={service.id} className="border rounded-lg p-3 bg-white hover:bg-gray-50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              {service.image_url && (
-                                <img
-                                  src={service.image_url}
-                                  alt={service.name}
-                                  className="w-16 h-16 object-cover rounded-lg border flex-shrink-0 cursor-pointer"
-                                  onClick={() => openEditServiceModal(service)}
-                                />
-                              )}
-                              <div className="flex-1 cursor-pointer" onClick={() => openEditServiceModal(service)}>
-                                <h4 className="font-semibold text-gray-900 text-sm">{service.name}</h4>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-xs text-gray-600">{service.duration} min</span>
-                                  <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
+                        {services.map((service) => {
+                          const isUnfilled = service.price <= 0 && service.duration <= 0
+                          return (
+                            <div
+                              key={service.id}
+                              className={`rounded-lg p-3 transition-colors cursor-pointer ${
+                                isUnfilled
+                                  ? 'bg-amber-50/50 border border-dashed border-amber-200'
+                                  : 'border bg-white hover:bg-gray-50'
+                              }`}
+                              onClick={() => openEditServiceModal(service)}
+                            >
+                              <div className="flex items-center gap-3">
+                                {service.image_url && (
+                                  <img
+                                    src={service.image_url}
+                                    alt={service.name}
+                                    className="w-16 h-16 object-cover rounded-lg border flex-shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-900 text-sm">{service.name}</h4>
+                                  {isUnfilled ? (
+                                    <p className="text-xs text-amber-600 mt-1">Tap to add price & duration (optional)</p>
+                                  ) : (
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <span className="text-xs text-gray-600">{service.duration} min</span>
+                                      <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
+                                    </div>
+                                  )}
                                 </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => { e.stopPropagation(); handleRemoveService(service.id) }}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
                               </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveService(service.id)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
 
@@ -1524,7 +1562,7 @@ export function ListBusinessForm() {
                         Upload Portfolio Photos
                       </h3>
                       <p className="text-xs text-gray-500 mb-3 space-y-1 leading-relaxed">
-                        <span className="block">Drop photos here or tap to add (10 max, 10MB each).</span>
+                        <span className="block">Drop photos here or tap to add (min 5, max 10, 10MB each).</span>
                         <span className="block">JPEG, PNG, WebP.</span>
                       </p>
                       <Button

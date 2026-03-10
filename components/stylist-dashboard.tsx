@@ -126,6 +126,12 @@ export function StylistDashboard() {
   const handleSave = async () => {
     if (!profile) return
 
+    // Validate minimum portfolio photos
+    if (localGalleryImages.length < 5) {
+      alert('Please upload at least 5 portfolio photos')
+      return
+    }
+
     setIsSaving(true)
     try {
       const yearStartedNumber = profileFormData.year_started ? Number(profileFormData.year_started) : null

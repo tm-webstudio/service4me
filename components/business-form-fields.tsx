@@ -91,13 +91,26 @@ export function BusinessFormFields({
   const [isServiceDragOver, setIsServiceDragOver] = useState(false)
   const serviceImageInputRef = useRef<HTMLInputElement>(null)
 
-  // Toggle additional service
+  // Toggle additional service — also creates/removes a service card
   const toggleAdditionalService = (service: string) => {
-    setAdditionalServices(prev =>
-      prev.includes(service)
-        ? prev.filter(s => s !== service)
-        : [...prev, service]
-    )
+    if (additionalServices.includes(service)) {
+      // Unchecking: remove from additional services and remove the auto-created service card
+      setAdditionalServices(prev => prev.filter(s => s !== service))
+      setServices(prev => prev.filter(s => !(s.name === service && s.id.startsWith('additional-'))))
+    } else {
+      // Checking: add to additional services and create a blank service card
+      setAdditionalServices(prev => [...prev, service])
+      const alreadyExists = services.some(s => s.name === service)
+      if (!alreadyExists) {
+        const newService: ServiceItem = {
+          id: `additional-${Date.now()}-${service.replace(/\s+/g, '-').toLowerCase()}`,
+          name: service,
+          price: 0,
+          duration: 0,
+        }
+        setServices(prev => [...prev, newService])
+      }
+    }
   }
 
   // Logo handlers
@@ -279,6 +292,13 @@ export function BusinessFormFields({
   }
 
   const handleRemoveService = (id: string) => {
+    // If removing an auto-created service from additional services checkbox, uncheck it too
+    if (id.startsWith('additional-')) {
+      const serviceToRemove = services.find(s => s.id === id)
+      if (serviceToRemove) {
+        setAdditionalServices(prev => prev.filter(s => s !== serviceToRemove.name))
+      }
+    }
     setServices(prev => prev.filter(service => service.id !== id))
   }
 
@@ -747,37 +767,48 @@ export function BusinessFormFields({
               </div>
               {services.length > 0 ? (
                 <div className="space-y-3">
-                  {services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100"
-                    >
-                      {service.image_url && (
-                        <img
-                          src={service.image_url}
-                          alt={service.name}
-                          className="w-16 h-16 object-cover rounded-lg border flex-shrink-0 cursor-pointer"
-                          onClick={() => openEditServiceModal(service)}
-                        />
-                      )}
-                      <div className="flex-1 cursor-pointer" onClick={() => openEditServiceModal(service)}>
-                        <h4 className="font-semibold text-gray-900 text-sm">{service.name}</h4>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-gray-600">{service.duration} min</span>
-                          <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveService(service.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  {services.map((service) => {
+                    const isUnfilled = service.price <= 0 && service.duration <= 0
+                    return (
+                      <div
+                        key={service.id}
+                        className={`flex items-center gap-4 p-3 rounded-lg border cursor-pointer ${
+                          isUnfilled
+                            ? 'bg-amber-50/50 border-amber-200 border-dashed'
+                            : 'bg-gray-50 border-gray-100'
+                        }`}
+                        onClick={() => openEditServiceModal(service)}
                       >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                        {service.image_url && (
+                          <img
+                            src={service.image_url}
+                            alt={service.name}
+                            className="w-16 h-16 object-cover rounded-lg border flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 text-sm">{service.name}</h4>
+                          {isUnfilled ? (
+                            <p className="text-xs text-amber-600 mt-1">Tap to add price & duration (optional)</p>
+                          ) : (
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-gray-600">{service.duration} min</span>
+                              <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); handleRemoveService(service.id) }}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-1">
@@ -958,7 +989,7 @@ export function BusinessFormFields({
                   Upload Portfolio Photos
                 </h3>
                 <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                  Drop photos here or tap to add (10 max, 10MB each). JPEG, PNG, WebP.
+                  Drop photos here or tap to add (min 5, max 10, 10MB each). JPEG, PNG, WebP.
                 </p>
                 <Button
                   type="button"
