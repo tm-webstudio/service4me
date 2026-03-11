@@ -976,50 +976,15 @@ Please change your password after first login.`
         throw new Error(result.error || 'Failed to update stylist profile')
       }
 
-      // Update services
-      // First get existing services
-      const { data: existingServices } = await supabase
-        .from('services')
-        .select('id')
-        .eq('stylist_id', editingStylistId)
-
-      const existingIds = new Set((existingServices || []).map(s => s.id))
-      const newServiceIds = new Set(formServices.map(s => s.id))
-
-      // Delete removed services
-      const toDelete = [...existingIds].filter(id => !newServiceIds.has(id))
-      if (toDelete.length > 0) {
-        await supabase
-          .from('services')
-          .delete()
-          .in('id', toDelete)
-      }
-
-      // Update or insert services
-      for (const service of formServices) {
-        if (existingIds.has(service.id)) {
-          // Update existing service
-          await supabase
-            .from('services')
-            .update({
-              name: service.name,
-              price: service.price * 100, // Convert pounds to pence
-              duration: service.duration,
-              image_url: service.image_url || null
-            })
-            .eq('id', service.id)
-        } else {
-          // Insert new service
-          await supabase
-            .from('services')
-            .insert({
-              stylist_id: editingStylistId,
-              name: service.name,
-              price: service.price * 100, // Convert pounds to pence
-              duration: service.duration,
-              image_url: service.image_url || null
-            })
-        }
+      // Update services via admin API (bypasses RLS)
+      const svcResponse = await fetch('/api/admin/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stylist_id: editingStylistId, services: formServices })
+      })
+      const svcResult = await svcResponse.json()
+      if (!svcResponse.ok) {
+        throw new Error(svcResult.error || 'Failed to update services')
       }
 
       setSuccess(`Stylist profile "${formData.business_name}" updated successfully!`)

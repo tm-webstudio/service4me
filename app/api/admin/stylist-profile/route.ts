@@ -73,6 +73,7 @@ export async function PATCH(request: NextRequest) {
 
     // Create admin client at runtime
     const supabaseAdmin = createSupabaseAdmin()
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
 
     // Update profile using service role (bypasses RLS)
     const { data, error } = await supabaseAdmin
@@ -84,8 +85,35 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       console.error('🔍 [ADMIN API] Error updating profile:', error)
       return NextResponse.json(
-        { error: 'Failed to update stylist profile', details: error },
+        { error: 'Failed to update stylist profile', details: error.message },
         { status: 500 }
+      )
+    }
+
+    if (!data || data.length === 0) {
+      // Diagnose: does the row exist at all?
+      const { data: existing } = await supabaseAdmin
+        .from('stylist_profiles')
+        .select('id')
+        .eq('id', id)
+        .limit(1)
+
+      if (!existing || existing.length === 0) {
+        console.error('🔍 [ADMIN API] Profile not found:', id, '| service key set:', hasServiceKey)
+        return NextResponse.json(
+          { error: `Profile with id "${id}" not found` },
+          { status: 404 }
+        )
+      }
+
+      // Row exists but update returned nothing — RLS is blocking the update
+      console.error('🔍 [ADMIN API] Update blocked (likely RLS). id:', id, '| service key set:', hasServiceKey)
+      return NextResponse.json(
+        { error: hasServiceKey
+            ? 'Update failed — the profile exists but could not be updated. Check server logs.'
+            : 'Update failed — SUPABASE_SERVICE_ROLE_KEY is not set. The admin API cannot bypass RLS without it.'
+        },
+        { status: 403 }
       )
     }
 

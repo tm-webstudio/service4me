@@ -63,3 +63,106 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { stylist_id, services } = body
+
+    console.log('🔍 [ADMIN API] Syncing services for stylist:', stylist_id)
+
+    if (!stylist_id || !services || !Array.isArray(services)) {
+      return NextResponse.json(
+        { error: 'stylist_id and services array are required' },
+        { status: 400 }
+      )
+    }
+
+    const supabaseAdmin = createSupabaseAdmin()
+
+    // Fetch existing services for this stylist
+    const { data: existing, error: fetchError } = await supabaseAdmin
+      .from('services')
+      .select('id, name, price, duration, image_url')
+      .eq('stylist_id', stylist_id)
+
+    if (fetchError) {
+      console.error('🔍 [ADMIN API] Error fetching existing services:', fetchError)
+      return NextResponse.json(
+        { error: 'Failed to fetch existing services', details: fetchError },
+        { status: 500 }
+      )
+    }
+
+    const existingIds = new Set((existing || []).map(s => s.id))
+    const incomingIds = new Set(services.filter(s => s.id).map(s => s.id))
+
+    // Delete removed services
+    const toDelete = [...existingIds].filter(id => !incomingIds.has(id))
+    if (toDelete.length > 0) {
+      const { error: deleteError } = await supabaseAdmin
+        .from('services')
+        .delete()
+        .in('id', toDelete)
+
+      if (deleteError) {
+        console.error('🔍 [ADMIN API] Error deleting services:', deleteError)
+        return NextResponse.json(
+          { error: 'Failed to delete removed services', details: deleteError },
+          { status: 500 }
+        )
+      }
+    }
+
+    // Update existing and insert new services
+    for (const service of services) {
+      if (service.id && existingIds.has(service.id)) {
+        const { error: updateError } = await supabaseAdmin
+          .from('services')
+          .update({
+            name: service.name,
+            price: Math.round(service.price * 100),
+            duration: service.duration,
+            image_url: service.image_url || null
+          })
+          .eq('id', service.id)
+
+        if (updateError) {
+          console.error('🔍 [ADMIN API] Error updating service:', updateError)
+          return NextResponse.json(
+            { error: `Failed to update service "${service.name}"`, details: updateError },
+            { status: 500 }
+          )
+        }
+      } else {
+        const { error: insertError } = await supabaseAdmin
+          .from('services')
+          .insert({
+            stylist_id,
+            name: service.name,
+            price: Math.round(service.price * 100),
+            duration: service.duration,
+            image_url: service.image_url || null
+          })
+
+        if (insertError) {
+          console.error('🔍 [ADMIN API] Error inserting service:', insertError)
+          return NextResponse.json(
+            { error: `Failed to insert service "${service.name}"`, details: insertError },
+            { status: 500 }
+          )
+        }
+      }
+    }
+
+    console.log('🔍 [ADMIN API] Services synced successfully for stylist:', stylist_id)
+    return NextResponse.json({ success: true })
+
+  } catch (error) {
+    console.error('🔍 [ADMIN API] Unexpected error syncing services:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
