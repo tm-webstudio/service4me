@@ -31,6 +31,7 @@ export function StylistDashboard() {
   const uploadInProgressRef = useRef(false)
   const [profileFormData, setProfileFormData] = useState<BusinessFormData>(initialBusinessFormData)
   const [additionalServices, setAdditionalServices] = useState<string[]>([])
+  const [specialtyServices, setSpecialtyServices] = useState<string[]>([])
   const [logoImage, setLogoImage] = useState<string>('')
   const [formServices, setFormServices] = useState<ServiceItem[]>([])
   const [isSaving, setIsSaving] = useState(false)
@@ -44,6 +45,13 @@ export function StylistDashboard() {
   const updateAdditionalServices = (updater: React.SetStateAction<string[]>) => {
     setFormDirty(true)
     setAdditionalServices(prev => typeof updater === 'function'
+      ? (updater as (prev: string[]) => string[])(prev)
+      : updater
+    )
+  }
+  const updateSpecialtyServices = (updater: React.SetStateAction<string[]>) => {
+    setFormDirty(true)
+    setSpecialtyServices(prev => typeof updater === 'function'
       ? (updater as (prev: string[]) => string[])(prev)
       : updater
     )
@@ -108,6 +116,7 @@ export function StylistDashboard() {
 
     setLogoImage(profile.logo_url || '')
     setAdditionalServices(profile.additional_services || [])
+    setSpecialtyServices(profile.specialty_services || [])
     setLocalGalleryImages(profile.portfolio_images || [])
     setHasUnsavedChanges(false)
     setFormDirty(false)
@@ -159,6 +168,7 @@ export function StylistDashboard() {
         years_experience,
         logo_url: logoImage,
         additional_services: additionalServices,
+        specialty_services: specialtyServices,
       }
 
       await updateProfile(updateData)
@@ -258,6 +268,7 @@ export function StylistDashboard() {
       })
       setLogoImage(profile.logo_url || '')
       setAdditionalServices(profile.additional_services || [])
+      setSpecialtyServices(profile.specialty_services || [])
       setLocalGalleryImages(profile.portfolio_images || [])
       setHasUnsavedChanges(false)
     }
@@ -538,6 +549,8 @@ export function StylistDashboard() {
                   setFormData={updateProfileFormData}
                   additionalServices={additionalServices}
                   setAdditionalServices={updateAdditionalServices}
+                  specialtyServices={specialtyServices}
+                  setSpecialtyServices={updateSpecialtyServices}
                   logoImage={logoImage}
                   setLogoImage={updateLogoImage}
                   galleryImages={localGalleryImages}

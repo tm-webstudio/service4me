@@ -50,6 +50,7 @@ interface PendingStylist {
   accepts_same_day: boolean | null
   accepts_mobile: boolean | null
   additional_services: string[] | null
+  specialty_services: string[] | null
   service_type?: string
 }
 
@@ -212,6 +213,7 @@ export function AdminDashboard() {
 
   // Additional services state
   const [additionalServices, setAdditionalServices] = useState<string[]>([])
+  const [specialtyServices, setSpecialtyServices] = useState<string[]>([])
 
   // Logo state
   const [logoImage, setLogoImage] = useState<string>('')
@@ -376,10 +378,6 @@ export function AdminDashboard() {
         throw new Error('Business name is required')
       }
 
-      if (!formData.contact_email.trim()) {
-        throw new Error('Email is required')
-      }
-
       if (!formData.booking_link.trim()) {
         throw new Error('Booking link is required')
       }
@@ -406,8 +404,8 @@ export function AdminDashboard() {
         throw new Error('Please enter a valid UK postcode (e.g., SW1A 1AA)')
       }
 
-      // Validate email format
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
+      // Validate email format (only if provided)
+      if (formData.contact_email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
         throw new Error('Please enter a valid email address')
       }
 
@@ -435,6 +433,7 @@ export function AdminDashboard() {
         specialties: formData.specialties ? [formData.specialties] : [],
         primary_specialty: formData.specialties,
         additional_services: additionalServices,
+        specialty_services: specialtyServices,
         year_started: formData.year_started ? parseInt(formData.year_started) : null,
         booking_link: formData.booking_link || null,
         phone: formData.phone,
@@ -543,6 +542,7 @@ export function AdminDashboard() {
 
       // Clear additional state
       setAdditionalServices([])
+      setSpecialtyServices([])
       setLogoImage('')
       setFormServices([])
       setGalleryImages([])
@@ -833,6 +833,7 @@ Please change your password after first login.`
       const servicesToSet = stylist.additional_services || []
       console.log('🔍 [ADMIN-DASHBOARD] Setting additional services:', servicesToSet)
       setAdditionalServices(servicesToSet)
+      setSpecialtyServices(stylist.specialty_services || [])
       setLogoImage(stylist.logo_url || '')
       setGalleryImages(stylist.portfolio_images || [])
 
@@ -878,6 +879,7 @@ Please change your password after first login.`
     setEditingStylistId(null)
     setFormData(initialBusinessFormData)
     setAdditionalServices([])
+    setSpecialtyServices([])
     setLogoImage('')
     setGalleryImages([])
     setMockServices([])
@@ -897,10 +899,6 @@ Please change your password after first login.`
       // Validate required fields
       if (!formData.business_name.trim()) {
         throw new Error('Business name is required')
-      }
-
-      if (!formData.contact_email.trim()) {
-        throw new Error('Email is required')
       }
 
       if (!formData.booking_link.trim()) {
@@ -929,8 +927,8 @@ Please change your password after first login.`
         throw new Error('Please enter a valid UK postcode (e.g., SW1A 1AA)')
       }
 
-      // Validate email format
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
+      // Validate email format (only if provided)
+      if (formData.contact_email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
         throw new Error('Please enter a valid email address')
       }
 
@@ -950,6 +948,7 @@ Please change your password after first login.`
         specialties: formData.specialties ? [formData.specialties] : [],
         primary_specialty: formData.specialties,
         additional_services: additionalServices,
+        specialty_services: specialtyServices,
         year_started: formData.year_started ? parseInt(formData.year_started) : null,
         booking_link: formData.booking_link || null,
         phone: formData.phone,
@@ -1335,6 +1334,7 @@ Please change your password after first login.`
   const handleCancel = () => {
     setFormData(initialBusinessFormData)
     setAdditionalServices([])
+    setSpecialtyServices([])
     setLogoImage('')
     setFormServices([])
     setError('')
@@ -2186,6 +2186,8 @@ Please change your password after first login.`
                   setFormData={setFormData}
                   additionalServices={additionalServices}
                   setAdditionalServices={setAdditionalServices}
+                  specialtyServices={specialtyServices}
+                  setSpecialtyServices={setSpecialtyServices}
                   logoImage={logoImage}
                   setLogoImage={setLogoImage}
                   galleryImages={galleryImages}
@@ -2428,6 +2430,11 @@ Please change your password after first login.`
                   {selectedStylist.specialties?.filter(s => s !== selectedStylist.primary_specialty).map((specialty, idx) => (
                     <Badge key={idx} variant="outline" className="text-gray-600">
                       {specialty}
+                    </Badge>
+                  ))}
+                  {selectedStylist.specialty_services?.map((service, idx) => (
+                    <Badge key={`spec-${idx}`} variant="outline" className="text-blue-600 border-blue-200">
+                      {service}
                     </Badge>
                   ))}
                   {selectedStylist.additional_services?.map((service, idx) => (

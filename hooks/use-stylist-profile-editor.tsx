@@ -29,6 +29,7 @@ interface ProfileUpdateData {
   accepts_mobile?: boolean | null
   logo_url?: string
   additional_services?: string[]
+  specialty_services?: string[]
 }
 
 export function useStylistProfileEditor() {
@@ -140,6 +141,7 @@ export function useStylistProfileEditor() {
             accepts_mobile: data.accepts_mobile,
             logo_url: data.logo_url,
             additional_services: data.additional_services || [],
+            specialty_services: data.specialty_services || [],
             service_type: data.service_type || 'hairstylist'
           }
 
@@ -309,7 +311,8 @@ export function useStylistProfileEditor() {
           accepts_same_day: data.accepts_same_day,
           accepts_mobile: data.accepts_mobile,
           logo_url: data.logo_url,
-          additional_services: data.additional_services || []
+          additional_services: data.additional_services || [],
+          specialty_services: data.specialty_services || []
         }
 
         setProfile(transformedData)

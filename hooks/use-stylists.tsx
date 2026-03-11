@@ -32,6 +32,7 @@ export interface StylistProfile {
   accepts_mobile?: boolean | null
   logo_url?: string
   additional_services?: string[]
+  specialty_services?: string[]
   service_type?: string
 }
 

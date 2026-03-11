@@ -154,6 +154,121 @@ export const ADDITIONAL_SERVICES_BY_TYPE: Record<string, string[]> = {
   ],
 }
 
+export const SERVICES_BY_SPECIALTY: Record<string, string[]> = {
+  // Hairstylist specialties
+  'Locs': [
+    'Starter Locs',
+    'Two-Strand Starter Locs',
+    'Instant Locs',
+    'Retwist',
+    'Retwist + Style',
+    'Loc Styling',
+    'Crochet Retwist',
+    'Loc Repair',
+    'Loc Extensions',
+    'Loc Re-attachment',
+    'Loc Colouring',
+  ],
+  'Braids': [
+    'Box Braids',
+    'Knotless Braids',
+    'Cornrows',
+    'Stitch Braids',
+    'Lemonade Braids',
+    'Goddess Braids',
+    'Fulani Braids',
+    'Butterfly Braids',
+    'Crochet Braids',
+    'Micro Braids',
+    'Feed-In Braids',
+  ],
+  'Wigs': [
+    'Frontal Wig Install',
+    'Closure Wig Install',
+    'Custom Wig Making',
+    'Wig Revamp/Wash',
+    'Wig Colouring',
+    'Wig Re-installation',
+    'Glueless Install',
+    'Wig Customisation',
+  ],
+  'Natural Hair': [
+    'Wash & Go',
+    'Twist Out',
+    'Bantu Knots',
+    'Flexi Rod Set',
+    'Silk Press',
+    'Deep Conditioning Treatment',
+    'Trim & Shape',
+    'Protective Styling',
+    'Scalp Treatment',
+  ],
+  'Bridal Hair': [
+    'Bridal Updo',
+    'Bridal Trial',
+    'Bridesmaid Styling',
+    'Bridal Wig Install',
+    'Bridal Braids',
+    'Bridal Locs Styling',
+    'Mother of the Bride',
+    'Bridal Hair Accessories',
+  ],
+  'Silk Press': [
+    'Silk Press (Short Hair)',
+    'Silk Press (Medium Hair)',
+    'Silk Press (Long Hair)',
+    'Silk Press + Trim',
+    'Silk Press + Treatment',
+    'Silk Press + Colour',
+  ],
+  // Nail technician specialties
+  'Acrylic Nails': ['Full Set', 'Infill', 'Removal', 'Nail Repair', 'Acrylic Overlay', 'Nail Art Add-On'],
+  'Gel Nails': ['Gel Manicure', 'Gel Removal', 'Gel Overlay', 'Builder Gel', 'Gel Infill', 'Gel Extensions'],
+  'Nail Art': ['Hand-Painted Art', 'Chrome Nails', '3D Nail Art', 'Foil Nails', 'Stamping', 'French Tip'],
+  'Manicure & Pedicure': ['Classic Manicure', 'Classic Pedicure', 'Luxury Manicure', 'Luxury Pedicure', 'Spa Pedicure', 'Paraffin Wax Treatment'],
+  'SNS/Dip Powder': ['SNS Full Set', 'SNS Infill', 'SNS Removal', 'SNS Overlay', 'SNS with Art'],
+  'Press-On Nails': ['Custom Press-Ons', 'Press-On Fitting', 'Press-On Set (Short)', 'Press-On Set (Long)', 'Press-On with Art'],
+  // Lash technician specialties
+  'Classic Lashes': ['Full Set', 'Infill', 'Removal', 'Mini Set'],
+  'Volume Lashes': ['Full Set', 'Infill', 'Removal', 'Mini Set'],
+  'Hybrid Lashes': ['Full Set', 'Infill', 'Removal', 'Mini Set'],
+  'Mega Volume': ['Full Set', 'Infill', 'Removal'],
+  'Lash Lift & Tint': ['Lash Lift', 'Lash Tint', 'Lash Lift & Tint Combo'],
+  'Lower Lashes': ['Lower Lash Full Set', 'Lower Lash Infill'],
+  // Makeup artist specialties
+  'Bridal Makeup': ['Bridal Trial', 'Wedding Day Makeup', 'Bridesmaid Makeup', 'Mother of the Bride', 'Touch-Up Kit'],
+  'Editorial Makeup': ['Editorial Shoot', 'Lookbook', 'Campaign Makeup', 'Creative Direction'],
+  'Special Effects': ['SFX Prosthetics', 'Wound Simulation', 'Character Makeup', 'Body Paint'],
+  'Natural/Everyday': ['Natural Glam', 'Everyday Makeup', 'Makeup Lesson', 'Minimal Makeup'],
+  'Glam Makeup': ['Full Glam', 'Soft Glam', 'Party Makeup', 'Prom Makeup', 'Red Carpet'],
+  'Airbrush Makeup': ['Airbrush Bridal', 'Airbrush Full Face', 'Airbrush Touch-Up'],
+  // Brow technician specialties
+  'Microblading': ['Initial Session', 'Top-Up Session', 'Colour Boost', 'Consultation'],
+  'Brow Lamination': ['Brow Lamination', 'Lamination + Tint', 'Lamination + Shape'],
+  'Brow Tinting': ['Brow Tint', 'Brow Shape + Tint', 'Lash + Brow Tint'],
+  'Ombré Brows': ['Initial Session', 'Top-Up Session', 'Colour Boost'],
+  'Nano Brows': ['Initial Session', 'Top-Up Session', 'Colour Boost'],
+  'Threading': ['Brow Threading', 'Upper Lip Threading', 'Full Face Threading'],
+  // Esthetician specialties
+  'Facials': ['Express Facial', 'Deep Cleanse Facial', 'Hydrating Facial', 'Anti-Aging Facial', 'Brightening Facial'],
+  'Chemical Peels': ['Superficial Peel', 'Medium Peel', 'Glycolic Peel', 'Salicylic Peel', 'Consultation'],
+  'Microdermabrasion': ['Single Session', 'Course of 3', 'Course of 6', 'Add-On Treatment'],
+  'Dermaplaning': ['Dermaplaning Facial', 'Dermaplaning Only', 'Dermaplaning + Peel'],
+  'Acne Treatment': ['Acne Consultation', 'Acne Facial', 'Extraction Session', 'LED Treatment'],
+  'Anti-Aging': ['Anti-Aging Facial', 'Collagen Boost', 'Microcurrent', 'LED Therapy'],
+  // Massage therapist specialties
+  'Deep Tissue': ['30 Min Session', '60 Min Session', '90 Min Session', 'Back & Shoulders'],
+  'Swedish Massage': ['30 Min Session', '60 Min Session', '90 Min Session', 'Full Body'],
+  'Sports Massage': ['30 Min Session', '60 Min Session', '90 Min Session', 'Pre-Event', 'Post-Event'],
+  'Hot Stone': ['60 Min Session', '90 Min Session', 'Back Only'],
+  'Prenatal Massage': ['30 Min Session', '60 Min Session', 'Postnatal Massage'],
+  'Lymphatic Drainage': ['60 Min Session', '90 Min Session', 'Face & Neck'],
+}
+
+export function getServicesForSpecialty(specialty: string): string[] {
+  return SERVICES_BY_SPECIALTY[specialty] || []
+}
+
 export const SERVICE_TEMPLATES_BY_TYPE: Record<string, string[]> = {
   hairstylist: ['Box Braids', 'Silk Press', 'Wig Install', 'Loc Retwist', 'Sew-In', 'Cornrows'],
   nail_technician: ['Full Set Acrylic', 'Gel Manicure', 'Nail Art Design', 'Pedicure', 'Infill'],

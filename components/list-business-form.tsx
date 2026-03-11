@@ -17,7 +17,7 @@ import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home,
 import { useRef, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DashboardHero } from "@/components/ui/dashboard-hero"
-import { SERVICE_TYPES, getSpecialtiesForType, getAdditionalServicesForType } from "@/lib/service-types"
+import { SERVICE_TYPES, getSpecialtiesForType, getAdditionalServicesForType, getServicesForSpecialty } from "@/lib/service-types"
 
 export function ListBusinessForm() {
   const [currentStep, setCurrentStep] = useState(1)
@@ -73,6 +73,9 @@ export function ListBusinessForm() {
 
   // Additional services state
   const [additionalServices, setAdditionalServices] = useState<string[]>([])
+
+  // Specialty services state
+  const [specialtyServices, setSpecialtyServices] = useState<string[]>([])
 
   // Services state
   const [services, setServices] = useState<Array<{id: string, name: string, price: number, duration: number, image_url?: string}>>([])
@@ -254,6 +257,13 @@ export function ListBusinessForm() {
         }])
       }
     }
+  }
+
+  // Specialty services handler
+  const toggleSpecialtyService = (service: string) => {
+    setSpecialtyServices(prev =>
+      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+    )
   }
 
   // Logo handlers
@@ -496,6 +506,7 @@ export function ListBusinessForm() {
           primary_specialty: formData.specialty,
           specialties: formData.specialty ? [formData.specialty] : [],
           additional_services: additionalServices,
+          specialty_services: specialtyServices,
           bio: formData.bio,
           year_started: formData.experience ? parseInt(formData.experience) : null,
           booking_link: formData.bookingLink || null,
@@ -902,7 +913,7 @@ export function ListBusinessForm() {
                       <Label htmlFor="specialty" className="text-sm font-medium text-gray-900 mb-2 block">
                         Specialty <span className="text-red-600">*</span>
                       </Label>
-                      <Select value={formData.specialty} onValueChange={(value) => setFormData({ ...formData, specialty: value })}>
+                      <Select value={formData.specialty} onValueChange={(value) => { setFormData({ ...formData, specialty: value }); setSpecialtyServices([]) }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select your specialty" />
                         </SelectTrigger>
@@ -932,6 +943,33 @@ export function ListBusinessForm() {
                       </Select>
                     </div>
                   </div>
+
+                  {/* Specialty Services */}
+                  {formData.specialty && getServicesForSpecialty(formData.specialty).length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-900 mb-1 block">
+                        Services You Offer
+                      </Label>
+                      <p className="text-xs text-gray-400 mb-4">Select the {formData.specialty} services you provide</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
+                        {getServicesForSpecialty(formData.specialty).map((service) => (
+                          <div
+                            key={service}
+                            onClick={() => toggleSpecialtyService(service)}
+                            className="flex items-center cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={specialtyServices.includes(service)}
+                              onChange={() => {}}
+                              className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                            />
+                            <span className="ml-2 text-[12.5px] text-gray-600">{service}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Additional Services */}
                   <div>

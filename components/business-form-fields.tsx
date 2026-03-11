@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { User, Settings, Upload, X, Image as ImageIcon, Plus, Scissors, Loader2, GripVertical } from "lucide-react"
-import { SERVICE_TYPES, getSpecialtiesForType, getAdditionalServicesForType } from "@/lib/service-types"
+import { SERVICE_TYPES, getSpecialtiesForType, getAdditionalServicesForType, getServicesForSpecialty } from "@/lib/service-types"
 
 export interface BusinessFormData {
   first_name: string
@@ -45,6 +45,8 @@ interface BusinessFormFieldsProps {
   setFormData: React.Dispatch<React.SetStateAction<BusinessFormData>>
   additionalServices: string[]
   setAdditionalServices: React.Dispatch<React.SetStateAction<string[]>>
+  specialtyServices: string[]
+  setSpecialtyServices: React.Dispatch<React.SetStateAction<string[]>>
   logoImage: string
   setLogoImage: React.Dispatch<React.SetStateAction<string>>
   galleryImages: string[]
@@ -62,6 +64,8 @@ export function BusinessFormFields({
   setFormData,
   additionalServices,
   setAdditionalServices,
+  specialtyServices,
+  setSpecialtyServices,
   logoImage,
   setLogoImage,
   galleryImages,
@@ -111,6 +115,13 @@ export function BusinessFormFields({
         setServices(prev => [...prev, newService])
       }
     }
+  }
+
+  // Toggle specialty service
+  const toggleSpecialtyService = (service: string) => {
+    setSpecialtyServices(prev =>
+      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+    )
   }
 
   // Logo handlers
@@ -349,7 +360,7 @@ export function BusinessFormFields({
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-900 mb-2 block">
-                Email Address <span className="text-red-600">*</span>
+                Email Address {!isAdminForm && <span className="text-red-600">*</span>}
               </Label>
               <Input
                 value={formData.contact_email}
@@ -465,7 +476,7 @@ export function BusinessFormFields({
               <Label className="text-sm font-medium text-gray-900 mb-2 block">
                 Specialty <span className="text-red-600">*</span>
               </Label>
-              <Select value={formData.specialties} onValueChange={(value) => setFormData(prev => ({ ...prev, specialties: value }))}>
+              <Select value={formData.specialties} onValueChange={(value) => { setFormData(prev => ({ ...prev, specialties: value })); setSpecialtyServices([]) }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your specialty" />
                 </SelectTrigger>
@@ -479,6 +490,33 @@ export function BusinessFormFields({
               </Select>
             </div>
           </div>
+
+          {/* Specialty Services */}
+          {formData.specialties && getServicesForSpecialty(formData.specialties).length > 0 && (
+            <div>
+              <Label className="text-sm font-medium text-gray-900 mb-1 block">
+                Services You Offer
+              </Label>
+              <p className="text-xs text-gray-400 mb-4">Select the {formData.specialties} services you provide</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
+                {getServicesForSpecialty(formData.specialties).map((service) => (
+                  <div
+                    key={service}
+                    onClick={() => toggleSpecialtyService(service)}
+                    className="flex items-center cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={specialtyServices.includes(service)}
+                      onChange={() => {}}
+                      className="w-4 h-4 text-red-600 border border-input rounded focus:ring-red-500 cursor-pointer"
+                    />
+                    <span className="ml-2 text-[12.5px] text-gray-600">{service}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Additional Services */}
           <div>

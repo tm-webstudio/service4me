@@ -620,6 +620,18 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 ))}
               </div>
             )}
+            {stylist.specialty_services && stylist.specialty_services.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-gray-500">
+                  {stylist.specialties?.[0] ? `${stylist.specialties[0]} services:` : 'Specialty services:'}
+                </span>
+                {stylist.specialty_services.map((service, index) => (
+                  <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
+                    {service}
+                  </div>
+                ))}
+              </div>
+            )}
             {stylist.additional_services && stylist.additional_services.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs text-gray-500">
