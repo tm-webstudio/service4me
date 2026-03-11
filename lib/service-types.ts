@@ -158,11 +158,10 @@ export const SERVICES_BY_SPECIALTY: Record<string, string[]> = {
   // Hairstylist specialties
   'Locs': [
     'Starter Locs',
-    'Two-Strand Starter Locs',
-    'Instant Locs',
     'Retwist',
+    'Instant Locs',
     'Retwist + Style',
-    'Loc Styling',
+    'Loc Styling Only',
     'Crochet Retwist',
     'Loc Repair',
     'Loc Extensions',

@@ -412,7 +412,7 @@ export function Navigation() {
                   }`}
                 />
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-1">
+              <CollapsibleContent className="">
                 <div className="flex flex-col gap-1 max-w-[250px]">
                   {categories.map((category) => (
                     <Link
@@ -450,13 +450,13 @@ export function Navigation() {
                   }`}
                 />
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="pl-2 pt-2 space-y-3">
+              <CollapsibleContent className="">
+                <div className="pl-2 pt-2 pb-4 space-y-3">
                   {londonAreas.map((area) => (
                     <Link
                       key={area}
                       href={`/browse?location=${encodeURIComponent(area)}`}
-                      className="block text-gray-700 hover:text-red-600 transition-colors py-1"
+                      className="block text-sm text-gray-700 hover:text-red-600 transition-colors py-1"
                       onClick={() => setIsOpen(false)}
                     >
                       {area}

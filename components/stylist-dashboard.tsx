@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, ExternalLink, Settings, MessageSquare, Scissors, Loader2, Save, AlertCircle, LayoutDashboard, User, XCircle, X } from "lucide-react"
+import { Star, ExternalLink, Settings, MessageSquare, Scissors, Loader2, Save, AlertCircle, CheckCircle, LayoutDashboard, User, XCircle, X } from "lucide-react"
 import Link from "next/link"
 import { useStylistProfileEditor } from "@/hooks/use-stylist-profile-editor"
 import { useAuth } from "@/lib/auth"
@@ -35,6 +35,8 @@ export function StylistDashboard() {
   const [logoImage, setLogoImage] = useState<string>('')
   const [formServices, setFormServices] = useState<ServiceItem[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formSuccess, setFormSuccess] = useState<string | null>(null)
   const updateProfileFormData = (updater: React.SetStateAction<BusinessFormData>) => {
     setFormDirty(true)
     setProfileFormData(prev => typeof updater === 'function'
@@ -135,9 +137,13 @@ export function StylistDashboard() {
   const handleSave = async () => {
     if (!profile) return
 
+    // Clear previous messages
+    setFormError(null)
+    setFormSuccess(null)
+
     // Validate minimum portfolio photos
     if (localGalleryImages.length < 5) {
-      alert('Please upload at least 5 portfolio photos')
+      setFormError('Please upload at least 5 portfolio photos')
       return
     }
 
@@ -232,9 +238,11 @@ export function StylistDashboard() {
 
       setFormDirty(false)
       setHasUnsavedChanges(false)
+      setFormSuccess('Changes saved successfully!')
+      setTimeout(() => setFormSuccess(null), 4000)
     } catch (err) {
       console.error('Failed to save profile:', err)
-      alert('Failed to save changes. Please try again.')
+      setFormError('Failed to save changes. Please try again.')
     } finally {
       setIsSaving(false)
     }
@@ -624,6 +632,18 @@ export function StylistDashboard() {
                       Editing
                     </Badge>
                   </div>
+                  {formError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-red-600">{formError}</p>
+                    </div>
+                  )}
+                  {formSuccess && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-green-600">{formSuccess}</p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Button
                       onClick={handleSave}

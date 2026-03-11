@@ -4,6 +4,8 @@ import type React from "react"
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { postcodeToAreaNameWithCode } from "@/lib/postcode-utils"
+import { SpecialistBadge } from "@/components/ui/specialist-badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -1532,27 +1534,23 @@ Please change your password after first login.`
                               </Badge>
                             </div>
 
-                            <div className="p-4">
-                              <div className="flex items-center justify-between mb-2">
-                                <h3 className="font-semibold text-lg text-gray-900 truncate">{stylist.business_name}</h3>
+                            <div className="p-2 md:p-4">
+                              <div className="flex items-center justify-between mb-1">
+                                <h3 className="font-medium text-base text-gray-900 leading-tight truncate">{stylist.business_name}</h3>
                               </div>
 
-                              <div className="flex items-center text-gray-600 mb-2">
+                              <div className="flex items-center text-gray-600 mb-1">
                                 <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-                                <span className="text-sm truncate">{stylist.location}</span>
+                                <span className="text-[13px] md:text-sm truncate">{stylist.location ? postcodeToAreaNameWithCode(stylist.location) : 'No location'}</span>
                               </div>
 
-                              <div className="flex items-center text-gray-500 mb-3">
-                                <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
-                                <span className="text-xs">Submitted {formatSubmittedDate(stylist.submitted_at)}</span>
-                              </div>
-
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="inline-block bg-red-50 border border-red-200 text-red-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
-                                    {getServiceTypeLabel(stylist.service_type || 'hairstylist')}
-                                  </span>
-                                  <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs whitespace-nowrap">
+                                  <SpecialistBadge
+                                    specialty={getServiceTypeLabel(stylist.service_type || 'hairstylist')}
+                                    className="whitespace-nowrap"
+                                  />
+                                  <span className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-3 py-0.5 rounded-full text-xs whitespace-nowrap">
                                     {stylist.primary_specialty || stylist.specialties?.[0] ? `${stylist.primary_specialty || stylist.specialties?.[0]}` : 'Hair'}
                                   </span>
                                 </div>
@@ -1568,6 +1566,11 @@ Please change your password after first login.`
                                   <Eye className="w-3 h-3 mr-1" />
                                   Details
                                 </Button>
+                              </div>
+
+                              <div className="flex items-center text-gray-400">
+                                <Clock className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                                <span className="text-xs">Submitted {formatSubmittedDate(stylist.submitted_at)}</span>
                               </div>
                             </div>
                           </CardContent>
@@ -1664,7 +1667,7 @@ Please change your password after first login.`
 
                           <div className="flex items-center text-gray-600 mb-2">
                             <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-                            <span className="text-sm truncate">{stylist.location}</span>
+                            <span className="text-sm truncate">{stylist.location ? postcodeToAreaNameWithCode(stylist.location) : 'No location'}</span>
                           </div>
 
                           <div className="flex items-center text-gray-500 mb-2">
@@ -1891,30 +1894,36 @@ Please change your password after first login.`
                               <td className="p-4">
                                 <div className="flex items-center space-x-2">
                                   {accountStatus.status === 'no-account' ? (
-                                    <SmallCtaButton
-                                      variant="default"
-                                      className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-[12px] min-w-[140px] disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                      disabled={generatingAccountForStylist === stylist.id || !stylist.contact_email}
-                                      onClick={() => handleTableGenerateAccount(stylist)}
-                                      title={!stylist.contact_email ? 'Stylist must have an email address to generate an account' : ''}
-                                    >
-                                      {generatingAccountForStylist === stylist.id ? (
-                                        <>
-                                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                          Generating...
-                                        </>
-                                      ) : !stylist.contact_email ? (
-                                        <>
-                                          <UserX className="w-3 h-3 mr-1" />
-                                          No Email
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Key className="w-3 h-3 mr-1" />
-                                          Generate Account
-                                        </>
-                                      )}
-                                    </SmallCtaButton>
+                                    !stylist.contact_email ? (
+                                      <SmallCtaButton
+                                        variant="outline"
+                                        className="h-8 px-3 text-[12px] min-w-[160px] text-gray-400 border-gray-300 hover:bg-gray-50 cursor-not-allowed"
+                                        disabled
+                                        title="Stylist must have an email address to generate an account"
+                                      >
+                                        <UserX className="w-3 h-3 mr-1" />
+                                        No Email
+                                      </SmallCtaButton>
+                                    ) : (
+                                      <SmallCtaButton
+                                        variant="default"
+                                        className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-[12px] min-w-[160px]"
+                                        disabled={generatingAccountForStylist === stylist.id}
+                                        onClick={() => handleTableGenerateAccount(stylist)}
+                                      >
+                                        {generatingAccountForStylist === stylist.id ? (
+                                          <>
+                                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                            Generating...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Key className="w-3 h-3 mr-1" />
+                                            Generate Account
+                                          </>
+                                        )}
+                                      </SmallCtaButton>
+                                    )
                                   ) : (
                                     <Button
                                       size="sm"

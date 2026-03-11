@@ -117,11 +117,24 @@ export function BusinessFormFields({
     }
   }
 
-  // Toggle specialty service
+  // Toggle specialty service — also creates/removes a service card
   const toggleSpecialtyService = (service: string) => {
-    setSpecialtyServices(prev =>
-      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
-    )
+    if (specialtyServices.includes(service)) {
+      setSpecialtyServices(prev => prev.filter(s => s !== service))
+      setServices(prev => prev.filter(s => !(s.name === service && s.id.startsWith('specialty-'))))
+    } else {
+      setSpecialtyServices(prev => [...prev, service])
+      const alreadyExists = services.some(s => s.name === service)
+      if (!alreadyExists) {
+        const newService: ServiceItem = {
+          id: `specialty-${Date.now()}-${service.replace(/\s+/g, '-').toLowerCase()}`,
+          name: service,
+          price: 0,
+          duration: 0,
+        }
+        setServices(prev => [...prev, newService])
+      }
+    }
   }
 
   // Logo handlers
@@ -785,14 +798,64 @@ export function BusinessFormFields({
                           />
                         </div>
                         <div>
-                          <Label>Duration (min)</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={serviceForm.duration || ''}
-                            onChange={(e) => setServiceForm(prev => ({ ...prev, duration: e.target.value === '' ? 0 : Number(e.target.value) }))}
-                            placeholder="60"
-                          />
+                          <Label>Duration</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Select
+                                value={Math.floor(serviceForm.duration / 60).toString()}
+                                onValueChange={(value) => setServiceForm(prev => ({
+                                  ...prev,
+                                  duration: (parseInt(value) * 60) + (prev.duration % 60)
+                                }))}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Hours" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="0">0 hrs</SelectItem>
+                                  <SelectItem value="1">1 hr</SelectItem>
+                                  <SelectItem value="2">2 hrs</SelectItem>
+                                  <SelectItem value="3">3 hrs</SelectItem>
+                                  <SelectItem value="4">4 hrs</SelectItem>
+                                  <SelectItem value="5">5 hrs</SelectItem>
+                                  <SelectItem value="6">6 hrs</SelectItem>
+                                  <SelectItem value="7">7 hrs</SelectItem>
+                                  <SelectItem value="8">8 hrs</SelectItem>
+                                  <SelectItem value="9">9 hrs</SelectItem>
+                                  <SelectItem value="10">10 hrs</SelectItem>
+                                  <SelectItem value="11">11 hrs</SelectItem>
+                                  <SelectItem value="12">12 hrs</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Select
+                                value={(serviceForm.duration % 60).toString()}
+                                onValueChange={(value) => setServiceForm(prev => ({
+                                  ...prev,
+                                  duration: (Math.floor(prev.duration / 60) * 60) + parseInt(value)
+                                }))}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Minutes" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="0">0 min</SelectItem>
+                                  <SelectItem value="5">5 min</SelectItem>
+                                  <SelectItem value="10">10 min</SelectItem>
+                                  <SelectItem value="15">15 min</SelectItem>
+                                  <SelectItem value="20">20 min</SelectItem>
+                                  <SelectItem value="25">25 min</SelectItem>
+                                  <SelectItem value="30">30 min</SelectItem>
+                                  <SelectItem value="35">35 min</SelectItem>
+                                  <SelectItem value="40">40 min</SelectItem>
+                                  <SelectItem value="45">45 min</SelectItem>
+                                  <SelectItem value="50">50 min</SelectItem>
+                                  <SelectItem value="55">55 min</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -830,7 +893,7 @@ export function BusinessFormFields({
                             <p className="text-xs text-amber-600 mt-1">Tap to add price & duration (optional)</p>
                           ) : (
                             <div className="flex items-center gap-3 mt-1">
-                              <span className="text-xs text-gray-600">{service.duration} min</span>
+                              <span className="text-xs text-gray-600">{Math.floor(service.duration / 60) > 0 && Math.floor(service.duration / 60) + 'h'}{Math.floor(service.duration / 60) > 0 && service.duration % 60 > 0 && ' '}{service.duration % 60 > 0 && (service.duration % 60) + 'm'}{service.duration === 0 && '0 min'}</span>
                               <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
                             </div>
                           )}

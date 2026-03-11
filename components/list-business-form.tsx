@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save, ClipboardList, GripVertical } from "lucide-react"
+import { Mail, Phone, Map, Building, User, Lock, Eye, EyeOff, CheckCircle, Home, Upload, Image as ImageIcon, X, Lightbulb, Check, ArrowRight, Briefcase, Camera, Plus, Save, ClipboardList, GripVertical, AlertCircle } from "lucide-react"
 import { useRef, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DashboardHero } from "@/components/ui/dashboard-hero"
@@ -259,11 +259,23 @@ export function ListBusinessForm() {
     }
   }
 
-  // Specialty services handler
+  // Specialty services handler — also creates/removes a service card
   const toggleSpecialtyService = (service: string) => {
-    setSpecialtyServices(prev =>
-      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
-    )
+    if (specialtyServices.includes(service)) {
+      setSpecialtyServices(prev => prev.filter(s => s !== service))
+      setServices(prev => prev.filter(s => !(s.name === service && s.id.startsWith('specialty-'))))
+    } else {
+      setSpecialtyServices(prev => [...prev, service])
+      const alreadyExists = services.some(s => s.name === service)
+      if (!alreadyExists) {
+        setServices(prev => [...prev, {
+          id: `specialty-${Date.now()}-${service.replace(/\s+/g, '-').toLowerCase()}`,
+          name: service,
+          price: 0,
+          duration: 0,
+        }])
+      }
+    }
   }
 
   // Logo handlers
@@ -892,7 +904,8 @@ export function ListBusinessForm() {
 
                   {/* Error Message for Step 1 */}
                   {error && (
-                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-red-600">{error}</p>
                     </div>
                   )}
@@ -1295,6 +1308,10 @@ export function ListBusinessForm() {
                                         <SelectItem value="6">6 hrs</SelectItem>
                                         <SelectItem value="7">7 hrs</SelectItem>
                                         <SelectItem value="8">8 hrs</SelectItem>
+                                        <SelectItem value="9">9 hrs</SelectItem>
+                                        <SelectItem value="10">10 hrs</SelectItem>
+                                        <SelectItem value="11">11 hrs</SelectItem>
+                                        <SelectItem value="12">12 hrs</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -1311,9 +1328,17 @@ export function ListBusinessForm() {
                                       </SelectTrigger>
                                       <SelectContent>
                                         <SelectItem value="0">0 min</SelectItem>
+                                        <SelectItem value="5">5 min</SelectItem>
+                                        <SelectItem value="10">10 min</SelectItem>
                                         <SelectItem value="15">15 min</SelectItem>
+                                        <SelectItem value="20">20 min</SelectItem>
+                                        <SelectItem value="25">25 min</SelectItem>
                                         <SelectItem value="30">30 min</SelectItem>
+                                        <SelectItem value="35">35 min</SelectItem>
+                                        <SelectItem value="40">40 min</SelectItem>
                                         <SelectItem value="45">45 min</SelectItem>
+                                        <SelectItem value="50">50 min</SelectItem>
+                                        <SelectItem value="55">55 min</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -1374,7 +1399,7 @@ export function ListBusinessForm() {
                                     <p className="text-xs text-amber-600 mt-1">Tap to add price & duration (optional)</p>
                                   ) : (
                                     <div className="flex items-center gap-3 mt-1">
-                                      <span className="text-xs text-gray-600">{service.duration} min</span>
+                                      <span className="text-xs text-gray-600">{Math.floor(service.duration / 60) > 0 && Math.floor(service.duration / 60) + 'h'}{Math.floor(service.duration / 60) > 0 && service.duration % 60 > 0 && ' '}{service.duration % 60 > 0 && (service.duration % 60) + 'm'}{service.duration === 0 && '0 min'}</span>
                                       <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
                                     </div>
                                   )}
@@ -1406,7 +1431,8 @@ export function ListBusinessForm() {
 
                   {/* Error Message for Step 2 */}
                   {error && (
-                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-red-600">{error}</p>
                     </div>
                   )}
@@ -1617,7 +1643,8 @@ export function ListBusinessForm() {
 
                   {/* Error Message for Step 3 */}
                   {error && (
-                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-red-600">{error}</p>
                     </div>
                   )}
@@ -1745,7 +1772,8 @@ export function ListBusinessForm() {
 
                   {/* Error Message for Step 4 */}
                   {error && (
-                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-red-600">{error}</p>
                     </div>
                   )}
