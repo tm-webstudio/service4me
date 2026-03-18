@@ -32,12 +32,19 @@ export interface BusinessFormData {
   accepts_mobile: boolean | null
 }
 
+export interface ServiceOptionItem {
+  name: string
+  price: number
+  duration: number
+}
+
 export interface ServiceItem {
   id: string
   name: string
   price: number
   duration: number
   image_url?: string
+  options?: ServiceOptionItem[] | null
 }
 
 interface BusinessFormFieldsProps {
@@ -91,9 +98,25 @@ export function BusinessFormFields({
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null)
   const [serviceForm, setServiceForm] = useState({ name: "", price: 0, duration: 60 })
+  const [serviceOptions, setServiceOptions] = useState<ServiceOptionItem[]>([])
   const [serviceImagePreview, setServiceImagePreview] = useState<string>('')
   const [isServiceDragOver, setIsServiceDragOver] = useState(false)
   const serviceImageInputRef = useRef<HTMLInputElement>(null)
+
+  // Option handlers
+  const addOption = () => {
+    setServiceOptions(prev => [...prev, { name: "", price: 0, duration: 60 }])
+  }
+
+  const updateOption = (index: number, field: keyof ServiceOptionItem, value: string | number) => {
+    setServiceOptions(prev => prev.map((opt, i) =>
+      i === index ? { ...opt, [field]: value } : opt
+    ))
+  }
+
+  const removeOption = (index: number) => {
+    setServiceOptions(prev => prev.filter((_, i) => i !== index))
+  }
 
   // Toggle additional service — also creates/removes a service card
   const toggleAdditionalService = (service: string) => {
@@ -244,6 +267,7 @@ export function BusinessFormFields({
   const openAddServiceModal = () => {
     setEditingServiceId(null)
     setServiceForm({ name: "", price: 0, duration: 60 })
+    setServiceOptions([])
     setServiceImagePreview('')
     setIsServiceModalOpen(true)
   }
@@ -251,6 +275,7 @@ export function BusinessFormFields({
   const openEditServiceModal = (service: ServiceItem) => {
     setEditingServiceId(service.id)
     setServiceForm({ name: service.name, price: service.price, duration: service.duration })
+    setServiceOptions(service.options || [])
     setServiceImagePreview(service.image_url || '')
     setIsServiceModalOpen(true)
   }
@@ -290,26 +315,42 @@ export function BusinessFormFields({
   }, [])
 
   const handleAddService = () => {
-    if (!serviceForm.name.trim() || serviceForm.price <= 0) return
+    const hasOptions = serviceOptions.length > 0
+    const validOptions = serviceOptions.filter(opt => opt.name.trim())
+
+    // If no options, require price > 0. If options exist, price is auto-computed.
+    if (!serviceForm.name.trim()) return
+    if (!hasOptions && serviceForm.price <= 0) return
+
+    // Auto-compute top-level price/duration from options
+    const finalPrice = validOptions.length > 0
+      ? Math.min(...validOptions.map(o => o.price))
+      : serviceForm.price
+    const finalDuration = validOptions.length > 0
+      ? Math.min(...validOptions.map(o => o.duration))
+      : serviceForm.duration
+    const finalOptions = validOptions.length > 0 ? validOptions : null
 
     if (editingServiceId) {
       setServices(prev => prev.map(service =>
         service.id === editingServiceId
-          ? { ...service, name: serviceForm.name, price: serviceForm.price, duration: serviceForm.duration, image_url: serviceImagePreview }
+          ? { ...service, name: serviceForm.name, price: finalPrice, duration: finalDuration, image_url: serviceImagePreview, options: finalOptions }
           : service
       ))
     } else {
       const newService: ServiceItem = {
         id: Date.now().toString(),
         name: serviceForm.name,
-        price: serviceForm.price,
-        duration: serviceForm.duration,
-        image_url: serviceImagePreview
+        price: finalPrice,
+        duration: finalDuration,
+        image_url: serviceImagePreview,
+        options: finalOptions
       }
       setServices(prev => [...prev, newService])
     }
 
     setServiceForm({ name: "", price: 0, duration: 60 })
+    setServiceOptions([])
     setServiceImagePreview('')
     setEditingServiceId(null)
     setIsServiceModalOpen(false)
@@ -859,6 +900,72 @@ export function BusinessFormFields({
                         </div>
                       </div>
 
+                      {/* Service Options */}
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">Size / Option Variants</Label>
+                          <SmallCtaButton
+                            type="button"
+                            variant="outline"
+                            onClick={addOption}
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Add Option
+                          </SmallCtaButton>
+                        </div>
+                        {serviceOptions.length > 0 && (
+                          <div className="space-y-3 mt-3">
+                            {serviceOptions.map((opt, idx) => (
+                              <div key={idx} className="flex items-end gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div className="flex-1">
+                                  <Label className="text-xs text-gray-500">Name</Label>
+                                  <Input
+                                    value={opt.name}
+                                    onChange={(e) => updateOption(idx, 'name', e.target.value)}
+                                    placeholder="e.g. Small, Medium, Large"
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                                <div className="w-20">
+                                  <Label className="text-xs text-gray-500">Price (£)</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={opt.price || ''}
+                                    onChange={(e) => updateOption(idx, 'price', e.target.value === '' ? 0 : Number(e.target.value))}
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                                <div className="w-20">
+                                  <Label className="text-xs text-gray-500">Mins</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="5"
+                                    value={opt.duration || ''}
+                                    onChange={(e) => updateOption(idx, 'duration', e.target.value === '' ? 0 : Number(e.target.value))}
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeOption(idx)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+                            <p className="text-xs text-gray-400">
+                              Top-level price will auto-set to the lowest option price (from £{serviceOptions.filter(o => o.price > 0).length > 0 ? Math.min(...serviceOptions.filter(o => o.price > 0).map(o => o.price)) : '...'})
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
                       <Button onClick={handleAddService} className="w-full bg-red-600 hover:bg-red-700">
                         {editingServiceId ? 'Update Service' : 'Add Service'}
                       </Button>
@@ -894,7 +1001,12 @@ export function BusinessFormFields({
                           ) : (
                             <div className="flex items-center gap-3 mt-1">
                               <span className="text-xs text-gray-600">{Math.floor(service.duration / 60) > 0 && Math.floor(service.duration / 60) + 'h'}{Math.floor(service.duration / 60) > 0 && service.duration % 60 > 0 && ' '}{service.duration % 60 > 0 && (service.duration % 60) + 'm'}{service.duration === 0 && '0 min'}</span>
-                              <span className="text-sm font-semibold text-gray-900">£{service.price}</span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {service.options && service.options.length > 0 ? `from ` : ''}£{service.price}
+                              </span>
+                              {service.options && service.options.length > 0 && (
+                                <span className="text-xs text-gray-400">({service.options.length} options)</span>
+                              )}
                             </div>
                           )}
                         </div>

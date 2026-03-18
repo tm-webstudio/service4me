@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 
+export interface ServiceOption {
+  name: string
+  price: number
+  duration: number
+}
+
 export interface Service {
   id: string
   stylist_id: string
@@ -11,6 +17,7 @@ export interface Service {
   price: number // in pence
   duration: number // in minutes
   image_url?: string
+  options?: ServiceOption[] | null
   created_at: string
   updated_at: string
 }
@@ -20,6 +27,7 @@ export interface ServiceInput {
   price: number
   duration: number
   image_url?: string
+  options?: ServiceOption[] | null
 }
 
 export function useServices() {
@@ -78,7 +86,13 @@ export function useServices() {
       // Convert prices from pence to pounds (handle both numeric and integer types)
       const servicesWithCorrectPrices = (data || []).map(service => ({
         ...service,
-        price: parseFloat(service.price) / 100
+        price: parseFloat(service.price) / 100,
+        options: service.options
+          ? (service.options as ServiceOption[]).map(opt => ({
+              ...opt,
+              price: opt.price / 100
+            }))
+          : null
       }))
       setServices(servicesWithCorrectPrices)
     } catch (err) {
@@ -104,12 +118,18 @@ export function useServices() {
         throw new Error('Stylist profile not found')
       }
 
-      const insertData = {
+      const insertData: Record<string, unknown> = {
         stylist_id: stylistId,
         name: serviceInput.name,
         price: serviceInput.price * 100, // convert to pence
         duration: serviceInput.duration,
-        image_url: serviceInput.image_url
+        image_url: serviceInput.image_url,
+        options: serviceInput.options
+          ? serviceInput.options.map(opt => ({
+              ...opt,
+              price: Math.round(opt.price * 100)
+            }))
+          : null
       }
 
       const { data, error } = await supabase
@@ -124,7 +144,13 @@ export function useServices() {
 
       const newService = {
         ...data,
-        price: parseFloat(data.price) / 100 // convert back to pounds
+        price: parseFloat(data.price) / 100, // convert back to pounds
+        options: data.options
+          ? (data.options as ServiceOption[]).map(opt => ({
+              ...opt,
+              price: opt.price / 100
+            }))
+          : null
       }
 
       setServices(prev => [newService, ...prev])
@@ -153,7 +179,13 @@ export function useServices() {
           name: serviceInput.name,
           price: serviceInput.price * 100, // convert to pence
           duration: serviceInput.duration,
-          image_url: serviceInput.image_url
+          image_url: serviceInput.image_url,
+          options: serviceInput.options
+            ? serviceInput.options.map(opt => ({
+                ...opt,
+                price: Math.round(opt.price * 100)
+              }))
+            : null
         })
         .eq('id', serviceId)
         .select()
@@ -165,7 +197,13 @@ export function useServices() {
 
       const updatedService = {
         ...data,
-        price: parseFloat(data.price) / 100 // convert back to pounds
+        price: parseFloat(data.price) / 100, // convert back to pounds
+        options: data.options
+          ? (data.options as ServiceOption[]).map(opt => ({
+              ...opt,
+              price: opt.price / 100
+            }))
+          : null
       }
 
       setServices(prev => prev.map(service => 

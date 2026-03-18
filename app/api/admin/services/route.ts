@@ -40,7 +40,13 @@ export async function POST(request: NextRequest) {
         name: service.name,
         price: Math.round(service.price * 100), // convert to pence
         duration: service.duration,
-        image_url: service.image_url || null
+        image_url: service.image_url || null,
+        options: service.options
+          ? service.options.map((opt: any) => ({
+              ...opt,
+              price: Math.round(opt.price * 100)
+            }))
+          : null
       })))
       .select()
 
@@ -83,7 +89,7 @@ export async function PUT(request: NextRequest) {
     // Fetch existing services for this stylist
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from('services')
-      .select('id, name, price, duration, image_url')
+      .select('id, name, price, duration, image_url, options')
       .eq('stylist_id', stylist_id)
 
     if (fetchError) {
@@ -123,7 +129,13 @@ export async function PUT(request: NextRequest) {
             name: service.name,
             price: Math.round(service.price * 100),
             duration: service.duration,
-            image_url: service.image_url || null
+            image_url: service.image_url || null,
+            options: service.options
+              ? service.options.map((opt: any) => ({
+                  ...opt,
+                  price: Math.round(opt.price * 100)
+                }))
+              : null
           })
           .eq('id', service.id)
 
@@ -142,7 +154,13 @@ export async function PUT(request: NextRequest) {
             name: service.name,
             price: Math.round(service.price * 100),
             duration: service.duration,
-            image_url: service.image_url || null
+            image_url: service.image_url || null,
+            options: service.options
+              ? service.options.map((opt: any) => ({
+                  ...opt,
+                  price: Math.round(opt.price * 100)
+                }))
+              : null
           })
 
         if (insertError) {

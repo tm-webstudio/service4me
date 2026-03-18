@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
+export interface ServiceOption {
+  name: string
+  price: number
+  duration: number
+}
+
 export interface Service {
   id: string
   stylist_id: string
@@ -10,6 +16,7 @@ export interface Service {
   price: number // in pence
   duration: number // in minutes
   image_url?: string
+  options?: ServiceOption[] | null
   created_at: string
   updated_at: string
 }
@@ -44,7 +51,13 @@ export function useStylistServices(stylistId: string | undefined) {
         // Convert price from pence to pounds for display
         const servicesWithPriceConversion = (data || []).map(service => ({
           ...service,
-          price: service.price / 100
+          price: service.price / 100,
+          options: service.options
+            ? (service.options as ServiceOption[]).map(opt => ({
+                ...opt,
+                price: opt.price / 100
+              }))
+            : null
         }))
 
         setServices(servicesWithPriceConversion)

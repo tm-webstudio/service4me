@@ -130,7 +130,8 @@ export function StylistDashboard() {
       name: s.name,
       price: s.price,
       duration: s.duration,
-      image_url: s.image_url
+      image_url: s.image_url,
+      options: s.options || null
     })))
   }, [services])
   
@@ -208,7 +209,8 @@ export function StylistDashboard() {
           existing.name !== s.name ||
           existing.price !== s.price ||
           existing.duration !== s.duration ||
-          (existing.image_url || '') !== (s.image_url || '')
+          (existing.image_url || '') !== (s.image_url || '') ||
+          JSON.stringify(existing.options || null) !== JSON.stringify(s.options || null)
         )
       })
 
@@ -221,7 +223,8 @@ export function StylistDashboard() {
           name: svc.name,
           price: svc.price,
           duration: svc.duration,
-          image_url: svc.image_url
+          image_url: svc.image_url,
+          options: svc.options || null
         })
       }
 
@@ -230,7 +233,8 @@ export function StylistDashboard() {
           name: svc.name,
           price: svc.price,
           duration: svc.duration,
-          image_url: svc.image_url
+          image_url: svc.image_url,
+          options: svc.options || null
         })
       }
 

@@ -854,7 +854,13 @@ Please change your password after first login.`
           name: s.name,
           price: parseFloat(s.price) / 100, // Convert from pence to pounds
           duration: s.duration,
-          image_url: s.image_url || ''
+          image_url: s.image_url || '',
+          options: s.options
+            ? (s.options as any[]).map(opt => ({
+                ...opt,
+                price: opt.price / 100
+              }))
+            : null
         }))
         console.log('🔍 [ADMIN-DASHBOARD] Converted services to set:', convertedServices)
         setFormServices(convertedServices)
