@@ -39,7 +39,6 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   X,
   Instagram,
   Briefcase,
@@ -83,7 +82,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   const [reviewsRefreshTrigger, setReviewsRefreshTrigger] = useState(0)
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false)
 
-  const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null)
+  const [selectedService, setSelectedService] = useState<{ id: string; name: string; price: number; duration: string; description?: string | null; image?: string | null; options?: { name: string; price: number; duration: number; description?: string }[] | null } | null>(null)
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
 
@@ -226,6 +225,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           name: service.name,
           price: service.price, // Already converted to pounds in the hook
           duration: formatDuration(service.duration),
+          description: service.description || null,
           image: service.image_url || null,
           id: service.id,
           options: service.options || null
@@ -589,17 +589,14 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 <p className="text-sm text-gray-400">Using placeholder services</p>
               </div>
             ) : displayData.services.length === 0 ? null : (
+              <>
               <div className="grid gap-4">
                 {displayData.services.map((service, index) => {
                   const hasOptions = service.options && service.options.length > 0
-                  const isExpanded = expandedServiceId === service.id
                   return (
-                    <Card key={service.id || index}>
+                    <Card key={service.id || index} className={hasOptions ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} onClick={() => hasOptions && setSelectedService(service)}>
                       <CardContent className="p-3">
-                        <div
-                          className={`flex items-stretch space-x-3 ${hasOptions ? 'cursor-pointer' : ''}`}
-                          onClick={() => hasOptions && setExpandedServiceId(isExpanded ? null : service.id)}
-                        >
+                        <div className="flex items-stretch space-x-3">
                           {service.image && (
                             <div className="w-16 h-16 flex-shrink-0">
                               <img
@@ -614,7 +611,12 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                             </div>
                           )}
                           <div className="flex-1 flex flex-col justify-between min-h-[64px]">
-                            <h3 className="font-medium text-sm">{service.name}</h3>
+                            <div>
+                              <h3 className="font-medium text-sm">{service.name}</h3>
+                              {service.description && (
+                                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{service.description}</p>
+                              )}
+                            </div>
                             <div className="flex items-center text-gray-700 text-sm">
                               <Clock className="w-4 h-4 mr-1.5" />
                               <span>{service.duration}</span>
@@ -626,31 +628,57 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                               £{service.price}
                             </div>
                             {hasOptions && (
-                              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              <ChevronRight className="w-4 h-4 text-gray-400" />
                             )}
                           </div>
                         </div>
-                        {hasOptions && isExpanded && (
-                          <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                            {service.options!.map((opt, optIdx) => (
-                              <div key={optIdx} className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded">
-                                <span className="text-sm text-gray-700">{opt.name}</span>
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center text-gray-500 text-xs">
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    <span>{formatDuration(opt.duration)}</span>
-                                  </div>
-                                  <span className="text-sm font-medium text-gray-700">£{opt.price}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </CardContent>
                     </Card>
                   )
                 })}
               </div>
+
+              {/* Service Options Modal */}
+              <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
+                <DialogContent className="w-[92vw] max-w-md sm:w-full p-0 gap-0 rounded-xl overflow-hidden">
+                  <div className="p-5 pb-4">
+                    <DialogTitle className="text-xl font-semibold text-gray-900">{selectedService?.name}</DialogTitle>
+                    <DialogDescription className="sr-only">Select a service option</DialogDescription>
+                    {selectedService?.description && (
+                      <p className="text-sm text-gray-500 mt-1">{selectedService.description}</p>
+                    )}
+                    <div className="flex items-center text-gray-500 text-sm mt-1.5">
+                      <Clock className="w-4 h-4 mr-1.5" />
+                      <span>{selectedService?.duration}</span>
+                      <span className="mx-2">·</span>
+                      <span className="font-medium text-gray-700">from £{selectedService?.price}</span>
+                    </div>
+                  </div>
+
+                  <div className="px-5 pb-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Select an option</p>
+                  </div>
+
+                  <div className="px-5 pb-5 divide-y divide-gray-100">
+                    {selectedService?.options?.map((opt, optIdx) => (
+                      <div key={optIdx} className="flex items-center justify-between py-4">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
+                          {opt.description && (
+                            <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                          )}
+                          <div className="flex items-center text-gray-400 text-xs mt-1">
+                            <Clock className="w-3 h-3 mr-1" />
+                            <span>{formatDuration(opt.duration)}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900">£{opt.price}</p>
+                      </div>
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
+              </>
             )}
             {stylist.specialty_services && stylist.specialty_services.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">

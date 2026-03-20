@@ -7,6 +7,7 @@ export interface ServiceOption {
   name: string
   price: number
   duration: number
+  description?: string
 }
 
 export interface Service {
@@ -15,6 +16,7 @@ export interface Service {
   name: string
   price: number // in pence
   duration: number // in minutes
+  description?: string
   image_url?: string
   options?: ServiceOption[] | null
   created_at: string

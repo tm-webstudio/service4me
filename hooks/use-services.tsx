@@ -8,6 +8,7 @@ export interface ServiceOption {
   name: string
   price: number
   duration: number
+  description?: string
 }
 
 export interface Service {
@@ -16,6 +17,7 @@ export interface Service {
   name: string
   price: number // in pence
   duration: number // in minutes
+  description?: string
   image_url?: string
   options?: ServiceOption[] | null
   created_at: string
@@ -26,6 +28,7 @@ export interface ServiceInput {
   name: string
   price: number
   duration: number
+  description?: string
   image_url?: string
   options?: ServiceOption[] | null
 }
@@ -122,7 +125,8 @@ export function useServices() {
         stylist_id: stylistId,
         name: serviceInput.name,
         price: serviceInput.price * 100, // convert to pence
-        duration: serviceInput.duration,
+        duration: serviceInput.duration || 60,
+        description: serviceInput.description || null,
         image_url: serviceInput.image_url,
         options: serviceInput.options
           ? serviceInput.options.map(opt => ({
@@ -178,7 +182,8 @@ export function useServices() {
         .update({
           name: serviceInput.name,
           price: serviceInput.price * 100, // convert to pence
-          duration: serviceInput.duration,
+          duration: serviceInput.duration || 60,
+          description: serviceInput.description || null,
           image_url: serviceInput.image_url,
           options: serviceInput.options
             ? serviceInput.options.map(opt => ({
