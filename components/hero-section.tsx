@@ -94,7 +94,7 @@ export function HeroSection() {
                 const q = query.trim()
                 router.push(q ? `/browse?q=${encodeURIComponent(q)}` : "/browse")
               }}
-              className="w-full max-w-[98%] md:max-w-[45rem] flex items-center bg-white rounded-md overflow-hidden h-12 md:h-12"
+              className="w-full max-w-[98%] md:max-w-[40rem] flex items-center bg-white rounded-md overflow-hidden h-12 md:h-12"
             >
               <span className="pl-4 pr-2 text-gray-400 flex-shrink-0">
                 <Search className="w-4 h-4" />

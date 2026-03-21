@@ -371,6 +371,40 @@ export function BusinessFormFields({
     setServices(prev => prev.filter(service => service.id !== id))
   }
 
+  const [draggedServiceIndex, setDraggedServiceIndex] = useState<number | null>(null)
+  const [dragOverServiceIndex, setDragOverServiceIndex] = useState<number | null>(null)
+
+  const handleServiceReorderDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedServiceIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleServiceReorderDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedServiceIndex !== null && draggedServiceIndex !== index) {
+      setDragOverServiceIndex(index)
+    }
+  }
+
+  const handleServiceReorderDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedServiceIndex !== null && draggedServiceIndex !== index) {
+      setServices(prev => {
+        const newServices = [...prev]
+        const [dragged] = newServices.splice(draggedServiceIndex, 1)
+        newServices.splice(index, 0, dragged)
+        return newServices
+      })
+    }
+    setDraggedServiceIndex(null)
+    setDragOverServiceIndex(null)
+  }
+
+  const handleServiceReorderDragEnd = () => {
+    setDraggedServiceIndex(null)
+    setDragOverServiceIndex(null)
+  }
+
   return (
     <div className="space-y-5">
       {/* Section 1: Basic Information */}
@@ -1003,18 +1037,33 @@ export function BusinessFormFields({
               </div>
               {services.length > 0 ? (
                 <div className="space-y-3">
-                  {services.map((service) => {
+                  {services.map((service, index) => {
                     const isUnfilled = service.price <= 0 && service.duration <= 0
                     return (
                       <div
                         key={service.id}
-                        className={`flex items-center gap-4 p-3 rounded-lg border cursor-pointer ${
-                          isUnfilled
-                            ? 'bg-amber-50/50 border-amber-200 border-dashed'
-                            : 'bg-gray-50 border-gray-100'
+                        draggable
+                        onDragStart={(e) => handleServiceReorderDragStart(e, index)}
+                        onDragOver={(e) => handleServiceReorderDragOver(e, index)}
+                        onDrop={(e) => handleServiceReorderDrop(e, index)}
+                        onDragEnd={handleServiceReorderDragEnd}
+                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                          draggedServiceIndex === index
+                            ? 'opacity-40'
+                            : dragOverServiceIndex === index
+                              ? 'border-red-400 bg-red-50/50'
+                              : isUnfilled
+                                ? 'bg-amber-50/50 border-amber-200 border-dashed'
+                                : 'bg-gray-50 border-gray-100'
                         }`}
                         onClick={() => openEditServiceModal(service)}
                       >
+                        <div
+                          className="flex-shrink-0 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </div>
                         {service.image_url && (
                           <img
                             src={service.image_url}

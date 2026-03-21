@@ -221,6 +221,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
     if (services && services.length > 0) {
       return services
         .filter(service => service.price > 0)
+        .sort((a, b) => {
+          // Services with images come first, then by price low to high
+          const aHasImage = a.image_url ? 1 : 0
+          const bHasImage = b.image_url ? 1 : 0
+          if (aHasImage !== bHasImage) return bHasImage - aHasImage
+          return a.price - b.price
+        })
         .map(service => ({
           name: service.name,
           price: service.price, // Already converted to pounds in the hook
@@ -560,7 +567,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           </div>
 
           {/* Services & Pricing */}
-          <div className="space-y-4 pt-6 w-full sm:w-1/2">
+          <div className="space-y-4 pt-6 w-full">
             <div>
               <h2 className="text-base font-medium text-gray-900">Services Offered</h2>
             </div>
@@ -590,13 +597,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               </div>
             ) : displayData.services.length === 0 ? null : (
               <>
-              <div className="grid gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {displayData.services.map((service, index) => {
                   const hasOptions = service.options && service.options.length > 0
                   return (
-                    <Card key={service.id || index} className={hasOptions ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} onClick={() => hasOptions && setSelectedService(service)}>
-                      <CardContent className="p-3">
-                        <div className="flex items-stretch space-x-3">
+                    <Card key={service.id || index} className={`h-full ${hasOptions ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`} onClick={() => hasOptions && setSelectedService(service)}>
+                      <CardContent className="p-3 h-full">
+                        <div className="flex items-start space-x-3 h-full">
                           {service.image && (
                             <div className="w-16 h-16 flex-shrink-0">
                               <img
@@ -610,26 +617,31 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                               />
                             </div>
                           )}
-                          <div className="flex-1 flex flex-col justify-between min-h-[64px]">
+                          <div className="flex-1 flex flex-col h-full">
                             <div>
                               <h3 className="font-medium text-sm">{service.name}</h3>
+                              <div className="text-xs font-medium text-gray-500 mt-0.5">
+                                {hasOptions ? (() => {
+                                  const min = Math.min(...service.options!.map(o => o.price))
+                                  const max = Math.max(...service.options!.map(o => o.price))
+                                  return min === max ? <>from £{min}</> : <>from £{min} - £{max}</>
+                                })() : (
+                                  <>£{service.price}</>
+                                )}
+                              </div>
                               {service.description && (
                                 <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{service.description}</p>
                               )}
                             </div>
-                            <div className="flex items-center text-gray-700 text-sm">
-                              <Clock className="w-4 h-4 mr-1.5" />
-                              <span>{service.duration}</span>
+                            <div className="flex items-center justify-between mt-auto pt-1">
+                              <span className="flex items-center text-gray-500 text-xs">
+                                <Clock className="w-3.5 h-3.5 mr-1" />
+                                {service.duration}
+                              </span>
+                              {hasOptions && (
+                                <span className="text-xs text-gray-400 hover:text-gray-600">See options</span>
+                              )}
                             </div>
-                          </div>
-                          <div className="self-stretch flex flex-col items-end justify-between">
-                            <div className="text-sm font-medium text-gray-700">
-                              {hasOptions && <span className="text-xs font-normal text-gray-500">from </span>}
-                              £{service.price}
-                            </div>
-                            {hasOptions && (
-                              <ChevronRight className="w-4 h-4 text-gray-400" />
-                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -651,7 +663,16 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                       <Clock className="w-4 h-4 mr-1.5" />
                       <span>{selectedService?.duration}</span>
                       <span className="mx-2">·</span>
-                      <span className="font-medium text-gray-700">from £{selectedService?.price}</span>
+                      <span className="font-medium text-gray-700">
+                        {selectedService?.options && selectedService.options.length > 0
+                          ? (() => {
+                              const min = Math.min(...selectedService.options.map(o => o.price))
+                              const max = Math.max(...selectedService.options.map(o => o.price))
+                              return min === max ? `from £${min}` : `from £${min} - £${max}`
+                            })()
+                          : `£${selectedService?.price}`
+                        }
+                      </span>
                     </div>
                   </div>
 
@@ -679,18 +700,6 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 </DialogContent>
               </Dialog>
               </>
-            )}
-            {stylist.specialty_services && stylist.specialty_services.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-500">
-                  {stylist.specialties?.[0] ? `${stylist.specialties[0]} services:` : 'Specialty services:'}
-                </span>
-                {stylist.specialty_services.map((service, index) => (
-                  <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
-                    {service}
-                  </div>
-                ))}
-              </div>
             )}
             {stylist.additional_services && stylist.additional_services.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
