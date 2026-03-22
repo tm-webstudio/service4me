@@ -78,6 +78,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showReviewForm, setShowReviewForm] = useState(false)
+  const [showAllServices, setShowAllServices] = useState(false)
   const [editingReview, setEditingReview] = useState<{id: string; rating: number; comment: string} | null>(null)
   const [reviewsRefreshTrigger, setReviewsRefreshTrigger] = useState(0)
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false)
@@ -597,13 +598,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               </div>
             ) : displayData.services.length === 0 ? null : (
               <>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {displayData.services.map((service, index) => {
+              <div className="grid grid-cols-1 gap-3 sm:w-1/2">
+                {(showAllServices ? displayData.services : displayData.services.slice(0, 5)).map((service, index) => {
                   const hasOptions = service.options && service.options.length > 0
                   return (
                     <Card key={service.id || index} className={`h-full ${hasOptions ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`} onClick={() => hasOptions && setSelectedService(service)}>
                       <CardContent className="p-3 h-full">
-                        <div className="flex items-start space-x-3 h-full">
+                        <div className="flex items-start space-x-3 h-full min-h-[64px]">
                           {service.image && (
                             <div className="w-16 h-16 flex-shrink-0">
                               <img
@@ -649,6 +650,14 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                   )
                 })}
               </div>
+              {displayData.services.length > 5 && (
+                <button
+                  onClick={() => setShowAllServices(!showAllServices)}
+                  className="text-xs text-gray-400 hover:text-gray-600 mt-1"
+                >
+                  {showAllServices ? 'Show less' : `+${displayData.services.length - 5} more services`}
+                </button>
+              )}
 
               {/* Service Options Modal */}
               <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
