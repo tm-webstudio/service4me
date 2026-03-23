@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogContentSheet, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
 import { getServiceTypeLabel } from "@/lib/service-types"
 import {
@@ -661,7 +661,8 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
               {/* Service Options Modal */}
               <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
-                <DialogContent className="w-[92vw] max-w-md sm:w-full p-0 gap-0 rounded-xl overflow-hidden">
+                <DialogContentSheet>
+                  <div className="flex flex-col h-full">
                   <div className="p-5 pb-4">
                     <DialogTitle className="text-xl font-semibold text-gray-900">{selectedService?.name}</DialogTitle>
                     <DialogDescription className="sr-only">Select a service option</DialogDescription>
@@ -706,7 +707,8 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                       </div>
                     ))}
                   </div>
-                </DialogContent>
+                  </div>
+                </DialogContentSheet>
               </Dialog>
               </>
             )}

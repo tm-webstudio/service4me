@@ -7,7 +7,7 @@ import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContentSheet, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Upload, X, Plus, Scissors, Image as ImageIcon, Trash2, GripVertical } from "lucide-react"
 import type { ServiceItem, ServiceOptionItem } from "@/components/business-form-fields"
@@ -190,11 +190,12 @@ export function ServiceEditor({ services, setServices }: ServiceEditorProps) {
               Add Service
             </SmallCtaButton>
           </DialogTrigger>
-          <DialogContent className="w-[92vw] max-w-md sm:w-full">
+          <DialogContentSheet>
+            <div className="p-6 overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingServiceId ? 'Edit Service' : 'Add New Service'}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 mt-4">
               <span className="inline-block bg-gray-100 text-gray-800 text-xs font-semibold rounded-full px-3 py-1">Main Service</span>
 
               {/* Image upload */}
@@ -438,7 +439,8 @@ export function ServiceEditor({ services, setServices }: ServiceEditorProps) {
                 {editingServiceId ? 'Update Service' : 'Add Service'}
               </Button>
             </div>
-          </DialogContent>
+            </div>
+          </DialogContentSheet>
         </Dialog>
       </div>
       {services.length > 0 ? (

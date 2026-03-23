@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContentSheet, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { User, Settings, Upload, X, Image as ImageIcon, Plus, Scissors, Loader2, GripVertical, Trash2 } from "lucide-react"
 import { SERVICE_TYPES, getSpecialtiesForType, getAdditionalServicesForType, getServicesForSpecialty } from "@/lib/service-types"
 
@@ -784,11 +784,12 @@ export function BusinessFormFields({
                       Add Service
                     </SmallCtaButton>
                   </DialogTrigger>
-                  <DialogContent className="w-[92vw] max-w-md sm:w-full">
+                  <DialogContentSheet>
+                    <div className="p-6 overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingServiceId ? 'Edit Service' : 'Add New Service'}</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <div className="space-y-4 mt-4">
                       <span className="inline-block bg-gray-100 text-gray-800 text-xs font-semibold rounded-full px-3 py-1">Main Service</span>
 
                       {/* Image upload */}
@@ -1032,7 +1033,8 @@ export function BusinessFormFields({
                         {editingServiceId ? 'Update Service' : 'Add Service'}
                       </Button>
                     </div>
-                  </DialogContent>
+                    </div>
+                  </DialogContentSheet>
                 </Dialog>
               </div>
               {services.length > 0 ? (
