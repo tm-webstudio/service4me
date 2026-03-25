@@ -23,6 +23,8 @@ export const SPECIALTIES_BY_TYPE: Record<string, string[]> = {
     'Natural Hair',
     'Bridal Hair',
     'Silk Press',
+    'Ponytails',
+    'Weave',
   ],
   nail_technician: [
     'Acrylic Nails',
@@ -85,6 +87,7 @@ export const ADDITIONAL_SERVICES_BY_TYPE: Record<string, string[]> = {
     'Sew-Ins',
     'Butterfly Locs',
     'Ponytails',
+    'Weave',
   ],
   nail_technician: [
     'Acrylic Nails',
@@ -219,6 +222,26 @@ export const SERVICES_BY_SPECIALTY: Record<string, string[]> = {
     'Silk Press + Trim',
     'Silk Press + Treatment',
     'Silk Press + Colour',
+  ],
+  'Weave': [
+    'Sew-In (Full)',
+    'Sew-In (Partial)',
+    'Quick Weave',
+    'Closure Sew-In',
+    'Frontal Sew-In',
+    'Weave Removal',
+    'Weave + Style',
+    'Leave Out Sew-In',
+  ],
+  'Ponytails': [
+    'Sleek Ponytail',
+    'Braided Ponytail',
+    'Curly Ponytail',
+    'Bubble Ponytail',
+    'Low Ponytail',
+    'High Ponytail',
+    'Ponytail with Weave',
+    'Swoop Ponytail',
   ],
   // Nail technician specialties
   'Acrylic Nails': ['Full Set', 'Infill', 'Removal', 'Nail Repair', 'Acrylic Overlay', 'Nail Art Add-On'],

@@ -79,6 +79,8 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [showAllServices, setShowAllServices] = useState(false)
+  const [showAllServicesModal, setShowAllServicesModal] = useState(false)
+  const [modalSelectedService, setModalSelectedService] = useState<typeof selectedService>(null)
   const [editingReview, setEditingReview] = useState<{id: string; rating: number; comment: string} | null>(null)
   const [reviewsRefreshTrigger, setReviewsRefreshTrigger] = useState(0)
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false)
@@ -133,7 +135,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   // Loading state with skeletons
   if (loading) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-4">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 lg:px-8 pt-3 pb-4">
         <MapStylesImport />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Main Content Skeleton */}
@@ -154,7 +156,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   // Error state
   if (error && !stylist) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 lg:px-8 pt-4 pb-4">
         <div className="text-center py-20">
           <p className="text-red-600 mb-4">Error loading stylist profile: {error}</p>
           <Button onClick={() => window.location.reload()} variant="outline">
@@ -168,7 +170,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   // No stylist found
   if (!stylist) {
     return (
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 lg:px-8 pt-4 pb-4">
         <div className="text-center py-20">
           <p className="text-gray-600 mb-4">Stylist not found.</p>
           <p className="text-sm text-gray-500">The stylist profile you're looking for doesn't exist.</p>
@@ -289,7 +291,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
   }
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-4">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 lg:px-8 pt-3 pb-4">
       <MapStylesImport />
 
       {/* Inactive Profile Notice */}
@@ -516,13 +518,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             {(stylist.accepts_mobile || stylist.accepts_same_day) && (
               <div className="flex flex-row gap-x-3 mb-2.5">
                 {stylist.accepts_mobile && (
-                  <div className="flex items-center text-gray-500 text-sm min-w-0">
+                  <div className="flex items-center text-gray-500 text-[13px] sm:text-sm min-w-0">
                     <Car className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Mobile Appointments</span>
                   </div>
                 )}
                 {stylist.accepts_same_day && (
-                  <div className="flex items-center text-gray-500 text-sm min-w-0">
+                  <div className="flex items-center text-gray-500 text-[13px] sm:text-sm min-w-0">
                     <Clock className="w-4 h-4 mr-1.5 flex-shrink-0" />
                     <span className="truncate">Same Day Appointments</span>
                   </div>
@@ -599,18 +601,18 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
             ) : displayData.services.length === 0 ? null : (
               <>
               <div className="grid grid-cols-1 gap-3 sm:w-1/2">
-                {(showAllServices ? displayData.services : displayData.services.slice(0, 5)).map((service, index) => {
+                {displayData.services.slice(0, 3).map((service, index) => {
                   const hasOptions = service.options && service.options.length > 0
                   return (
                     <Card key={service.id || index} className={`h-full ${hasOptions ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`} onClick={() => hasOptions && setSelectedService(service)}>
-                      <CardContent className="p-3 h-full">
-                        <div className="flex items-start space-x-3 h-full min-h-[64px]">
+                      <CardContent className="px-2.5 py-2 h-full">
+                        <div className="flex items-start space-x-3 h-full min-h-[4.25rem]">
                           {service.image && (
-                            <div className="w-16 h-16 flex-shrink-0">
+                            <div className="w-16 h-[4.25rem] flex-shrink-0">
                               <img
                                 src={service.image}
                                 alt={service.name}
-                                className="w-16 h-16 object-cover rounded-lg"
+                                className="w-16 h-[4.25rem] object-cover rounded-lg"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   if (target.parentElement) target.parentElement.style.display = 'none'
@@ -650,26 +652,26 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                   )
                 })}
               </div>
-              {displayData.services.length > 5 && (
+              {displayData.services.length > 3 && (
                 <button
-                  onClick={() => setShowAllServices(!showAllServices)}
-                  className="text-xs text-gray-400 hover:text-gray-600 mt-1"
+                  onClick={() => setShowAllServicesModal(true)}
+                  className="text-sm font-medium text-gray-900 bg-gray-100 hover:bg-gray-200 px-5 py-2.5 rounded-full transition-colors mt-3"
                 >
-                  {showAllServices ? 'Show less' : `+${displayData.services.length - 5} more services`}
+                  Show more
                 </button>
               )}
 
               {/* Service Options Modal */}
               <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
                 <DialogContentSheet>
-                  <div className="flex flex-col h-full">
+                  <div className="flex flex-col h-full sm:px-10 sm:pt-8 sm:pb-10">
                   <div className="p-5 pb-4">
-                    <DialogTitle className="text-xl font-semibold text-gray-900">{selectedService?.name}</DialogTitle>
+                    <DialogTitle className="text-xl font-semibold text-gray-900 pr-8">{selectedService?.name}</DialogTitle>
                     <DialogDescription className="sr-only">Select a service option</DialogDescription>
                     {selectedService?.description && (
                       <p className="text-sm text-gray-500 mt-1">{selectedService.description}</p>
                     )}
-                    <div className="flex items-center text-gray-500 text-sm mt-1.5">
+                    <div className="flex items-center text-gray-500 text-sm mt-2">
                       <Clock className="w-4 h-4 mr-1.5" />
                       <span>{selectedService?.duration}</span>
                       <span className="mx-2">·</span>
@@ -707,6 +709,133 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                       </div>
                     ))}
                   </div>
+                  </div>
+                </DialogContentSheet>
+              </Dialog>
+
+              {/* All Services Modal */}
+              <Dialog open={showAllServicesModal} onOpenChange={(open) => {
+                setShowAllServicesModal(open)
+                if (!open) setModalSelectedService(null)
+              }}>
+                <DialogContentSheet>
+                  <div className="flex flex-col h-full sm:px-10 relative overflow-hidden">
+                    {/* Services List View */}
+                    <div className={`flex flex-col h-full transition-all duration-300 ease-in-out ${modalSelectedService ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}>
+                      <div className="p-5 pb-3">
+                        <DialogTitle className="text-xl font-semibold text-gray-900 pr-8">All Services</DialogTitle>
+                        <DialogDescription className="sr-only">View all services</DialogDescription>
+                      </div>
+                      <div className="px-4 pb-5 overflow-y-auto flex-1">
+                        <div className="grid grid-cols-1 gap-3">
+                          {displayData.services.map((service, index) => {
+                            const hasOptions = service.options && service.options.length > 0
+                            return (
+                              <Card
+                                key={service.id || index}
+                                className={`h-full ${hasOptions ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+                                onClick={() => {
+                                  if (hasOptions) setModalSelectedService(service)
+                                }}
+                              >
+                                <CardContent className="px-2.5 py-2 h-full">
+                                  <div className="flex items-start space-x-3 h-full min-h-[4.25rem]">
+                                    {service.image && (
+                                      <div className="w-16 h-[4.25rem] flex-shrink-0">
+                                        <img
+                                          src={service.image}
+                                          alt={service.name}
+                                          className="w-16 h-[4.25rem] object-cover rounded-lg"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement
+                                            if (target.parentElement) target.parentElement.style.display = 'none'
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 flex flex-col h-full">
+                                      <div>
+                                        <h3 className="font-medium text-sm">{service.name}</h3>
+                                        <div className="text-xs font-medium text-gray-500 mt-0.5">
+                                          {hasOptions ? (() => {
+                                            const min = Math.min(...service.options!.map(o => o.price))
+                                            const max = Math.max(...service.options!.map(o => o.price))
+                                            return min === max ? <>from £{min}</> : <>from £{min} - £{max}</>
+                                          })() : (
+                                            <>£{service.price}</>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center justify-between mt-auto pt-1">
+                                        <span className="flex items-center text-gray-500 text-xs">
+                                          <Clock className="w-3.5 h-3.5 mr-1" />
+                                          {service.duration}
+                                        </span>
+                                        {hasOptions && (
+                                          <span className="text-xs text-gray-400 hover:text-gray-600">See options</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Service Detail View */}
+                    <div className={`absolute inset-0 flex flex-col h-full sm:px-10 transition-all duration-300 ease-in-out ${modalSelectedService ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+                      <div className="p-5 pb-4">
+                        <button
+                          onClick={() => setModalSelectedService(null)}
+                          className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3 -ml-1"
+                        >
+                          <ChevronLeft className="w-4 h-4 mr-0.5" />
+                          All Services
+                        </button>
+                        <h2 className="text-xl font-semibold text-gray-900">{modalSelectedService?.name}</h2>
+                        {modalSelectedService?.description && (
+                          <p className="text-sm text-gray-500 mt-1">{modalSelectedService.description}</p>
+                        )}
+                        <div className="flex items-center text-gray-500 text-sm mt-2">
+                          <Clock className="w-4 h-4 mr-1.5" />
+                          <span>{modalSelectedService?.duration}</span>
+                          <span className="mx-2">·</span>
+                          <span className="font-medium text-gray-700">
+                            {modalSelectedService?.options && modalSelectedService.options.length > 0
+                              ? (() => {
+                                  const min = Math.min(...modalSelectedService.options.map(o => o.price))
+                                  const max = Math.max(...modalSelectedService.options.map(o => o.price))
+                                  return min === max ? `from £${min}` : `from £${min} - £${max}`
+                                })()
+                              : `£${modalSelectedService?.price}`
+                            }
+                          </span>
+                        </div>
+                      </div>
+                      <div className="px-5 pb-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Select an option</p>
+                      </div>
+                      <div className="px-5 pb-5 divide-y divide-gray-100 overflow-y-auto flex-1">
+                        {modalSelectedService?.options?.map((opt, optIdx) => (
+                          <div key={optIdx} className="flex items-center justify-between py-4">
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
+                              {opt.description && (
+                                <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                              )}
+                              <div className="flex items-center text-gray-400 text-xs mt-1">
+                                <Clock className="w-3 h-3 mr-1" />
+                                <span>{formatDuration(opt.duration)}</span>
+                              </div>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">£{opt.price}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </DialogContentSheet>
               </Dialog>
