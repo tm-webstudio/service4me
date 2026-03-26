@@ -7,7 +7,7 @@ import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContentSheet, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogClose, DialogContentSheet, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Upload, X, Plus, Scissors, Image as ImageIcon, Trash2, GripVertical } from "lucide-react"
 import type { ServiceItem, ServiceOptionItem } from "@/components/business-form-fields"
@@ -227,7 +227,12 @@ export function ServiceEditor({ services, setServices }: ServiceEditorProps) {
           <DialogContentSheet>
             <div className="p-6 overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingServiceId ? 'Edit Service' : 'Add New Service'}</DialogTitle>
+              <div className="flex items-start justify-between">
+                <DialogTitle>{editingServiceId ? 'Edit Service' : 'Add New Service'}</DialogTitle>
+                <DialogClose className="rounded-sm opacity-70 hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
+                  <X className="h-5 w-5" />
+                </DialogClose>
+              </div>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <span className="inline-block bg-gray-100 text-gray-800 text-xs font-semibold rounded-full px-3 py-1">Main Service</span>

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogContentSheet, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogContentSheet, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SpecialistBadge } from "@/components/ui/specialist-badge"
 import { getServiceTypeLabel } from "@/lib/service-types"
 import {
@@ -54,10 +54,11 @@ const TikTokIcon = ({ className }: { className?: string }) => (
 
 const TruncatedText = ({ text, limit = 80 }: { text: string; limit?: number }) => {
   const [expanded, setExpanded] = useState(false)
-  if (text.length <= limit) return <span>{text}</span>
+  const flat = text.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim()
+  if (flat.length <= limit) return <span className={text.includes('\n') ? 'whitespace-pre-line' : ''}>{text}</span>
   return (
-    <span>
-      {expanded ? text : `${text.slice(0, limit).trimEnd()}...`}
+    <span className={expanded ? 'whitespace-pre-line' : ''}>
+      {expanded ? text : `${flat.slice(0, limit).trimEnd()}...`}
       <button
         onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
         className="ml-1 text-gray-700 font-medium hover:underline"
@@ -616,7 +617,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               </div>
             ) : displayData.services.length === 0 ? null : (
               <>
-              <div className="grid grid-cols-1 gap-3 sm:w-1/2">
+              <div className="grid grid-cols-1 gap-2 sm:gap-2.5 sm:w-1/2">
                 {displayData.services.slice(0, 3).map((service, index) => {
                   const hasOptions = service.options && service.options.length > 0
                   return (
@@ -669,11 +670,21 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 })}
               </div>
               {displayData.services.length > 3 && (
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <span className="text-xs text-gray-500">Also available:</span>
+                  {displayData.services.slice(3).map((service, index) => (
+                    <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
+                      {service.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {displayData.services.length > 3 && (
                 <button
                   onClick={() => setShowAllServicesModal(true)}
-                  className="text-sm font-medium text-gray-900 bg-gray-100 hover:bg-gray-200 px-5 py-2.5 rounded-full transition-colors mt-3"
+                  className="text-sm font-medium text-gray-900 bg-gray-100 hover:bg-gray-200 px-5 py-2.5 rounded-xl transition-colors mt-3"
                 >
-                  Show more
+                  Show all
                 </button>
               )}
 
@@ -681,8 +692,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
                 <DialogContentSheet>
                   <div className="flex flex-col h-full sm:px-10">
-                  <div className="sticky top-0 z-10 bg-background p-6 pb-4 border-b border-gray-100">
-                    <DialogTitle className="text-xl font-semibold text-gray-900 pr-8">{selectedService?.name}</DialogTitle>
+                  <div className="sticky top-0 z-10 bg-background px-6 pt-6 sm:pt-10 pb-5 border-b border-gray-100">
+                    <div className="flex items-start justify-between">
+                      <DialogTitle className="text-[1.175rem] sm:text-xl font-semibold text-gray-900">{selectedService?.name}</DialogTitle>
+                      <DialogClose className="rounded-sm opacity-70 hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
+                        <X className="h-5 w-5" />
+                      </DialogClose>
+                    </div>
                     <DialogDescription className="sr-only">Select a service option</DialogDescription>
                     {selectedService?.description && (
                       <p className="text-sm text-gray-500 mt-1">{selectedService.description}</p>
@@ -704,20 +720,22 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                     </div>
                   </div>
 
-                  <div className="px-6 pb-6 divide-y divide-gray-100 overflow-y-auto flex-1">
+                  <div className="px-6 pt-1 sm:pt-3 pb-6 divide-y divide-gray-100 overflow-y-auto flex-1">
                     {selectedService?.options?.map((opt, optIdx) => (
-                      <div key={optIdx} className="flex items-center justify-between py-4">
+                      <div key={optIdx} className="flex items-start justify-between py-5">
                         <div>
                           <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
                           {opt.description && (
-                            <p className="text-xs text-gray-500 mt-0.5"><TruncatedText text={opt.description} /></p>
+                            <p className="text-xs text-gray-500 mt-1 max-w-[75%]"><TruncatedText text={opt.description} /></p>
                           )}
-                          <div className="flex items-center text-gray-400 text-xs mt-1">
+                          {opt.duration > 0 && (
+                          <div className="flex items-center text-gray-400 text-xs mt-1.5">
                             <Clock className="w-3 h-3 mr-1" />
                             <span>{formatDuration(opt.duration)}</span>
                           </div>
+                          )}
                         </div>
-                        <p className="text-sm font-semibold text-gray-900">£{opt.price}</p>
+                        <p className="text-[13px] sm:text-sm font-semibold text-gray-900">£{opt.price}</p>
                       </div>
                     ))}
                   </div>
@@ -734,12 +752,17 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                   <div className="flex flex-col h-full sm:px-10 relative overflow-hidden">
                     {/* Services List View */}
                     <div className={`flex flex-col h-full transition-all duration-300 ease-in-out ${modalSelectedService ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}>
-                      <div className="sticky top-0 z-10 bg-background p-6 pb-4 border-b border-gray-100">
-                        <DialogTitle className="text-xl font-semibold text-gray-900 pr-8">All Services</DialogTitle>
+                      <div className="sticky top-0 z-10 bg-background px-6 pt-6 sm:pt-10 pb-5 border-b border-gray-100">
+                        <div className="flex items-start justify-between">
+                          <DialogTitle className="text-[1.175rem] sm:text-xl font-semibold text-gray-900">All Services</DialogTitle>
+                          <DialogClose className="rounded-sm opacity-70 hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
+                            <X className="h-5 w-5" />
+                          </DialogClose>
+                        </div>
                         <DialogDescription className="sr-only">View all services</DialogDescription>
                       </div>
                       <div className="px-6 pt-4 pb-6 overflow-y-auto flex-1">
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 gap-2 sm:gap-2.5">
                           {displayData.services.map((service, index) => {
                             const hasOptions = service.options && service.options.length > 0
                             return (
@@ -799,15 +822,20 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
                     {/* Service Detail View */}
                     <div className={`absolute inset-0 flex flex-col h-full sm:px-10 transition-all duration-300 ease-in-out ${modalSelectedService ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-                      <div className="sticky top-0 z-10 bg-background p-6 pb-4 border-b border-gray-100">
-                        <button
-                          onClick={() => setModalSelectedService(null)}
-                          className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3 -ml-1"
+                      <div className="sticky top-0 z-10 bg-background px-6 pt-6 sm:pt-10 pb-5 border-b border-gray-100">
+                        <div className="flex items-center justify-between mb-3">
+                          <button
+                            onClick={() => setModalSelectedService(null)}
+                            className="flex items-center text-sm text-gray-500 hover:text-gray-700 -ml-1"
                         >
-                          <ChevronLeft className="w-4 h-4 mr-0.5" />
-                          All Services
-                        </button>
-                        <h2 className="text-xl font-semibold text-gray-900">{modalSelectedService?.name}</h2>
+                            <ChevronLeft className="w-4 h-4 mr-0.5" />
+                            All Services
+                          </button>
+                          <DialogClose className="rounded-sm opacity-70 hover:opacity-100 transition-opacity flex-shrink-0">
+                            <X className="h-5 w-5" />
+                          </DialogClose>
+                        </div>
+                        <h2 className="text-[1.175rem] sm:text-xl font-semibold text-gray-900">{modalSelectedService?.name}</h2>
                         {modalSelectedService?.description && (
                           <p className="text-sm text-gray-500 mt-1">{modalSelectedService.description}</p>
                         )}
@@ -827,20 +855,22 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                           </span>
                         </div>
                       </div>
-                      <div className="px-6 pb-6 divide-y divide-gray-100 overflow-y-auto flex-1">
+                      <div className="px-6 pt-1 sm:pt-3 pb-6 divide-y divide-gray-100 overflow-y-auto flex-1">
                         {modalSelectedService?.options?.map((opt, optIdx) => (
-                          <div key={optIdx} className="flex items-center justify-between py-4">
+                          <div key={optIdx} className="flex items-start justify-between py-5">
                             <div>
                               <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
                               {opt.description && (
-                                <p className="text-xs text-gray-500 mt-0.5"><TruncatedText text={opt.description} /></p>
+                                <p className="text-xs text-gray-500 mt-1 max-w-[75%]"><TruncatedText text={opt.description} /></p>
                               )}
-                              <div className="flex items-center text-gray-400 text-xs mt-1">
+                              {opt.duration > 0 && (
+                              <div className="flex items-center text-gray-400 text-xs mt-1.5">
                                 <Clock className="w-3 h-3 mr-1" />
                                 <span>{formatDuration(opt.duration)}</span>
                               </div>
+                              )}
                             </div>
-                            <p className="text-sm font-semibold text-gray-900">£{opt.price}</p>
+                            <p className="text-[13px] sm:text-sm font-semibold text-gray-900">£{opt.price}</p>
                           </div>
                         ))}
                       </div>
@@ -849,18 +879,6 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 </DialogContentSheet>
               </Dialog>
               </>
-            )}
-            {stylist.additional_services && stylist.additional_services.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-500">
-                  {displayData.services.length > 0 ? 'Additional services:' : 'Available services:'}
-                </span>
-                {stylist.additional_services.map((service, index) => (
-                  <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">
-                    {service}
-                  </div>
-                ))}
-              </div>
             )}
           </div>
 
