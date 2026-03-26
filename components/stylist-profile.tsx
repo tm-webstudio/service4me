@@ -52,6 +52,22 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
+const TruncatedText = ({ text, limit = 80 }: { text: string; limit?: number }) => {
+  const [expanded, setExpanded] = useState(false)
+  if (text.length <= limit) return <span>{text}</span>
+  return (
+    <span>
+      {expanded ? text : `${text.slice(0, limit).trimEnd()}...`}
+      <button
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
+        className="ml-1 text-gray-700 font-medium hover:underline"
+      >
+        {expanded ? 'see less' : 'see more'}
+      </button>
+    </span>
+  )
+}
+
 // Default fallback data for missing information
 const defaultHours = {
   monday: "9:00 AM - 6:00 PM",
@@ -606,13 +622,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                   return (
                     <Card key={service.id || index} className={`h-full ${hasOptions ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`} onClick={() => hasOptions && setSelectedService(service)}>
                       <CardContent className="px-2.5 py-2 h-full">
-                        <div className="flex items-start space-x-3 h-full min-h-[4.25rem]">
+                        <div className="flex items-start space-x-3 h-full min-h-[4.75rem]">
                           {service.image && (
-                            <div className="w-16 h-[4.25rem] flex-shrink-0">
+                            <div className="w-16 h-[4.75rem] flex-shrink-0">
                               <img
                                 src={service.image}
                                 alt={service.name}
-                                className="w-16 h-[4.25rem] object-cover rounded-lg"
+                                className="w-16 h-[4.75rem] object-cover rounded-lg"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   if (target.parentElement) target.parentElement.style.display = 'none'
@@ -664,8 +680,8 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               {/* Service Options Modal */}
               <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
                 <DialogContentSheet>
-                  <div className="flex flex-col h-full sm:px-10 sm:pt-8 sm:pb-10">
-                  <div className="p-5 pb-4">
+                  <div className="flex flex-col h-full sm:px-10">
+                  <div className="sticky top-0 z-10 bg-background p-6 pb-4 border-b border-gray-100">
                     <DialogTitle className="text-xl font-semibold text-gray-900 pr-8">{selectedService?.name}</DialogTitle>
                     <DialogDescription className="sr-only">Select a service option</DialogDescription>
                     {selectedService?.description && (
@@ -688,17 +704,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                     </div>
                   </div>
 
-                  <div className="px-5 pb-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Select an option</p>
-                  </div>
-
-                  <div className="px-5 pb-5 divide-y divide-gray-100">
+                  <div className="px-6 pb-6 divide-y divide-gray-100 overflow-y-auto flex-1">
                     {selectedService?.options?.map((opt, optIdx) => (
                       <div key={optIdx} className="flex items-center justify-between py-4">
                         <div>
                           <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
                           {opt.description && (
-                            <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                            <p className="text-xs text-gray-500 mt-0.5"><TruncatedText text={opt.description} /></p>
                           )}
                           <div className="flex items-center text-gray-400 text-xs mt-1">
                             <Clock className="w-3 h-3 mr-1" />
@@ -722,11 +734,11 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                   <div className="flex flex-col h-full sm:px-10 relative overflow-hidden">
                     {/* Services List View */}
                     <div className={`flex flex-col h-full transition-all duration-300 ease-in-out ${modalSelectedService ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}>
-                      <div className="p-5 pb-3">
+                      <div className="sticky top-0 z-10 bg-background p-6 pb-4 border-b border-gray-100">
                         <DialogTitle className="text-xl font-semibold text-gray-900 pr-8">All Services</DialogTitle>
                         <DialogDescription className="sr-only">View all services</DialogDescription>
                       </div>
-                      <div className="px-4 pb-5 overflow-y-auto flex-1">
+                      <div className="px-6 pt-4 pb-6 overflow-y-auto flex-1">
                         <div className="grid grid-cols-1 gap-3">
                           {displayData.services.map((service, index) => {
                             const hasOptions = service.options && service.options.length > 0
@@ -739,13 +751,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                                 }}
                               >
                                 <CardContent className="px-2.5 py-2 h-full">
-                                  <div className="flex items-start space-x-3 h-full min-h-[4.25rem]">
+                                  <div className="flex items-start space-x-3 h-full min-h-[4.75rem]">
                                     {service.image && (
-                                      <div className="w-16 h-[4.25rem] flex-shrink-0">
+                                      <div className="w-16 h-[4.75rem] flex-shrink-0">
                                         <img
                                           src={service.image}
                                           alt={service.name}
-                                          className="w-16 h-[4.25rem] object-cover rounded-lg"
+                                          className="w-16 h-[4.75rem] object-cover rounded-lg"
                                           onError={(e) => {
                                             const target = e.target as HTMLImageElement
                                             if (target.parentElement) target.parentElement.style.display = 'none'
@@ -787,7 +799,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
                     {/* Service Detail View */}
                     <div className={`absolute inset-0 flex flex-col h-full sm:px-10 transition-all duration-300 ease-in-out ${modalSelectedService ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-                      <div className="p-5 pb-4">
+                      <div className="sticky top-0 z-10 bg-background p-6 pb-4 border-b border-gray-100">
                         <button
                           onClick={() => setModalSelectedService(null)}
                           className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3 -ml-1"
@@ -815,16 +827,13 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                           </span>
                         </div>
                       </div>
-                      <div className="px-5 pb-2">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Select an option</p>
-                      </div>
-                      <div className="px-5 pb-5 divide-y divide-gray-100 overflow-y-auto flex-1">
+                      <div className="px-6 pb-6 divide-y divide-gray-100 overflow-y-auto flex-1">
                         {modalSelectedService?.options?.map((opt, optIdx) => (
                           <div key={optIdx} className="flex items-center justify-between py-4">
                             <div>
                               <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
                               {opt.description && (
-                                <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                                <p className="text-xs text-gray-500 mt-0.5"><TruncatedText text={opt.description} /></p>
                               )}
                               <div className="flex items-center text-gray-400 text-xs mt-1">
                                 <Clock className="w-3 h-3 mr-1" />

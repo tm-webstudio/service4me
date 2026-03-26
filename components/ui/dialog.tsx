@@ -56,28 +56,48 @@ DialogContent.displayName = DialogPrimitive.Content.displayName
 const DialogContentSheet = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, style, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed z-50 grid w-full border bg-background shadow-sm overflow-y-auto will-change-transform",
-        "bottom-0 top-auto left-0 right-0 h-[90vh] rounded-t-[10px] rounded-b-none p-0 gap-0 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-full data-[state=closed]:slide-out-to-bottom-full",
-        "sm:bottom-auto sm:left-[50%] sm:right-auto sm:top-[50%] sm:h-[70vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[10px] sm:p-0 sm:duration-200 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%] sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
-        className
-      )}
-      style={style}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute right-5 top-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-5 w-5" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
+>(({ className, children, style, ...props }, ref) => {
+  const innerRef = React.useRef<HTMLDivElement>(null)
+
+  // Merge forwarded ref with inner ref
+  const mergedRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      innerRef.current = node
+      if (typeof ref === 'function') ref(node)
+      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+      // Scroll to top when modal opens on iOS Safari
+      if (node) {
+        requestAnimationFrame(() => {
+          node.scrollTop = 0
+        })
+      }
+    },
+    [ref]
+  )
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={mergedRef}
+        className={cn(
+          "fixed z-50 grid w-full border bg-background shadow-sm will-change-transform",
+          "bottom-0 top-auto left-0 right-0 h-[90dvh] rounded-t-[10px] rounded-b-none p-0 gap-0 overflow-y-auto overscroll-contain duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-full data-[state=closed]:slide-out-to-bottom-full",
+          "sm:bottom-auto sm:left-[50%] sm:right-auto sm:top-[50%] sm:h-[70vh] sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[10px] sm:p-0 sm:duration-200 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%] sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
+          className
+        )}
+        style={style}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute right-5 top-6 z-20 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-5 w-5" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+})
 DialogContentSheet.displayName = "DialogContentSheet"
 
 const DialogHeader = ({

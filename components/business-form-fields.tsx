@@ -120,6 +120,40 @@ export function BusinessFormFields({
     setServiceOptions(prev => prev.filter((_, i) => i !== index))
   }
 
+  const [draggedOptionIndex, setDraggedOptionIndex] = useState<number | null>(null)
+  const [dragOverOptionIndex, setDragOverOptionIndex] = useState<number | null>(null)
+
+  const handleOptionDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedOptionIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleOptionDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedOptionIndex !== null && draggedOptionIndex !== index) {
+      setDragOverOptionIndex(index)
+    }
+  }
+
+  const handleOptionDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedOptionIndex !== null && draggedOptionIndex !== index) {
+      setServiceOptions(prev => {
+        const newOptions = [...prev]
+        const [dragged] = newOptions.splice(draggedOptionIndex, 1)
+        newOptions.splice(index, 0, dragged)
+        return newOptions
+      })
+    }
+    setDraggedOptionIndex(null)
+    setDragOverOptionIndex(null)
+  }
+
+  const handleOptionDragEnd = () => {
+    setDraggedOptionIndex(null)
+    setDragOverOptionIndex(null)
+  }
+
   // Toggle additional service — also creates/removes a service card
   const toggleAdditionalService = (service: string) => {
     if (additionalServices.includes(service)) {
@@ -950,10 +984,25 @@ export function BusinessFormFields({
                         {serviceOptions.length > 0 && (
                           <div className="space-y-3">
                             {serviceOptions.map((opt, idx) => (
-                              <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-2">
+                              <div
+                                key={idx}
+                                onDragOver={(e) => handleOptionDragOver(e, idx)}
+                                onDrop={(e) => handleOptionDrop(e, idx)}
+                                className={`p-3 bg-gray-50 rounded-lg border space-y-2 transition-colors ${
+                                  draggedOptionIndex === idx ? 'opacity-40' : ''
+                                } ${dragOverOptionIndex === idx ? 'border-red-400 bg-red-50/50' : 'border-gray-100'}`}
+                              >
                                 <div className="space-y-1">
                                   <Label className="text-xs text-gray-500">Option Name</Label>
                                   <div className="flex items-center gap-2">
+                                    <div
+                                      draggable
+                                      onDragStart={(e) => handleOptionDragStart(e, idx)}
+                                      onDragEnd={handleOptionDragEnd}
+                                      className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 flex-shrink-0 p-1"
+                                    >
+                                      <GripVertical className="w-5 h-5" />
+                                    </div>
                                     <Input
                                       value={opt.name}
                                       onChange={(e) => updateOption(idx, 'name', e.target.value)}
