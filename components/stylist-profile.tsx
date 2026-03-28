@@ -670,7 +670,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                 })}
               </div>
               {displayData.services.length > 3 && (
-                <div className="flex flex-wrap items-center gap-2 mt-3">
+                <div className="flex flex-wrap items-center gap-2 mt-3 sm:w-1/2">
                   <span className="text-xs text-gray-500">Also available:</span>
                   {displayData.services.slice(3).map((service, index) => (
                     <div key={index} className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-0.5 text-[12px]">

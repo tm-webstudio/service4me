@@ -25,6 +25,7 @@ export const SPECIALTIES_BY_TYPE: Record<string, string[]> = {
     'Silk Press',
     'Ponytails',
     'Weave',
+    'Colouring',
   ],
   nail_technician: [
     'Acrylic Nails',
@@ -88,6 +89,7 @@ export const ADDITIONAL_SERVICES_BY_TYPE: Record<string, string[]> = {
     'Butterfly Locs',
     'Ponytails',
     'Weave',
+    'Colouring',
   ],
   nail_technician: [
     'Acrylic Nails',
@@ -243,6 +245,17 @@ export const SERVICES_BY_SPECIALTY: Record<string, string[]> = {
     'Ponytail with Weave',
     'Swoop Ponytail',
   ],
+  'Colouring': [
+    'Full Head Colour',
+    'Root Touch-Up',
+    'Highlights',
+    'Balayage',
+    'Ombré Colour',
+    'Toner',
+    'Colour Correction',
+    'Semi-Permanent Colour',
+    'Bleach & Tone',
+  ],
   // Nail technician specialties
   'Acrylic Nails': ['Full Set', 'Infill', 'Removal', 'Nail Repair', 'Acrylic Overlay', 'Nail Art Add-On'],
   'Gel Nails': ['Gel Manicure', 'Gel Removal', 'Gel Overlay', 'Builder Gel', 'Gel Infill', 'Gel Extensions'],
@@ -292,7 +305,7 @@ export function getServicesForSpecialty(specialty: string): string[] {
 }
 
 export const SERVICE_TEMPLATES_BY_TYPE: Record<string, string[]> = {
-  hairstylist: ['Box Braids', 'Silk Press', 'Wig Install', 'Loc Retwist', 'Sew-In', 'Cornrows'],
+  hairstylist: ['Box Braids', 'Silk Press', 'Wig Install', 'Loc Retwist', 'Sew-In', 'Cornrows', 'Full Head Colour'],
   nail_technician: ['Full Set Acrylic', 'Gel Manicure', 'Nail Art Design', 'Pedicure', 'Infill'],
   lash_technician: ['Full Set Classic', 'Full Set Volume', 'Infill', 'Lash Lift', 'Lash Removal'],
   makeup_artist: ['Full Glam', 'Bridal Makeup', 'Natural Look', 'Editorial', 'Lesson'],
