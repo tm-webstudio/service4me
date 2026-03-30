@@ -73,6 +73,8 @@ export function AdminDashboard() {
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [selectedStylist, setSelectedStylist] = useState<PendingStylist | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkApproving, setBulkApproving] = useState(false)
 
   // Edit mode state
   const [editingStylistId, setEditingStylistId] = useState<string | null>(null)
@@ -340,6 +342,56 @@ export function AdminDashboard() {
       console.error('Error rejecting stylist:', err)
     } finally {
       setRejectingId(null)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === stylists.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(stylists.map(s => s.id)))
+    }
+  }
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.size === 0) return
+    setBulkApproving(true)
+    try {
+      const ids = Array.from(selectedIds)
+      const { error } = await supabase
+        .from('stylist_profiles')
+        .update({
+          verification_status: 'approved',
+          is_active: true,
+          is_verified: true,
+          verified_at: new Date().toISOString(),
+          verified_by: user?.id
+        })
+        .in('id', ids)
+
+      if (error) {
+        console.error('Error bulk approving stylists:', error)
+        return
+      }
+
+      setStylists(prev => prev.filter(s => !selectedIds.has(s.id)))
+      setSelectedIds(new Set())
+      if (hasFetchedStylists) {
+        fetchAllStylists()
+      }
+    } catch (err) {
+      console.error('Error bulk approving stylists:', err)
+    } finally {
+      setBulkApproving(false)
     }
   }
 
@@ -1595,6 +1647,36 @@ Please change your password after first login.`
             <SectionHeader
               title="Stylists Awaiting Verification"
               description="Review and approve or reject stylist applications"
+              action={stylists.length > 0 ? (
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === stylists.length && stylists.length > 0}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-gray-300 accent-green-600"
+                    />
+                    <span className="text-sm text-gray-600 whitespace-nowrap">
+                      {selectedIds.size === 0 ? 'Select all' : `${selectedIds.size} selected`}
+                    </span>
+                  </label>
+                  {selectedIds.size > 0 && (
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-sm"
+                      disabled={bulkApproving}
+                      onClick={handleBulkApprove}
+                    >
+                      {bulkApproving ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                      ) : (
+                        <Check className="h-4 w-4 mr-1.5" />
+                      )}
+                      Approve {selectedIds.size}
+                    </Button>
+                  )}
+                </div>
+              ) : undefined}
             />
             <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
               {stylists.length === 0 ? (
@@ -1661,9 +1743,21 @@ Please change your password after first login.`
                               )}
                             </Button>
                           </div>
-                          <Badge className="absolute top-3 left-3 bg-orange-600 hover:bg-orange-700">
-                            Pending
-                          </Badge>
+                          <div className="absolute top-3 left-3 flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(stylist.id)}
+                              onChange={(e) => {
+                                e.stopPropagation()
+                                toggleSelect(stylist.id)
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-4 w-4 rounded border-gray-300 accent-green-600 shadow-sm"
+                            />
+                            <Badge className="bg-orange-600 hover:bg-orange-700">
+                              Pending
+                            </Badge>
+                          </div>
                         </div>
 
                         <div className="p-4">

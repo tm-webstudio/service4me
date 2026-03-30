@@ -9,7 +9,7 @@ import { StarDisplay } from "@/components/ui/star-rating"
 import { useRouter } from "next/navigation"
 import { useStylists, type StylistProfile } from "@/hooks/use-stylists"
 import { useSavedStylistIds } from "@/hooks/use-saved-stylists"
-import { postcodeToAreaName, postcodeToAreaNameWithCode } from "@/lib/postcode-utils"
+import { postcodeToAreaName, postcodeToAreaNameWithCode, postcodeToRegion } from "@/lib/postcode-utils"
 import { StylistCardSkeleton } from "@/components/ui/skeletons"
 import { EmptyState } from "@/components/ui/empty-state"
 import { SmallCtaButton } from "@/components/ui/small-cta-button"
@@ -43,7 +43,11 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
     }
 
     if (location) {
-      matchesLocation = stylist.location?.toLowerCase().includes(location.toLowerCase()) || false
+      const loc = location.toLowerCase()
+      const stylistPostcode = stylist.location || ''
+      const region = postcodeToRegion(stylistPostcode).toLowerCase()
+      const areaName = postcodeToAreaName(stylistPostcode).toLowerCase()
+      matchesLocation = region.includes(loc) || areaName.includes(loc) || stylistPostcode.toLowerCase().includes(loc)
     }
 
     if (serviceTypeFilter && serviceTypeFilter !== "all") {
@@ -233,13 +237,13 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
                 <div className="p-2 md:p-4">
                   {/* Mobile Layout - Title first, then stars below */}
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-1 gap-1 md:gap-2 min-w-0">
-                    <h3 className="font-medium text-base text-gray-900 leading-tight truncate">{businessName}</h3>
-                    <StarDisplay rating={rating} totalReviews={reviewCount} size="sm" className="flex-shrink-0" />
+                    <h3 className="font-medium text-sm sm:text-base text-gray-900 leading-tight truncate">{businessName}</h3>
+                    <StarDisplay rating={rating} totalReviews={reviewCount} size="sm" className="flex-shrink-0 [&>span]:text-[13px] sm:[&>span]:text-sm" />
                   </div>
 
                   <div className="flex items-center text-gray-600 mb-1">
                     <MapPin className="w-4 h-4 mr-1" />
-                    <span className="text-[13px] md:text-sm">{location}</span>
+                    <span className="text-xs sm:text-sm">{location}</span>
                   </div>
 
                   <div>

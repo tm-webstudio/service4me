@@ -529,7 +529,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
 
           {/* Bio */}
           <div>
-            <p className="text-gray-700 leading-relaxed mb-4 text-sm md:text-[0.9375rem] max-w-2xl whitespace-pre-line">{displayData.bio}</p>
+            <p className="text-gray-700 leading-relaxed mb-4 text-sm max-w-2xl whitespace-pre-line">{displayData.bio}</p>
 
             {/* Mobile: Mobile & Same Day Appointments above Book Now */}
             {(stylist.accepts_mobile || stylist.accepts_same_day) && (
@@ -587,9 +587,9 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           </div>
 
           {/* Services & Pricing */}
-          <div className="space-y-4 pt-6 w-full">
+          <div className="space-y-3 pt-6 w-full">
             <div>
-              <h2 className="text-base font-medium text-gray-900">Services Offered</h2>
+              <h2 className="text-base font-medium text-gray-700">Services Offered</h2>
             </div>
             {servicesLoading ? (
               <div className="grid gap-4">
@@ -704,9 +704,6 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                       <p className="text-sm text-gray-500 mt-1">{selectedService.description}</p>
                     )}
                     <div className="flex items-center text-gray-500 text-sm mt-2">
-                      <Clock className="w-4 h-4 mr-1.5" />
-                      <span>{selectedService?.duration}</span>
-                      <span className="mx-2">·</span>
                       <span className="font-medium text-gray-700">
                         {selectedService?.options && selectedService.options.length > 0
                           ? (() => {
@@ -717,6 +714,9 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                           : `£${selectedService?.price}`
                         }
                       </span>
+                      <span className="mx-2">·</span>
+                      <Clock className="w-4 h-4 mr-1.5" />
+                      <span>{selectedService?.duration}</span>
                     </div>
                   </div>
 
@@ -726,7 +726,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                         <div>
                           <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
                           {opt.description && (
-                            <p className="text-xs text-gray-500 mt-1 max-w-[75%]"><TruncatedText text={opt.description} /></p>
+                            <p className="text-xs text-gray-500 mt-1 max-w-[75%] leading-[1.35]"><TruncatedText text={opt.description} /></p>
                           )}
                           {opt.duration > 0 && (
                           <div className="flex items-center text-gray-400 text-xs mt-1.5">
@@ -735,7 +735,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                           </div>
                           )}
                         </div>
-                        <p className="text-[13px] sm:text-sm font-semibold text-gray-900">£{opt.price}</p>
+                        <p className="text-xs sm:text-[13px] font-medium text-gray-500 mt-0.5">£{opt.price}</p>
                       </div>
                     ))}
                   </div>
@@ -840,9 +840,6 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                           <p className="text-sm text-gray-500 mt-1">{modalSelectedService.description}</p>
                         )}
                         <div className="flex items-center text-gray-500 text-sm mt-2">
-                          <Clock className="w-4 h-4 mr-1.5" />
-                          <span>{modalSelectedService?.duration}</span>
-                          <span className="mx-2">·</span>
                           <span className="font-medium text-gray-700">
                             {modalSelectedService?.options && modalSelectedService.options.length > 0
                               ? (() => {
@@ -853,6 +850,9 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                               : `£${modalSelectedService?.price}`
                             }
                           </span>
+                          <span className="mx-2">·</span>
+                          <Clock className="w-4 h-4 mr-1.5" />
+                          <span>{modalSelectedService?.duration}</span>
                         </div>
                       </div>
                       <div className="px-6 pt-1 sm:pt-3 pb-6 divide-y divide-gray-100 overflow-y-auto flex-1">
@@ -861,7 +861,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                             <div>
                               <h4 className="text-sm font-medium text-gray-900">{opt.name}</h4>
                               {opt.description && (
-                                <p className="text-xs text-gray-500 mt-1 max-w-[75%]"><TruncatedText text={opt.description} /></p>
+                                <p className="text-xs text-gray-500 mt-1 max-w-[75%] leading-[1.35]"><TruncatedText text={opt.description} /></p>
                               )}
                               {opt.duration > 0 && (
                               <div className="flex items-center text-gray-400 text-xs mt-1.5">
@@ -870,7 +870,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
                               </div>
                               )}
                             </div>
-                            <p className="text-[13px] sm:text-sm font-semibold text-gray-900">£{opt.price}</p>
+                            <p className="text-xs sm:text-[13px] font-medium text-gray-500 mt-0.5">£{opt.price}</p>
                           </div>
                         ))}
                       </div>
@@ -885,7 +885,7 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
           {/* Reviews */}
           <div className="pt-6 space-y-4 w-full">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-medium text-gray-900">Reviews</h2>
+              <h2 className="text-base font-medium text-gray-700">Reviews</h2>
               {(!user || user?.role === 'client') && !showReviewForm && !editingReview && stylist.review_count > 0 && (
                 <SmallCtaButton onClick={handleLeaveReviewClick} variant="outline">
                   Leave a Review
