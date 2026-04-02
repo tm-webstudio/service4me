@@ -9,7 +9,7 @@ export function Footer() {
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-1 xl:col-span-2">
             <div className="mb-2">
-              <img src="/logo-long.svg" alt="Service4Me" className="h-[20px] w-auto" />
+              <img src="/logo-long.svg" alt="Service4Me" className="h-[18px] w-auto" />
             </div>
             <p className="text-gray-600 mb-5 max-w-[280px] sm:max-w-[320px] text-[14.5px]">
               Discover exceptional service providers near you. Explore portfolios, book appointments, and share your experience.

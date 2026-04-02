@@ -283,7 +283,7 @@ export function ReviewsDisplay({
                     <h4 className="font-medium text-gray-900">
                       {getClientDisplayName(review.client_name)}
                     </h4>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-gray-500">
                       {formatDate(review.created_at)}
                       {review.updated_at !== review.created_at && (
                         <Badge variant="outline" className="ml-2 text-xs">
