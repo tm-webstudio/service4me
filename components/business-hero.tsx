@@ -39,4 +39,3 @@ const BusinessHero: FC = () => {
 }
 
 export { BusinessHero }
-export default BusinessHero

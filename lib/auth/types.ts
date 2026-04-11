@@ -187,24 +187,6 @@ export interface AuthContextValue extends AuthState, AuthActions {
 }
 
 /**
- * Internal state machine for managing auth flow
- * Not exposed to consumers
- */
-export interface AuthStateMachine {
-  /** Current state */
-  current: AuthStatus
-
-  /** Pending operation (if any) */
-  pendingOperation: 'signin' | 'signup' | 'signout' | 'refresh' | null
-
-  /** Last operation for retry */
-  lastOperation?: {
-    type: string
-    args: any[]
-  }
-}
-
-/**
  * Database user record type
  */
 export interface DatabaseUser {

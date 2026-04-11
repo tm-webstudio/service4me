@@ -337,11 +337,11 @@ export function postcodeToRegion(postcode: string): string {
  * @param postcode - UK postcode (e.g., "SW1A 1AA")
  * @returns Outward code (e.g., "SW1A") or empty string
  */
-export function getPostcodeOutwardCode(postcode: string): string {
+function getPostcodeOutwardCode(postcode: string): string {
   if (!postcode || typeof postcode !== 'string') {
     return ''
   }
-  
+
   return extractPostcodeArea(postcode)
 }
 
@@ -366,22 +366,4 @@ export function postcodeToAreaNameWithCode(postcode: string): string {
 
   // Otherwise just return the area name
   return areaName
-}
-
-/**
- * Validate if a string is a valid UK postcode format
- * @param postcode - String to validate
- * @returns Boolean indicating if it's a valid UK postcode
- */
-export function isValidUKPostcode(postcode: string): boolean {
-  if (!postcode || typeof postcode !== 'string') {
-    return false
-  }
-  
-  const cleanPostcode = postcode.replace(/\s/g, '').toUpperCase()
-  
-  // UK postcode regex pattern
-  const pattern = /^[A-Z]{1,2}\d{1,2}[A-Z]?\d[A-Z]{2}$/
-  
-  return pattern.test(cleanPostcode)
 }

@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 
-export interface ServiceOption {
+interface ServiceOption {
   name: string
   price: number
   duration: number
   description?: string
 }
 
-export interface Service {
+interface Service {
   id: string
   stylist_id: string
   name: string
@@ -24,7 +24,7 @@ export interface Service {
   updated_at: string
 }
 
-export interface ServiceInput {
+interface ServiceInput {
   name: string
   price: number
   duration: number

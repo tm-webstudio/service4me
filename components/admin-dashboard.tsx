@@ -2587,4 +2587,3 @@ Please change your password after first login.`
   )
 }
 
-export default AdminDashboard

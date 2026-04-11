@@ -1,6 +1,6 @@
 // Centralized service type definitions for all provider types
 
-export interface ServiceType {
+interface ServiceType {
   value: string
   label: string
 }
@@ -15,7 +15,7 @@ export const SERVICE_TYPES: ServiceType[] = [
   { value: 'massage_therapist', label: 'Massage Therapist' },
 ]
 
-export const SPECIALTIES_BY_TYPE: Record<string, string[]> = {
+const SPECIALTIES_BY_TYPE: Record<string, string[]> = {
   hairstylist: [
     'Wigs',
     'Braids',
@@ -77,7 +77,7 @@ export const SPECIALTIES_BY_TYPE: Record<string, string[]> = {
   ],
 }
 
-export const ADDITIONAL_SERVICES_BY_TYPE: Record<string, string[]> = {
+const ADDITIONAL_SERVICES_BY_TYPE: Record<string, string[]> = {
   hairstylist: [
     'Wigs',
     'Braids',
@@ -159,7 +159,7 @@ export const ADDITIONAL_SERVICES_BY_TYPE: Record<string, string[]> = {
   ],
 }
 
-export const SERVICES_BY_SPECIALTY: Record<string, string[]> = {
+const SERVICES_BY_SPECIALTY: Record<string, string[]> = {
   // Hairstylist specialties
   'Locs': [
     'Starter Locs',
@@ -304,16 +304,6 @@ export function getServicesForSpecialty(specialty: string): string[] {
   return SERVICES_BY_SPECIALTY[specialty] || []
 }
 
-export const SERVICE_TEMPLATES_BY_TYPE: Record<string, string[]> = {
-  hairstylist: ['Box Braids', 'Silk Press', 'Wig Install', 'Loc Retwist', 'Sew-In', 'Cornrows', 'Full Head Colour'],
-  nail_technician: ['Full Set Acrylic', 'Gel Manicure', 'Nail Art Design', 'Pedicure', 'Infill'],
-  lash_technician: ['Full Set Classic', 'Full Set Volume', 'Infill', 'Lash Lift', 'Lash Removal'],
-  makeup_artist: ['Full Glam', 'Bridal Makeup', 'Natural Look', 'Editorial', 'Lesson'],
-  brow_technician: ['Microblading', 'Brow Lamination', 'Brow Shape & Tint', 'Touch-Up'],
-  esthetician: ['Express Facial', 'Deep Cleanse Facial', 'Chemical Peel', 'Dermaplaning'],
-  massage_therapist: ['30 Min Massage', '60 Min Massage', '90 Min Massage', 'Couples Massage'],
-}
-
 // Helper functions
 
 export function getServiceTypeLabel(value: string): string {
@@ -327,8 +317,4 @@ export function getSpecialtiesForType(type: string): string[] {
 
 export function getAdditionalServicesForType(type: string): string[] {
   return ADDITIONAL_SERVICES_BY_TYPE[type] || ADDITIONAL_SERVICES_BY_TYPE.hairstylist
-}
-
-export function getServiceTemplatesForType(type: string): string[] {
-  return SERVICE_TEMPLATES_BY_TYPE[type] || SERVICE_TEMPLATES_BY_TYPE.hairstylist
 }
