@@ -23,20 +23,47 @@ interface StylistGridProps {
   category?: string
   location?: string
   serviceType?: string
+  query?: string
 }
 
-export function StylistGrid({ category, location, serviceType }: StylistGridProps = {}) {
+// Light stemmer to handle singular/plural and -er forms (e.g. "braider" → "braid", "braids" → "braid")
+function stemWord(word: string): string {
+  const w = word.toLowerCase().trim()
+  if (w.length > 5 && w.endsWith("ers")) return w.slice(0, -3)
+  if (w.length > 4 && w.endsWith("er")) return w.slice(0, -2)
+  if (w.length > 5 && w.endsWith("ing")) return w.slice(0, -3)
+  if (w.length > 3 && w.endsWith("es")) return w.slice(0, -2)
+  if (w.length > 3 && w.endsWith("s")) return w.slice(0, -1)
+  return w
+}
+
+const STOP_WORDS = new Set([
+  "in", "at", "the", "a", "an", "and", "or", "of", "for", "with", "near", "on", "to", "my",
+])
+
+function tokenizeQuery(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .map(t => t.replace(/[^a-z0-9]/g, ""))
+    .filter(t => t.length > 1 && !STOP_WORDS.has(t))
+}
+
+export function StylistGrid({ category, location, serviceType, query }: StylistGridProps = {}) {
   const router = useRouter()
   const { stylists, loading, error } = useStylists()
   const { savedIds, toggleSave, savingId, isAuthenticated } = useSavedStylistIds()
   const [sortBy, setSortBy] = useState<SortOption>("featured")
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>(serviceType || "all")
 
-  // Filter stylists based on category, location, and service type
+  const queryTokens = query ? tokenizeQuery(query) : []
+
+  // Filter stylists based on category, location, service type, and free-text query
   const filteredStylists = stylists.filter(stylist => {
     let matchesCategory = true
     let matchesLocation = true
     let matchesServiceType = true
+    let matchesQuery = true
 
     if (category) {
       matchesCategory = stylist.specialties.includes(category)
@@ -54,7 +81,38 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
       matchesServiceType = (stylist.service_type || 'hairstylist') === serviceTypeFilter
     }
 
-    return matchesCategory && matchesLocation && matchesServiceType
+    if (queryTokens.length > 0) {
+      const stylistPostcode = stylist.location || ''
+      const searchableParts = [
+        stylist.business_name,
+        stylist.bio,
+        ...(stylist.specialties || []),
+        ...(stylist.additional_services || []),
+        ...(stylist.specialty_services || []),
+        stylistPostcode,
+        postcodeToRegion(stylistPostcode),
+        postcodeToAreaName(stylistPostcode),
+        stylist.service_type,
+        getServiceTypeLabel(stylist.service_type || 'hairstylist'),
+      ]
+      const searchable = searchableParts.filter(Boolean).join(' ').toLowerCase()
+      const stemmedSearchable = searchable
+        .split(/\s+/)
+        .map(stemWord)
+        .join(' ')
+
+      matchesQuery = queryTokens.every(token => {
+        const stemmed = stemWord(token)
+        return (
+          searchable.includes(token) ||
+          searchable.includes(stemmed) ||
+          stemmedSearchable.includes(token) ||
+          stemmedSearchable.includes(stemmed)
+        )
+      })
+    }
+
+    return matchesCategory && matchesLocation && matchesServiceType && matchesQuery
   })
 
   // Sort filtered stylists based on selected option
@@ -164,13 +222,15 @@ export function StylistGrid({ category, location, serviceType }: StylistGridProp
         <EmptyState
           icon={<Heart className="h-8 w-8 text-gray-400" />}
           title={
-            category || location || (serviceTypeFilter && serviceTypeFilter !== 'all')
-              ? `No professionals found${category ? ` for ${category}` : ''}${serviceTypeFilter && serviceTypeFilter !== 'all' ? ` in ${getServiceTypeLabel(serviceTypeFilter)}` : ''}${location ? ` in ${location}` : ''}.`
-              : "No professionals available yet."
+            query
+              ? `No professionals found for "${query}".`
+              : category || location || (serviceTypeFilter && serviceTypeFilter !== 'all')
+                ? `No professionals found${category ? ` for ${category}` : ''}${serviceTypeFilter && serviceTypeFilter !== 'all' ? ` in ${getServiceTypeLabel(serviceTypeFilter)}` : ''}${location ? ` in ${location}` : ''}.`
+                : "No professionals available yet."
           }
           description={
-            category || location || (serviceTypeFilter && serviceTypeFilter !== 'all')
-              ? "Try browsing all professionals or a different category."
+            query || category || location || (serviceTypeFilter && serviceTypeFilter !== 'all')
+              ? "Try a different search or browse all professionals."
               : "Tap browse to discover professionals you might like."
           }
           className="py-10 space-y-1"

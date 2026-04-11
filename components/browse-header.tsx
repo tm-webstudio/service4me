@@ -11,6 +11,7 @@ interface BrowseHeaderProps {
   category?: string
   location?: string
   serviceType?: string
+  query?: string
 }
 
 const categoryTitles: Record<string, string> = {
@@ -59,7 +60,7 @@ const locationDescriptions: Record<string, string> = {
   "West London": "Explore expert stylists in West London, from Notting Hill to Hammersmith and Kensington",
 }
 
-export function BrowseHeader({ category, location, serviceType }: BrowseHeaderProps) {
+export function BrowseHeader({ category, location, serviceType, query }: BrowseHeaderProps) {
   const [activeFilters, setActiveFilters] = useState<string[]>([])
 
   const removeFilter = (filter: string) => {
@@ -70,7 +71,10 @@ export function BrowseHeader({ category, location, serviceType }: BrowseHeaderPr
   let title = "All Professionals"
   let description = "Discover talented beauty professionals in your area"
 
-  if (serviceType) {
+  if (query) {
+    title = `Results for "${query}"`
+    description = "Professionals matching your search"
+  } else if (serviceType) {
     title = serviceTypeTitles[serviceType] || `${getServiceTypeLabel(serviceType)}s`
     description = serviceTypeDescriptions[serviceType] || `Discover talented ${getServiceTypeLabel(serviceType).toLowerCase()}s`
     if (location) {

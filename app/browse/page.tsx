@@ -11,12 +11,23 @@ export default function BrowsePage() {
   const category = searchParams.get("category")
   const location = searchParams.get("location")
   const serviceType = searchParams.get("serviceType")
+  const query = searchParams.get("q")
 
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      <BrowseHeader category={category || undefined} location={location || undefined} serviceType={serviceType || undefined} />
-      <StylistGrid category={category || undefined} location={location || undefined} serviceType={serviceType || undefined} />
+      <BrowseHeader
+        category={category || undefined}
+        location={location || undefined}
+        serviceType={serviceType || undefined}
+        query={query || undefined}
+      />
+      <StylistGrid
+        category={category || undefined}
+        location={location || undefined}
+        serviceType={serviceType || undefined}
+        query={query || undefined}
+      />
       <Footer />
     </div>
   )
