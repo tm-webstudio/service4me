@@ -342,23 +342,23 @@ export function Navigation() {
               <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="py-6">
                   <h3 className="font-semibold text-gray-900 text-base mb-4">Hair Styling Categories</h3>
-                  <div className="grid grid-cols-3 gap-x-8 gap-y-3 max-w-3xl">
+                  <div className="grid grid-cols-3 gap-x-8 gap-y-3 max-w-3xl lg:grid-cols-6 lg:max-w-none lg:gap-x-4">
                     {categories.map((category) => (
                       <Link
                         key={category.name}
                         href={`/browse?category=${encodeURIComponent(category.name)}`}
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group lg:flex-col lg:items-stretch lg:space-x-0 lg:space-y-2 lg:p-0"
                       >
-                        <div className="w-[4.5rem] h-[4.5rem] overflow-hidden flex-shrink-0">
+                        <div className="w-[4.5rem] h-[4.5rem] overflow-hidden flex-shrink-0 lg:w-full lg:h-auto lg:aspect-[3/4] lg:rounded-lg">
                           <Image
                             src={category.image || "/placeholder.svg"}
                             alt={category.name}
-                            width={56}
-                            height={56}
+                            width={400}
+                            height={533}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 lg:px-1">
                           <h4 className="font-medium text-gray-900 text-sm group-hover:text-red-600 transition-colors">
                             {category.name}
                           </h4>
