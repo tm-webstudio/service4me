@@ -264,7 +264,7 @@ export function StylistGrid({ category, location, serviceType, query }: StylistG
               onClick={() => router.push(`/stylist/${stylist.id}`)}
             >
               <CardContent className="p-0 h-full">
-                <div className="relative aspect-[4/3]">
+                <div className="relative aspect-[7/6]">
                   <img
                     src={getStylistImage(stylist)}
                     alt={businessName}

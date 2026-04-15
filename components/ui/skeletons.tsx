@@ -6,7 +6,7 @@ export function StylistCardSkeleton() {
   return (
     <Card className="group cursor-pointer hover:shadow-sm transition-all duration-300 border h-full">
       <CardContent className="p-0 h-full">
-        <div className="relative aspect-[4/3]">
+        <div className="relative aspect-[7/6]">
           <Skeleton className="w-full h-full rounded-t-lg" />
           {/* Heart icon skeleton */}
           <div className="absolute top-3 right-3">

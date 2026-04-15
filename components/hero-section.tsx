@@ -74,7 +74,7 @@ export function HeroSection() {
           <div className="w-full relative z-10 flex flex-col items-center text-center md:-translate-y-4">
             <div className="max-w-[90%]">
               <h1
-                className="font-medium text-white mb-2 text-[1.75rem] md:mb-3 md:text-5xl tracking-tight md:max-w-[20ch] md:mx-auto"
+                className="font-medium text-white mb-2 text-[1.75rem] md:mb-3 md:text-5xl tracking-tight md:max-w-[16ch] md:mx-auto"
                 style={{ lineHeight: "108%" }}
               >
                 Book Your Next Beauty Appointment.

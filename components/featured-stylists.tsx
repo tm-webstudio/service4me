@@ -168,15 +168,16 @@ export function FeaturedStylists() {
                 return (
                   <div
                     key={stylist.id}
-                    className="flex-none w-[calc((100%-16px)/1.2)] md:w-[calc((100%-32px)/2.8)] lg:w-[calc((100%-40px)/3.2)] xl:w-[calc((100%-48px)/4.6)] 2xl:w-[calc((100%-64px)/4.6)]"
+                    className="flex-none w-[70%] sm:w-[48%] md:w-[33%] lg:w-[23%] xl:w-[calc((100%-80px)/4.5)] 2xl:w-[18.5%]"
                     style={{ scrollSnapAlign: "start" }}
                   >
-                    <Card 
-                      className="group cursor-pointer hover:shadow-sm transition-shadow h-full"
+                    <Card
+                      className="group cursor-pointer hover:shadow-sm transition-shadow"
+                      style={{ aspectRatio: "4/5" }}
                       onClick={() => router.push(`/stylist/${stylist.id}`)}
                     >
-                      <CardContent className="p-0 h-full">
-                        <div className="relative h-[240px]">
+                      <CardContent className="p-0 h-full flex flex-col">
+                        <div className="relative flex-1 min-h-0">
                           <img
                             src={getStylistImage(stylist)}
                             alt={businessName}
