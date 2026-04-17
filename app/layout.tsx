@@ -5,8 +5,7 @@ import { AuthProvider } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: "Service4Me",
-  description: "Created with v0",
-  generator: "v0.dev",
+  description: "Find and book beauty and hair professionals near you",
 }
 
 export const viewport: Viewport = {
