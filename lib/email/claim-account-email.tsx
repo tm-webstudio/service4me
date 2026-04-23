@@ -27,7 +27,7 @@ export default function ClaimAccountEmail({ businessName, claimUrl }: ClaimAccou
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
         `}</style>
       </Head>
-      <Preview>Claim your Service4Me stylist account</Preview>
+      <Preview>Your Service4Me account is ready</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={logoContainer}>
@@ -114,6 +114,7 @@ const paragraph = {
   fontSize: '16px',
   lineHeight: '26px',
   fontFamily,
+  textAlign: 'center' as const,
   margin: '0 0 16px',
 }
 

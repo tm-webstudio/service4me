@@ -274,7 +274,7 @@ export async function POST(request: NextRequest) {
     const { error: emailError } = await resend.emails.send({
       from: 'Service4Me <admin@updates.service4me.co.uk>',
       to: email,
-      subject: `Claim your Service4Me account — ${existingProfile.business_name}`,
+      subject: `${existingProfile.business_name}, claim your stylist account on Service4Me`,
       react: ClaimAccountEmail({
         businessName: existingProfile.business_name,
         claimUrl,
