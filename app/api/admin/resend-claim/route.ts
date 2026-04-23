@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { render } from '@react-email/render'
 import ClaimAccountEmail from '@/lib/email/claim-account-email'
 
 function createSupabaseAdmin() {
@@ -63,20 +64,22 @@ export async function POST(request: NextRequest) {
 
     const resend = new Resend(resendApiKey)
 
+    const emailHtml = await render(ClaimAccountEmail({
+      businessName: business_name,
+      claimUrl,
+    }))
+
     const { error: emailError } = await resend.emails.send({
       from: 'Service4Me <admin@updates.service4me.co.uk>',
       to: email,
       subject: `${business_name}, your Service4Me account is ready to claim`,
-      react: ClaimAccountEmail({
-        businessName: business_name,
-        claimUrl,
-      }),
+      html: emailHtml,
     })
 
     if (emailError) {
-      console.error('Error sending claim email:', emailError)
+      console.error('Error sending claim email:', JSON.stringify(emailError))
       return NextResponse.json(
-        { error: 'Failed to send claim email' },
+        { error: `Failed to send claim email: ${emailError.message}` },
         { status: 500 }
       )
     }
