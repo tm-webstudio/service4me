@@ -111,20 +111,29 @@ function ConfirmContent() {
     setSettingPassword(true)
 
     try {
+      // Mark the stylist account as claimed before changing password
+      // (password change can trigger auth state changes)
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (currentUser) {
+        if (currentUser.user_metadata?.stylist_id) {
+          await supabase
+            .from('stylist_profiles')
+            .update({ account_claimed: true })
+            .eq('id', currentUser.user_metadata.stylist_id)
+        } else {
+          await supabase
+            .from('stylist_profiles')
+            .update({ account_claimed: true })
+            .eq('user_id', currentUser.id)
+        }
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword })
 
       if (error) {
         setPasswordError(error.message)
+        setSettingPassword(false)
         return
-      }
-
-      // Mark the stylist account as claimed
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (currentUser?.user_metadata?.stylist_id) {
-        await supabase
-          .from('stylist_profiles')
-          .update({ account_claimed: true })
-          .eq('id', currentUser.user_metadata.stylist_id)
       }
 
       setStatus('success')
@@ -135,7 +144,6 @@ function ConfirmContent() {
       }, 2000)
     } catch {
       setPasswordError('An unexpected error occurred')
-    } finally {
       setSettingPassword(false)
     }
   }
@@ -220,7 +228,7 @@ function ConfirmContent() {
           <img
             src="/logo-short.svg"
             alt="Service4Me"
-            className="h-8 mx-auto mb-6"
+            className="h-5 mx-auto mb-6"
           />
           <h1 className="text-2xl font-bold text-gray-900">
             Welcome{businessName ? `, ${businessName}` : ''}!

@@ -27,7 +27,7 @@ export default function ClaimAccountEmail({ businessName, claimUrl }: ClaimAccou
           @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
         `}</style>
       </Head>
-      <Preview>Your Service4Me account is ready</Preview>
+      <Preview>Claim your stylist account on Service4Me</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={logoContainer}>
@@ -39,7 +39,7 @@ export default function ClaimAccountEmail({ businessName, claimUrl }: ClaimAccou
               style={logoImage}
             />
           </Section>
-          <Heading style={heading}>Welcome to Service4Me</Heading>
+          <Heading style={heading}>{businessName}, your Service4Me account is ready to claim</Heading>
           <Text style={paragraph}>
             Hi {businessName},
           </Text>
