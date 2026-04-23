@@ -39,7 +39,7 @@ export default function ClaimAccountEmail({ businessName, claimUrl }: ClaimAccou
               style={logoImage}
             />
           </Section>
-          <Heading style={heading}>{businessName}, your Service4Me account is ready to claim</Heading>
+          <Heading style={heading}>Welcome to Service4Me</Heading>
           <Text style={paragraph}>
             Hi {businessName},
           </Text>

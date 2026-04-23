@@ -111,27 +111,29 @@ function ConfirmContent() {
     setSettingPassword(true)
 
     try {
-      // Mark the stylist account as claimed before changing password
-      // (password change can trigger auth state changes)
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (currentUser) {
-        if (currentUser.user_metadata?.stylist_id) {
-          await supabase
-            .from('stylist_profiles')
-            .update({ account_claimed: true })
-            .eq('id', currentUser.user_metadata.stylist_id)
-        } else {
-          await supabase
-            .from('stylist_profiles')
-            .update({ account_claimed: true })
-            .eq('user_id', currentUser.id)
-        }
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setPasswordError('Session expired. Please use the claim link again.')
+        setSettingPassword(false)
+        return
       }
 
-      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      // Use server-side API to set password and mark account as claimed
+      // (avoids client-side auth state changes and RLS issues)
+      const res = await fetch('/api/auth/claim-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: newPassword,
+          access_token: session.access_token,
+        }),
+      })
 
-      if (error) {
-        setPasswordError(error.message)
+      const result = await res.json()
+
+      if (!res.ok) {
+        setPasswordError(result.error || 'Failed to set password')
         setSettingPassword(false)
         return
       }
