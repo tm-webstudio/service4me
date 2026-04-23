@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
+import ClaimAccountEmail from '@/lib/email/claim-account-email'
 
 // Create admin client with service role key
 function createSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  
+
   if (!url || !serviceKey) {
     throw new Error('Missing required Supabase configuration')
   }
-  
+
   return createClient(url, serviceKey, {
     auth: {
       autoRefreshToken: false,
@@ -21,12 +23,12 @@ function createSupabaseAdmin() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, stylist_id, business_name } = body
+    const { email, stylist_id, business_name } = body
 
     // Validate required fields
-    if (!email || !password || !stylist_id) {
+    if (!email || !stylist_id) {
       return NextResponse.json(
-        { error: 'Email, password, and stylist_id are required' },
+        { error: 'Email and stylist_id are required' },
         { status: 400 }
       )
     }
@@ -41,17 +43,17 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Creating user account for:', { email, stylist_id, business_name })
-    
+
     // Create admin client at runtime
     const supabaseAdmin = createSupabaseAdmin()
-    
-    // First, let's verify the stylist profile exists and check its current state
+
+    // Verify the stylist profile exists and check its current state
     const { data: existingProfile, error: fetchError } = await supabaseAdmin
       .from('stylist_profiles')
       .select('id, business_name, user_id')
       .eq('id', stylist_id)
       .single()
-      
+
     if (fetchError) {
       console.error('Error fetching stylist profile:', fetchError)
       return NextResponse.json(
@@ -59,9 +61,7 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
-    
-    console.log('Found existing stylist profile:', existingProfile)
-    
+
     if (existingProfile.user_id) {
       return NextResponse.json(
         { error: 'This stylist profile already has a user account linked' },
@@ -69,11 +69,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Generate a random password (the stylist will set their own via the claim link)
+    const tempPassword = crypto.randomUUID()
+
     // Create user account with Supabase Admin
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    let authData: any
+    const { data: initialAuthData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password,
-      email_confirm: true, // Auto-confirm email
+      password: tempPassword,
+      email_confirm: true,
       user_metadata: {
         role: 'stylist',
         stylist_id: stylist_id,
@@ -83,26 +87,20 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.error('Error creating user:', authError)
-      
-      // Check if it's a duplicate email error
+
+      // Handle duplicate email by cleaning up orphaned account
       if (authError.message?.includes('already been registered') || authError.message?.includes('email_address_not_authorized')) {
-        // Try to find and delete the existing orphaned user first
         console.log('Email already exists, attempting to clean up orphaned account...')
         try {
-          // Try to get the existing user by email
           const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
           const orphanedUser = existingUsers.users?.find(u => u.email === email)
-          
+
           if (orphanedUser) {
-            console.log('Found orphaned user:', orphanedUser.id)
-            // Delete the orphaned user
             await supabaseAdmin.auth.admin.deleteUser(orphanedUser.id)
-            console.log('Deleted orphaned user, retrying account creation...')
-            
-            // Retry creating the user
+
             const { data: retryAuthData, error: retryAuthError } = await supabaseAdmin.auth.admin.createUser({
               email,
-              password,
+              password: tempPassword,
               email_confirm: true,
               user_metadata: {
                 role: 'stylist',
@@ -110,20 +108,16 @@ export async function POST(request: NextRequest) {
                 business_name: existingProfile.business_name
               }
             })
-            
-            if (retryAuthError) {
-              throw retryAuthError
-            }
-            
-            // Update authData for the rest of the function
-            Object.assign(authData, retryAuthData)
+
+            if (retryAuthError) throw retryAuthError
+            authData = retryAuthData
           } else {
             throw new Error('Email is registered but user not found in admin list')
           }
         } catch (cleanupError) {
           console.error('Failed to cleanup orphaned account:', cleanupError)
           return NextResponse.json(
-            { error: `Email address is already registered. Please use a different email address or contact support to resolve this issue.` },
+            { error: 'Email address is already registered. Please use a different email address or contact support.' },
             { status: 400 }
           )
         }
@@ -133,6 +127,8 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
+    } else {
+      authData = initialAuthData
     }
 
     if (!authData?.user) {
@@ -144,66 +140,74 @@ export async function POST(request: NextRequest) {
 
     console.log('User created successfully:', authData.user.id)
 
-    // Temporarily disable the trigger to prevent automatic stylist profile creation
-    // Note: SQL commands not available via Supabase client
-    // console.log('Disabling trigger before user creation')
-    // try {
-    //   await supabaseAdmin.sql`ALTER TABLE users DISABLE TRIGGER trigger_create_stylist_profile`
-    //   console.log('Trigger disabled successfully')
-    // } catch (triggerError) {
-    //   console.error('Could not disable trigger:', triggerError)
-    //   // Continue anyway
-    // }
-
-    // Create user profile record in our users table
-    const { error: userProfileError } = await supabaseAdmin
+    // Create or update user profile record in users table
+    // First check if a row with this email already exists (e.g. orphaned from a previous account)
+    const { data: existingUser } = await supabaseAdmin
       .from('users')
-      .insert({
-        id: authData.user.id,
-        email: authData.user.email,
-        full_name: existingProfile.business_name, // Use the existing profile's business name
-        role: 'stylist'
-      })
+      .select('id')
+      .eq('email', authData.user.email)
+      .limit(1)
+      .maybeSingle()
 
-    // Re-enable the trigger
-    // Note: SQL commands not available via Supabase client
-    // console.log('Re-enabling trigger after user creation')
-    // try {
-    //   await supabaseAdmin.sql`ALTER TABLE users ENABLE TRIGGER trigger_create_stylist_profile`
-    //   console.log('Trigger re-enabled successfully')
-    // } catch (triggerError) {
-    //   console.error('Could not re-enable trigger:', triggerError)
-    //   // Continue anyway - this is not critical
-    // }
+    if (existingUser) {
+      // Update the existing row to point to the new auth user
+      const { error: updateUserError } = await supabaseAdmin
+        .from('users')
+        .update({
+          id: authData.user.id,
+          full_name: existingProfile.business_name,
+          role: 'stylist'
+        })
+        .eq('email', authData.user.email)
 
-    if (userProfileError) {
-      console.error('Error creating user profile:', userProfileError)
-      return NextResponse.json(
-        { error: `Failed to create user profile: ${userProfileError.message}` },
-        { status: 500 }
-      )
+      if (updateUserError) {
+        console.error('Error updating existing user profile:', updateUserError)
+        // If update fails due to id conflict, delete the old row and insert fresh
+        await supabaseAdmin.from('users').delete().eq('id', existingUser.id)
+        const { error: insertError } = await supabaseAdmin
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email,
+            full_name: existingProfile.business_name,
+            role: 'stylist'
+          })
+        if (insertError) {
+          console.error('Error creating user profile after cleanup:', insertError)
+          return NextResponse.json(
+            { error: `Failed to create user profile: ${insertError.message}` },
+            { status: 500 }
+          )
+        }
+      }
     } else {
-      console.log('User profile created successfully in users table')
+      const { error: userProfileError } = await supabaseAdmin
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: authData.user.email,
+          full_name: existingProfile.business_name,
+          role: 'stylist'
+        })
+
+      if (userProfileError) {
+        console.error('Error creating user profile:', userProfileError)
+        return NextResponse.json(
+          { error: `Failed to create user profile: ${userProfileError.message}` },
+          { status: 500 }
+        )
+      }
     }
 
-    // Check if the trigger created a default stylist profile
-    console.log('Checking if trigger created a default profile...')
-    const { data: triggerCreatedProfiles, error: checkError } = await supabaseAdmin
+    // Clean up any trigger-created default profiles
+    const { data: triggerCreatedProfiles } = await supabaseAdmin
       .from('stylist_profiles')
       .select('id, business_name')
       .eq('user_id', authData.user.id)
 
-    if (checkError) {
-      console.error('Error checking for trigger-created profiles:', checkError)
-    }
-
-    if (triggerCreatedProfiles && triggerCreatedProfiles.length > 0) {
-      console.log('Found trigger-created profile(s):', triggerCreatedProfiles)
-      
-      // Delete the trigger-created profile(s) since we want to use the existing one
+    if (triggerCreatedProfiles) {
       for (const triggerProfile of triggerCreatedProfiles) {
         if (triggerProfile.business_name === 'My Hair Studio') {
-          console.log('Deleting trigger-created default profile:', triggerProfile.id)
           await supabaseAdmin
             .from('stylist_profiles')
             .delete()
@@ -212,8 +216,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Now link the existing stylist profile to the user account
-    console.log('Linking existing stylist profile to user account')
+    // Link the existing stylist profile to the user account
     const { error: updateError } = await supabaseAdmin
       .from('stylist_profiles')
       .update({ user_id: authData.user.id })
@@ -225,15 +228,78 @@ export async function POST(request: NextRequest) {
         { error: `Failed to link stylist profile: ${updateError.message}` },
         { status: 500 }
       )
-    } else {
-      console.log('Successfully linked existing stylist profile to user account')
     }
+
+    // Generate a password reset link for the "Claim Your Account" email
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://service4me.co.uk'
+
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: {
+        redirectTo: `${siteUrl}/auth/confirm`,
+      }
+    })
+
+    if (linkError) {
+      console.error('Error generating recovery link:', linkError)
+      // Account was created successfully, but email will fail — return partial success
+      return NextResponse.json({
+        success: true,
+        user_id: authData.user.id,
+        email: authData.user.email,
+        email_sent: false,
+        message: 'Account created but failed to generate claim link. You can manually share login details.'
+      })
+    }
+
+    // Build the claim URL from the generated link token
+    const claimUrl = `${siteUrl}/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=recovery`
+
+    // Send the claim email via Resend
+    const resendApiKey = process.env.RESEND_API_KEY
+    if (!resendApiKey) {
+      console.error('RESEND_API_KEY is not configured')
+      return NextResponse.json({
+        success: true,
+        user_id: authData.user.id,
+        email: authData.user.email,
+        email_sent: false,
+        message: 'Account created but email service is not configured.'
+      })
+    }
+
+    const resend = new Resend(resendApiKey)
+
+    const { error: emailError } = await resend.emails.send({
+      from: 'Service4Me <admin@updates.service4me.co.uk>',
+      to: email,
+      subject: `Claim your Service4Me account — ${existingProfile.business_name}`,
+      react: ClaimAccountEmail({
+        businessName: existingProfile.business_name,
+        claimUrl,
+      }),
+    })
+
+    if (emailError) {
+      console.error('Error sending claim email:', emailError)
+      return NextResponse.json({
+        success: true,
+        user_id: authData.user.id,
+        email: authData.user.email,
+        email_sent: false,
+        message: 'Account created but failed to send claim email.'
+      })
+    }
+
+    console.log('Claim email sent successfully to:', email)
 
     return NextResponse.json({
       success: true,
       user_id: authData.user.id,
       email: authData.user.email,
-      message: 'User account created successfully'
+      email_sent: true,
+      message: 'Account created and claim email sent successfully'
     })
 
   } catch (error) {

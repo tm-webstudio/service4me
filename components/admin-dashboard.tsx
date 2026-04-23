@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckCircle, XCircle, Plus, User, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check, Eye, Mail, Phone, Calendar, Briefcase } from "lucide-react"
+import { CheckCircle, XCircle, Plus, User, Users, MapPin, Upload, Scissors, Edit, Trash2, Settings, Save, Loader2, X, Search, Filter, MoreHorizontal, Key, UserCheck, UserX, Clock, ExternalLink, ChevronDown, Image, Copy, LayoutDashboard, Star, Check, Eye, Mail, Phone, Calendar, Briefcase } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { usePortfolioUpload } from "@/hooks/use-portfolio-upload"
@@ -75,6 +75,16 @@ export function AdminDashboard() {
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkApproving, setBulkApproving] = useState(false)
+
+  // Client management state
+  const [allClients, setAllClients] = useState<any[]>([])
+  const [loadingClients, setLoadingClients] = useState(false)
+  const [clientSearchTerm, setClientSearchTerm] = useState('')
+  const [hasFetchedClients, setHasFetchedClients] = useState(false)
+  const [deletingClient, setDeletingClient] = useState<any | null>(null)
+  const [isDeletingClient, setIsDeletingClient] = useState(false)
+  const [deleteClientError, setDeleteClientError] = useState('')
+  const [deleteClientSuccess, setDeleteClientSuccess] = useState(false)
 
   // Edit mode state
   const [editingStylistId, setEditingStylistId] = useState<string | null>(null)
@@ -143,6 +153,17 @@ export function AdminDashboard() {
     }
   }, [hasFetchedStylists, fetchAllStylists])
 
+  // Get account status for a stylist
+  const getAccountStatus = (stylist: any) => {
+    if (stylist.user_id && stylist.account_claimed) {
+      return { status: 'active', label: 'Active Account', color: 'bg-green-100 text-green-800' }
+    } else if (stylist.user_id && !stylist.account_claimed) {
+      return { status: 'pending', label: 'Pending Claim', color: 'bg-amber-100 text-amber-800' }
+    } else {
+      return { status: 'no-account', label: 'No Account', color: 'bg-red-100 text-red-800' }
+    }
+  }
+
   // Filter stylists based on search, status, and service type
   const filteredStylists = allStylists.filter(stylist => {
     const matchesSearch =
@@ -151,11 +172,12 @@ export function AdminDashboard() {
       stylist.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       getServiceTypeLabel(stylist.service_type || 'hairstylist').toLowerCase().includes(searchTerm.toLowerCase())
 
-    const hasAccount = stylist.user_id !== null
+    const accountStatus = getAccountStatus(stylist)
     const matchesStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'active' && hasAccount) ||
-      (statusFilter === 'no-account' && !hasAccount)
+      (statusFilter === 'active' && accountStatus.status === 'active') ||
+      (statusFilter === 'pending' && accountStatus.status === 'pending') ||
+      (statusFilter === 'no-account' && accountStatus.status === 'no-account')
 
     const matchesServiceType =
       serviceTypeFilter === 'all' ||
@@ -164,14 +186,91 @@ export function AdminDashboard() {
     return matchesSearch && matchesStatus && matchesServiceType
   })
 
-  // Get account status for a stylist
-  const getAccountStatus = (stylist: any) => {
-    if (stylist.user_id) {
-      return { status: 'active', label: 'Active Account', color: 'bg-green-100 text-green-800' }
-    } else {
-      return { status: 'no-account', label: 'No Account', color: 'bg-red-100 text-red-800' }
+  // Fetch all clients for manage clients tab
+  const fetchAllClients = useCallback(async () => {
+    setLoadingClients(true)
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('role', 'client')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        return
+      }
+
+      setAllClients(data || [])
+      setHasFetchedClients(true)
+    } catch (err) {
+    } finally {
+      setLoadingClients(false)
+    }
+  }, [])
+
+  // Load all clients on mount
+  useEffect(() => {
+    if (!hasFetchedClients) {
+      fetchAllClients()
+    }
+  }, [hasFetchedClients, fetchAllClients])
+
+  // Filter clients based on search
+  const filteredClients = allClients.filter(client => {
+    const search = clientSearchTerm.toLowerCase()
+    return (
+      client.full_name?.toLowerCase().includes(search) ||
+      client.email?.toLowerCase().includes(search) ||
+      client.phone?.toLowerCase().includes(search)
+    )
+  })
+
+  // Delete client handlers
+  const openDeleteClientModal = (client: any) => {
+    setDeletingClient(client)
+    setDeleteClientError('')
+    setDeleteClientSuccess(false)
+  }
+
+  const closeDeleteClientModal = () => {
+    if (!isDeletingClient) {
+      setDeletingClient(null)
+      setDeleteClientError('')
+      setDeleteClientSuccess(false)
     }
   }
+
+  const handleDeleteClient = async () => {
+    if (!deletingClient) return
+
+    setIsDeletingClient(true)
+    setDeleteClientError('')
+
+    try {
+      const response = await fetch(`/api/admin/client?id=${deletingClient.id}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete client')
+      }
+
+      setAllClients(prev => prev.filter(c => c.id !== deletingClient.id))
+      setDeleteClientSuccess(true)
+
+      setTimeout(() => {
+        closeDeleteClientModal()
+      }, 1500)
+    } catch (err: any) {
+      setDeleteClientError(err.message || 'Failed to delete client')
+    } finally {
+      setIsDeletingClient(false)
+    }
+  }
+
+
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -185,7 +284,7 @@ export function AdminDashboard() {
   
   // Table-specific account generation state
   const [generatingAccountForStylist, setGeneratingAccountForStylist] = useState<string | null>(null)
-  const [tableAccountCredentials, setTableAccountCredentials] = useState<{stylist_id: string, email: string, password: string} | null>(null)
+  const [tableAccountCredentials, setTableAccountCredentials] = useState<{stylist_id: string, email: string, password: string, email_sent?: boolean} | null>(null)
   const [tableAccountError, setTableAccountError] = useState('')
 
   // Delete stylist modal state
@@ -617,41 +716,15 @@ export function AdminDashboard() {
     }
   }
 
-  // Generate secure random password
-  const generateSecurePassword = (): string => {
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    const numbers = '0123456789'
-    const symbols = '!@#$%^&*'
-    const allChars = lowercase + uppercase + numbers + symbols
-    
-    let password = ''
-    // Ensure at least one character from each category
-    password += lowercase[Math.floor(Math.random() * lowercase.length)]
-    password += uppercase[Math.floor(Math.random() * uppercase.length)]
-    password += numbers[Math.floor(Math.random() * numbers.length)]
-    password += symbols[Math.floor(Math.random() * symbols.length)]
-    
-    // Add remaining characters
-    for (let i = 4; i < 12; i++) {
-      password += allChars[Math.floor(Math.random() * allChars.length)]
-    }
-    
-    // Shuffle the password
-    return password.split('').sort(() => Math.random() - 0.5).join('')
-  }
-
   // Generate login account for created stylist
   const handleGenerateAccount = async () => {
     if (!createdStylist) return
 
     setAccountError('')
     setGeneratingAccount(true)
-    
+
     try {
-      const tempPassword = generateSecurePassword()
-      
-      // Call API to create user account
+      // Call API to create user account and send claim email
       const response = await fetch('/api/admin/create-account', {
         method: 'POST',
         headers: {
@@ -659,24 +732,23 @@ export function AdminDashboard() {
         },
         body: JSON.stringify({
           email: createdStylist.contact_email,
-          password: tempPassword,
           stylist_id: createdStylist.id,
           business_name: createdStylist.business_name
         })
       })
 
       const result = await response.json()
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create account')
       }
-      
-      // Store credentials for display
+
+      // Store result for display
       setAccountCredentials({
         email: createdStylist.contact_email,
-        password: tempPassword
+        password: result.email_sent ? '' : 'Email not sent — see error details'
       })
-      
+
       // Update created stylist with user_id
       setCreatedStylist({
         ...createdStylist,
@@ -690,22 +762,6 @@ export function AdminDashboard() {
     }
   }
 
-  // Copy credentials to clipboard
-  const copyCredentials = async () => {
-    if (!accountCredentials) return
-
-    const credentialsText = `Login Credentials for ${createdStylist?.business_name}:
-Email: ${accountCredentials.email}
-Temporary Password: ${accountCredentials.password}
-
-Please change your password after first login.`
-
-    try {
-      await navigator.clipboard.writeText(credentialsText)
-      // Could add a toast notification here
-    } catch (err) {
-    }
-  }
 
   // Reset to start over
   const resetCreationState = () => {
@@ -725,11 +781,9 @@ Please change your password after first login.`
 
     setTableAccountError('')
     setGeneratingAccountForStylist(stylist.id)
-    
+
     try {
-      const tempPassword = generateSecurePassword()
-      
-      // Call API to create user account
+      // Call API to create user account and send claim email
       const response = await fetch('/api/admin/create-account', {
         method: 'POST',
         headers: {
@@ -737,30 +791,30 @@ Please change your password after first login.`
         },
         body: JSON.stringify({
           email: stylist.contact_email,
-          password: tempPassword,
           stylist_id: stylist.id,
           business_name: stylist.business_name
         })
       })
 
       const result = await response.json()
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create account')
       }
-      
-      // Store credentials for display
+
+      // Store result for display
       setTableAccountCredentials({
         stylist_id: stylist.id,
         email: stylist.contact_email,
-        password: tempPassword
+        password: result.email_sent ? '' : 'Email could not be sent',
+        email_sent: result.email_sent
       })
-      
+
       // Update the local stylists list to reflect the new account
-      setAllStylists(prevStylists => 
-        prevStylists.map(s => 
-          s.id === stylist.id 
-            ? { ...s, user_id: result.user_id, users: { id: result.user_id, email: stylist.contact_email } }
+      setAllStylists(prevStylists =>
+        prevStylists.map(s =>
+          s.id === stylist.id
+            ? { ...s, user_id: result.user_id, account_claimed: false, users: { id: result.user_id, email: stylist.contact_email } }
             : s
         )
       )
@@ -823,19 +877,38 @@ Please change your password after first login.`
     }
   }
 
-  // Copy table credentials to clipboard
-  const copyTableCredentials = async (credentials: {stylist_id: string, email: string, password: string}) => {
-    const stylist = allStylists.find(s => s.id === credentials.stylist_id)
-    const credentialsText = `Login Credentials for ${stylist?.business_name || 'Stylist'}:
-Email: ${credentials.email}
-Temporary Password: ${credentials.password}
-
-Please change your password after first login.`
+  // Resend claim email for a pending stylist
+  const handleResendClaimEmail = async (stylist: any) => {
+    setTableAccountError('')
+    setGeneratingAccountForStylist(stylist.id)
 
     try {
-      await navigator.clipboard.writeText(credentialsText)
-      // Could add a toast notification here
-    } catch (err) {
+      const response = await fetch('/api/admin/resend-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: stylist.contact_email || stylist.users?.email,
+          stylist_id: stylist.id,
+          business_name: stylist.business_name
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to resend claim email')
+      }
+
+      setTableAccountCredentials({
+        stylist_id: stylist.id,
+        email: stylist.contact_email || stylist.users?.email,
+        password: '',
+        email_sent: true
+      })
+    } catch (err: any) {
+      setTableAccountError(err.message || 'Failed to resend claim email')
+    } finally {
+      setGeneratingAccountForStylist(null)
     }
   }
 
@@ -1412,6 +1485,13 @@ Please change your password after first login.`
             Manage Stylists
           </TabsTrigger>
           <TabsTrigger
+            value="manage-clients"
+            className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
+          >
+            <Users className="w-4 h-4" />
+            Manage Clients
+          </TabsTrigger>
+          <TabsTrigger
             value="create"
             className="bg-transparent px-0 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-red-600 data-[state=active]:bg-transparent rounded-none transition-colors inline-flex items-center gap-2"
           >
@@ -1447,9 +1527,23 @@ Please change your password after first login.`
                 <UserCheck className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent className="pt-4 pb-5">
-                <div className="text-lg sm:text-xl font-bold mb-1">{allStylists.filter(s => s.user_id).length}</div>
+                <div className="text-lg sm:text-xl font-bold mb-1">{allStylists.filter(s => s.user_id && s.account_claimed).length}</div>
                 <p className="text-xs text-gray-500 whitespace-nowrap">
                   Stylists with active accounts
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Pending Claim */}
+            <Card className="min-w-[220px] md:min-w-0 flex-shrink-0 snap-start">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pt-4 pb-4">
+                <CardTitle className="text-sm font-medium">Pending Claim</CardTitle>
+                <Clock className="h-4 w-4 text-amber-600" />
+              </CardHeader>
+              <CardContent className="pt-4 pb-5">
+                <div className="text-lg sm:text-xl font-bold mb-1">{allStylists.filter(s => s.user_id && !s.account_claimed).length}</div>
+                <p className="text-xs text-gray-500 whitespace-nowrap">
+                  Awaiting account claim
                 </p>
               </CardContent>
             </Card>
@@ -1848,6 +1942,7 @@ Please change your password after first login.`
                   <SelectContent>
                     <SelectItem value="all">All Stylists</SelectItem>
                     <SelectItem value="active">Active Accounts</SelectItem>
+                    <SelectItem value="pending">Pending Claim</SelectItem>
                     <SelectItem value="no-account">No Account</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1983,6 +2078,8 @@ Please change your password after first login.`
                                 <Badge variant="secondary" className={`${accountStatus.color} whitespace-nowrap`}>
                                   {accountStatus.status === 'active' ? (
                                     <UserCheck className="w-3 h-3 mr-1" />
+                                  ) : accountStatus.status === 'pending' ? (
+                                    <Clock className="w-3 h-3 mr-1" />
                                   ) : (
                                     <UserX className="w-3 h-3 mr-1" />
                                   )}
@@ -2024,6 +2121,25 @@ Please change your password after first login.`
                                         )}
                                       </SmallCtaButton>
                                     )
+                                  ) : accountStatus.status === 'pending' ? (
+                                    <SmallCtaButton
+                                      variant="default"
+                                      className="bg-amber-600 hover:bg-amber-700 text-white h-8 px-3 text-[12px] min-w-[160px]"
+                                      disabled={generatingAccountForStylist === stylist.id}
+                                      onClick={() => handleResendClaimEmail(stylist)}
+                                    >
+                                      {generatingAccountForStylist === stylist.id ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                          Sending...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Mail className="w-3 h-3 mr-1" />
+                                          Resend Email
+                                        </>
+                                      )}
+                                    </SmallCtaButton>
                                   ) : (
                                     <Button
                                       size="sm"
@@ -2075,7 +2191,7 @@ Please change your password after first login.`
             </CardContent>
           </Card>
 
-          {/* Account Credentials Modal */}
+          {/* Account Created Modal */}
           <Dialog open={!!tableAccountCredentials} onOpenChange={(open) => {
             if (!open) closeTableCredentials()
           }}>
@@ -2092,21 +2208,30 @@ Please change your password after first login.`
                     <h4 className="font-medium text-green-900 mb-2">
                       Account for {allStylists.find(s => s.id === tableAccountCredentials.stylist_id)?.business_name}
                     </h4>
-                    <p className="text-sm text-green-700 mb-3">
-                      Login credentials have been generated successfully.
-                    </p>
-                    
-                    <div className="bg-white rounded border p-3 space-y-2">
-                      <div className="text-sm">
-                        <span className="font-medium">Email:</span> {tableAccountCredentials.email}
+                    {tableAccountCredentials.email_sent ? (
+                      <div>
+                        <p className="text-sm text-green-700 mb-2">
+                          A claim email has been sent to:
+                        </p>
+                        <div className="bg-white rounded border p-3">
+                          <div className="text-sm font-medium">{tableAccountCredentials.email}</div>
+                        </div>
+                        <p className="text-sm text-green-700 mt-2">
+                          The stylist will receive a link to set their password and access their account.
+                        </p>
                       </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Temporary Password:</span>
-                        <code className="ml-1 px-1 bg-gray-100 rounded text-xs break-all">
-                          {tableAccountCredentials.password}
-                        </code>
+                    ) : (
+                      <div>
+                        <p className="text-sm text-amber-700 mb-2">
+                          Account created, but the claim email could not be sent. You may need to share the login details manually.
+                        </p>
+                        <div className="bg-white rounded border p-3">
+                          <div className="text-sm">
+                            <span className="font-medium">Email:</span> {tableAccountCredentials.email}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {tableAccountError && (
@@ -2115,28 +2240,41 @@ Please change your password after first login.`
                     </div>
                   )}
 
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={() => copyTableCredentials(tableAccountCredentials)}
-                      className="bg-green-600 hover:bg-green-700 flex-1"
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Credentials
-                    </Button>
-                    <Button 
-                      onClick={closeTableCredentials}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      Close
-                    </Button>
-                  </div>
-                  
-                  <p className="text-xs text-gray-500 text-center">
-                    Share these credentials with the stylist. They should change their password after first login.
-                  </p>
+                  <Button
+                    onClick={closeTableCredentials}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Close
+                  </Button>
                 </div>
               )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Account Generation Error Modal */}
+          <Dialog open={!!tableAccountError && !tableAccountCredentials} onOpenChange={(open) => {
+            if (!open) setTableAccountError('')
+          }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center">
+                  <XCircle className="w-5 h-5 mr-2 text-red-600" />
+                  Account Generation Failed
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm text-red-700">{tableAccountError}</p>
+                </div>
+                <Button
+                  onClick={() => setTableAccountError('')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Close
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
 
@@ -2206,6 +2344,209 @@ Please change your password after first login.`
                       </div>
                       <p className="text-sm text-green-700">
                         {deletingStylist.business_name} has been removed from the system.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        <TabsContent value="manage-clients" className="space-y-6">
+          <Card>
+            <SectionHeader
+              title="Manage Clients"
+              description="View and manage all client accounts"
+            />
+            <CardContent className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
+              {/* Search */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search by name, email, or phone..."
+                    value={clientSearchTerm}
+                    onChange={(e) => setClientSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Results Summary */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-gray-600">
+                  Showing {filteredClients.length} of {allClients.length} clients
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchAllClients}
+                  disabled={loadingClients}
+                >
+                  {loadingClients ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh'}
+                </Button>
+              </div>
+
+              {/* Clients Table */}
+              {loadingClients ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+                  <span className="ml-2 text-gray-600">Loading clients...</span>
+                </div>
+              ) : filteredClients.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No clients found</h3>
+                  <p className="text-gray-500">
+                    {clientSearchTerm
+                      ? 'Try adjusting your search criteria.'
+                      : 'No client accounts have been created yet.'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Client</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Email</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Phone</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Joined</th>
+                          <th className="text-left p-4 text-sm font-semibold text-gray-900">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {filteredClients.map((client) => (
+                          <tr key={client.id} className="hover:bg-gray-50">
+                            {/* Client Info */}
+                            <td className="p-4">
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="w-10 h-10">
+                                  <AvatarImage src={client.avatar_url} className="object-cover" />
+                                  <AvatarFallback>
+                                    {client.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'C'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {client.full_name || 'Unnamed Client'}
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Email */}
+                            <td className="p-4">
+                              <div className="text-sm text-gray-900">
+                                {client.email || 'No email'}
+                              </div>
+                            </td>
+
+                            {/* Phone */}
+                            <td className="p-4">
+                              <div className="text-sm text-gray-900">
+                                {client.phone || 'No phone'}
+                              </div>
+                            </td>
+
+                            {/* Joined */}
+                            <td className="p-4">
+                              <div className="text-sm text-gray-900">
+                                {client.created_at ? format(new Date(client.created_at), 'dd MMM yyyy') : 'Unknown'}
+                              </div>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="p-4">
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 px-3 text-sm"
+                                  onClick={() => openDeleteClientModal(client)}
+                                >
+                                  <Trash2 className="w-3 h-3 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Delete Client Confirmation Modal */}
+          <Dialog open={!!deletingClient} onOpenChange={(open) => {
+            if (!open) closeDeleteClientModal()
+          }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center">
+                  <Trash2 className="w-5 h-5 mr-2 text-red-600" />
+                  Delete Client
+                </DialogTitle>
+              </DialogHeader>
+              {deletingClient && (
+                <div className="space-y-4">
+                  {!deleteClientSuccess ? (
+                    <>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-sm text-red-900 mb-2">
+                          Are you sure you want to delete <strong>{deletingClient.full_name || deletingClient.email}</strong>?
+                        </p>
+                        <p className="text-xs text-red-700">
+                          This action cannot be undone. All client data, reviews, and saved stylists will be permanently deleted.
+                        </p>
+                      </div>
+
+                      {deleteClientError && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm text-red-600">{deleteClientError}</p>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleDeleteClient}
+                          disabled={isDeletingClient}
+                          className="bg-red-600 hover:bg-red-700 flex-1"
+                        >
+                          {isDeletingClient ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete Client
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={closeDeleteClientModal}
+                          disabled={isDeletingClient}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center text-green-900 mb-2">
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        <p className="font-medium">Client deleted successfully</p>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        {deletingClient.full_name || deletingClient.email} has been removed from the system.
                       </p>
                     </div>
                   )}
