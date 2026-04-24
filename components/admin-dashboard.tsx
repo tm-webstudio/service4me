@@ -598,10 +598,10 @@ export function AdminDashboard() {
         accepts_mobile: formData.accepts_mobile,
         logo_url: logoImage || null,
         portfolio_images: portfolioImages,
-        // Admin-created profiles are active immediately
-        verification_status: 'approved',
+        // Set to pending verification
+        verification_status: 'pending_verification',
         submitted_at: new Date().toISOString(),
-        is_active: true,
+        is_active: false,
         is_verified: false,
         rating: 0,
         total_reviews: 0
