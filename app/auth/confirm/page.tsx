@@ -139,11 +139,11 @@ function ConfirmContent() {
       }
 
       setStatus('success')
-      setMessage('You\'re all set! Redirecting to your dashboard...')
+      setMessage('Your password has been set. Please sign in to access your account.')
 
       setTimeout(() => {
-        router.replace('/dashboard/stylist')
-      }, 2000)
+        router.replace('/signin')
+      }, 3000)
     } catch {
       setPasswordError('An unexpected error occurred')
       setSettingPassword(false)
@@ -203,16 +203,16 @@ function ConfirmContent() {
           <Card className="border shadow-sm">
             <CardHeader className="text-center pb-2">
               <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-              <h2 className="text-xl font-semibold text-gray-900">Welcome to Service4Me!</h2>
+              <h2 className="text-xl font-semibold text-gray-900">You're All Set!</h2>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-gray-600">{message}</p>
               <Button
-                onClick={() => router.replace('/dashboard/stylist')}
+                onClick={() => router.replace('/signin')}
                 className="w-full bg-red-600 hover:bg-red-700"
                 size="lg"
               >
-                Go to Dashboard
+                Sign In
               </Button>
             </CardContent>
           </Card>
