@@ -142,7 +142,7 @@ function ConfirmContent() {
       setMessage('Your password has been set. Please sign in to access your account.')
 
       setTimeout(() => {
-        router.replace('/signin')
+        router.replace('/login')
       }, 3000)
     } catch {
       setPasswordError('An unexpected error occurred')
@@ -208,7 +208,7 @@ function ConfirmContent() {
             <CardContent className="text-center space-y-4">
               <p className="text-gray-600">{message}</p>
               <Button
-                onClick={() => router.replace('/signin')}
+                onClick={() => router.replace('/login')}
                 className="w-full bg-red-600 hover:bg-red-700"
                 size="lg"
               >
