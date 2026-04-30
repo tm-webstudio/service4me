@@ -284,7 +284,7 @@ export function AdminDashboard() {
   
   // Table-specific account generation state
   const [generatingAccountForStylist, setGeneratingAccountForStylist] = useState<string | null>(null)
-  const [tableAccountCredentials, setTableAccountCredentials] = useState<{stylist_id: string, email: string, password: string, email_sent?: boolean} | null>(null)
+  const [tableAccountCredentials, setTableAccountCredentials] = useState<{stylist_id: string, email: string, password: string, email_sent?: boolean, message?: string} | null>(null)
   const [tableAccountError, setTableAccountError] = useState('')
 
   // Delete stylist modal state
@@ -807,7 +807,8 @@ export function AdminDashboard() {
         stylist_id: stylist.id,
         email: stylist.contact_email,
         password: result.email_sent ? '' : 'Email could not be sent',
-        email_sent: result.email_sent
+        email_sent: result.email_sent,
+        message: result.message
       })
 
       // Update the local stylists list to reflect the new account
@@ -2225,6 +2226,13 @@ export function AdminDashboard() {
                         <p className="text-sm text-amber-700 mb-2">
                           Account created, but the claim email could not be sent. You may need to share the login details manually.
                         </p>
+                        {tableAccountCredentials.message && (
+                          <div className="bg-amber-50 border border-amber-200 rounded p-2 mb-2">
+                            <p className="text-xs text-amber-800 break-words">
+                              <span className="font-medium">Reason:</span> {tableAccountCredentials.message}
+                            </p>
+                          </div>
+                        )}
                         <div className="bg-white rounded border p-3">
                           <div className="text-sm">
                             <span className="font-medium">Email:</span> {tableAccountCredentials.email}
