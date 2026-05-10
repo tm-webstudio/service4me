@@ -88,7 +88,7 @@ interface StylistProfileProps {
 
 export function StylistProfile({ stylistId, hideInactiveBanner = false }: StylistProfileProps) {
   const { user } = useAuth()
-  const { stylist, loading, error, refetch: refetchStylist } = useStylist(stylistId)
+  const { stylist, loading, error, notFound, refetch: refetchStylist } = useStylist(stylistId)
   const { services, loading: servicesLoading, error: servicesError, formatDuration } = useStylistServices(stylist?.id)
   const { isSaved: isFavorite, toggleSave, loading: savingFavorite, isAuthenticated } = useSavedStylists(stylist?.id)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -170,27 +170,35 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
     )
   }
 
-  // Error state
-  if (error && !stylist) {
+  // Not-found state (stylist ID does not exist)
+  if (notFound) {
     return (
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 lg:px-8 pt-4 pb-4">
         <div className="text-center py-20">
-          <p className="text-red-600 mb-4">Error loading stylist profile: {error}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            Try Again
-          </Button>
+          <p className="text-gray-900 font-medium mb-1">Stylist not found</p>
+          <p className="text-sm text-gray-500 mb-4">
+            This profile doesn't exist or is no longer available.
+          </p>
+          <Link href="/browse">
+            <Button variant="outline">Browse stylists</Button>
+          </Link>
         </div>
       </div>
     )
   }
 
-  // No stylist found
-  if (!stylist) {
+  // Error state (transient failure — DB down, network, etc.)
+  if (error || !stylist) {
     return (
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 lg:px-8 pt-4 pb-4">
         <div className="text-center py-20">
-          <p className="text-gray-600 mb-4">Stylist not found.</p>
-          <p className="text-sm text-gray-500">The stylist profile you're looking for doesn't exist.</p>
+          <p className="text-gray-900 font-medium mb-1">We couldn't load this profile right now</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Please check your connection and try again in a moment.
+          </p>
+          <Button onClick={() => refetchStylist()} variant="outline">
+            Try Again
+          </Button>
         </div>
       </div>
     )
@@ -612,8 +620,8 @@ export function StylistProfile({ stylistId, hideInactiveBanner = false }: Stylis
               </div>
             ) : servicesError ? (
               <div className="text-center py-8">
-                <p className="text-gray-500 mb-2">Unable to load services</p>
-                <p className="text-sm text-gray-400">Using placeholder services</p>
+                <p className="text-gray-500 mb-1">We couldn't load services right now</p>
+                <p className="text-sm text-gray-400">Please try again in a moment.</p>
               </div>
             ) : displayData.services.length === 0 ? null : (
               <>

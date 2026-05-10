@@ -8,6 +8,7 @@ export function useStylist(id: string) {
   const [stylist, setStylist] = useState<StylistProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
@@ -21,11 +22,24 @@ export function useStylist(id: string) {
       try {
         setLoading(true)
         setError(null)
+        setNotFound(false)
 
         // Primary approach: Use reliable API endpoint first
         try {
           const apiResponse = await fetch(`/api/stylists/${id}`)
           const apiData = await apiResponse.json()
+
+          if (apiResponse.status === 404) {
+            setNotFound(true)
+            return
+          }
+
+          if (!apiResponse.ok || apiData.success === false) {
+            console.error(
+              `[useStylist] /api/stylists/${id} responded ${apiResponse.status}: ${apiData?.error || apiResponse.statusText}`,
+              { status: apiResponse.status, body: apiData }
+            )
+          }
 
           if (apiData.success && apiData.data) {
             const transformedData: StylistProfile = {
@@ -60,7 +74,11 @@ export function useStylist(id: string) {
             setStylist(transformedData)
             return
           }
-        } catch (apiError) {
+        } catch (apiError: any) {
+          console.error(
+            `[useStylist] /api/stylists/${id} request failed: ${apiError?.message || apiError}`,
+            apiError
+          )
         }
 
         // Fallback approach: Try direct Supabase client
@@ -75,6 +93,11 @@ export function useStylist(id: string) {
           .single()
 
         if (error) {
+          // PGRST116 = no rows returned
+          if (error.code === 'PGRST116') {
+            setNotFound(true)
+            return
+          }
           throw error
         }
 
@@ -112,28 +135,24 @@ export function useStylist(id: string) {
           return
         }
 
-        // If we get here, no method worked
-        throw new Error('Stylist not found')
+        // Reached here with no data and no error → treat as not found
+        setNotFound(true)
 
-      } catch (err) {
-        // Final fallback: Show sample data for the specific ID
-        const fallbackData: StylistProfile = {
-          id: id,
-          business_name: "Sample Hair Studio",
-          bio: "Professional hairstylist with years of experience in modern styling techniques and customer care.",
-          location: "London, UK",
-          specialties: ["Hair Styling", "Braids"],
-          years_experience: 5,
-          hourly_rate: 50,
-          average_rating: 4.8,
-          review_count: 25,
-          is_verified: true,
-          is_active: true,
-          full_name: "Professional Stylist",
-          email: "stylist@example.com"
-        }
-        setStylist(fallbackData)
-        setError(null)
+      } catch (err: any) {
+        const reason = err?.message || err?.error_description || String(err) || 'unknown error'
+        console.error(
+          `[useStylist] Failed to load stylist ${id}: ${reason}`,
+          {
+            message: err?.message,
+            code: err?.code,
+            details: err?.details,
+            hint: err?.hint,
+            status: err?.status,
+            error: err,
+          }
+        )
+        setStylist(null)
+        setError(reason)
       } finally {
         setLoading(false)
       }
@@ -142,16 +161,18 @@ export function useStylist(id: string) {
     fetchStylist()
   }, [id, retryCount])
 
-  return { 
-    stylist, 
-    loading, 
-    error, 
+  return {
+    stylist,
+    loading,
+    error,
+    notFound,
     refetch: () => {
       if (id) {
         setLoading(true)
         setError(null)
+        setNotFound(false)
         setStylist(null)
-        setRetryCount(prev => prev + 1) // This will trigger useEffect to refetch
+        setRetryCount(prev => prev + 1)
       }
     }
   }
