@@ -102,7 +102,8 @@ export function FeaturedStylists() {
         {/* Error State */}
         {error && !loading && (
           <div className="text-center py-12">
-            <p className="text-red-600 mb-4">Error loading stylists: {error}</p>
+            <p className="text-gray-900 font-medium mb-1">We couldn't load stylists right now</p>
+            <p className="text-sm text-gray-500 mb-4">Please check your connection and try again in a moment.</p>
             <Button onClick={() => window.location.reload()} variant="outline">
               Try Again
             </Button>

@@ -52,6 +52,13 @@ export function useStylists() {
           const apiResponse = await fetch('/api/stylists')
           const apiData = await apiResponse.json()
 
+          if (!apiResponse.ok || apiData.success === false) {
+            console.error(
+              `[useStylists] /api/stylists responded ${apiResponse.status}: ${apiData?.error || apiResponse.statusText}`,
+              { status: apiResponse.status, body: apiData }
+            )
+          }
+
           if (apiData.success && apiData.data && apiData.data.length > 0) {
             const transformedData = apiData.data.map((stylist: any) => ({
               id: stylist.id,
@@ -79,7 +86,11 @@ export function useStylists() {
             setStylists(transformedData)
             return
           }
-        } catch (apiError) {
+        } catch (apiError: any) {
+          console.error(
+            `[useStylists] /api/stylists request failed: ${apiError?.message || apiError}`,
+            apiError
+          )
         }
 
         // Fallback approach: Try direct Supabase client
@@ -129,9 +140,20 @@ export function useStylists() {
         throw new Error('No data available from any method')
 
       } catch (err: any) {
-        // Set error instead of showing dummy data
+        const reason = err?.message || err?.error_description || String(err) || 'unknown error'
+        console.error(
+          `[useStylists] Failed to load stylist profiles: ${reason}`,
+          {
+            message: err?.message,
+            code: err?.code,
+            details: err?.details,
+            hint: err?.hint,
+            status: err?.status,
+            error: err,
+          }
+        )
         setStylists([])
-        setError(err?.message || 'Failed to load stylists')
+        setError(reason)
       } finally {
         setLoading(false)
       }
