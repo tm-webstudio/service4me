@@ -486,11 +486,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         error: null
       }))
 
-      // Create auth user
+      // Create auth user. Confirmation link always points to the configured
+      // production site URL so users land on prod after clicking the email,
+      // regardless of whether they signed up on localhost or prod.
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (typeof window !== 'undefined' ? window.location.origin : '')
+      const emailRedirectTo = siteUrl ? `${siteUrl}/auth/confirm` : undefined
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo,
           data: {
             role,
             full_name: additionalData?.fullName,

@@ -87,6 +87,13 @@ export const ERROR_CATALOG = {
     logLevel: 'info' as const
   },
 
+  EMAIL_NOT_CONFIRMED: {
+    message: 'Please confirm your email before signing in. Check your inbox for the confirmation link.',
+    recoverable: false,
+    action: 'retry' as const,
+    logLevel: 'info' as const
+  },
+
   // Generic Errors
   UNKNOWN_ERROR: {
     message: 'An unexpected error occurred',
@@ -112,6 +119,14 @@ export function normalizeError(error: unknown): AuthError {
     return {
       code: 'INVALID_CREDENTIALS',
       ...ERROR_CATALOG.INVALID_CREDENTIALS,
+      details: errorMessage
+    }
+  }
+
+  if (errorMessage.includes('Email not confirmed')) {
+    return {
+      code: 'EMAIL_NOT_CONFIRMED',
+      ...ERROR_CATALOG.EMAIL_NOT_CONFIRMED,
       details: errorMessage
     }
   }

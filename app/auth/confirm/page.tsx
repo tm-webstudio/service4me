@@ -32,8 +32,15 @@ function ConfirmContent() {
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code)
           if (error) {
+            // Supabase's /verify endpoint will have already marked the email as
+            // confirmed at this point (it runs before the redirect to this page).
+            // The failure here is almost always the PKCE code_verifier being
+            // unavailable — e.g. signing up on one origin and clicking the link
+            // from another. Tell the user to sign in instead of scaring them.
             setStatus('error')
-            setMessage(error.message || 'Invalid or expired confirmation link')
+            setMessage(
+              'Your email has likely been confirmed, but we couldn\'t sign you in automatically. Please sign in with your email and password.'
+            )
             return
           }
 
@@ -173,20 +180,25 @@ function ConfirmContent() {
         <div className="max-w-md w-full">
           <Card className="border shadow-sm">
             <CardHeader className="text-center pb-2">
-              <XCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
-              <h2 className="text-xl font-semibold text-gray-900">Link Expired or Invalid</h2>
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+              <h2 className="text-xl font-semibold text-gray-900">Almost there</h2>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-gray-600 text-sm">{message}</p>
-              <p className="text-gray-500 text-sm">
-                This link may have expired. Please contact the Service4Me team to request a new one.
-              </p>
               <Button
-                onClick={handleContinue}
+                onClick={() => router.replace('/login')}
                 className="w-full bg-red-600 hover:bg-red-700"
                 size="lg"
               >
-                Go to Sign Up
+                Sign in
+              </Button>
+              <Button
+                onClick={handleContinue}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                Back to sign up
               </Button>
             </CardContent>
           </Card>

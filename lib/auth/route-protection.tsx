@@ -221,22 +221,12 @@ export function PublicRoute({
     )
   }
 
-  // Show loading during auth operations
+  // Keep children mounted during auth operations so their local state
+  // (e.g. SignupForm's "check your email" success screen) survives the
+  // transition. Children handle their own loading via useAuth().isLoading.
   if (status === AuthStatus.LOADING) {
-    console.log('[PUBLIC-ROUTE] Auth operation in progress...')
-
-    if (!showLoadingScreen) {
-      return null
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+    console.log('[PUBLIC-ROUTE] Auth operation in progress (children stay mounted)')
+    return <>{children}</>
   }
 
   if (status === AuthStatus.AUTHENTICATED && user) {
