@@ -36,12 +36,29 @@ function ConfirmContent() {
         const { data: { session: existingSession } } = await supabase.auth.getSession()
         if (existingSession) {
           setStatus('success')
-          setMessage('Email confirmed! Redirecting to your dashboard...')
+          setMessage('Email confirmed! Signing you in...')
           const role = existingSession.user?.user_metadata?.role
           const dashboardPath = role === 'stylist' ? '/dashboard/stylist' : '/dashboard/client'
           setTimeout(() => {
             router.replace(dashboardPath)
           }, 1500)
+          return
+        }
+
+        // Supabase redirects back here with error params when the link has
+        // already been used (one-time token consumed on a previous click) or
+        // genuinely expired. Without a current session it looks identical to
+        // a malformed link, so detect the params explicitly and tell the user
+        // their email is already confirmed.
+        const errorCode = searchParams.get('error_code')
+        const errorParam = searchParams.get('error')
+        if (errorCode || errorParam) {
+          setStatus('error')
+          setMessage(
+            errorCode === 'otp_expired' || errorParam === 'access_denied'
+              ? 'This confirmation link has already been used. Your email is confirmed — please sign in.'
+              : 'This confirmation link is no longer valid. Please sign in, or sign up again if you don\'t have an account yet.'
+          )
           return
         }
 

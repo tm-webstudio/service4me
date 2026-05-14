@@ -51,9 +51,13 @@ export function ProtectedRoute({
   const userRole = user?.role
   const hasRequiredRole = userRole ? allowedRoles.includes(userRole) : false
 
-  // Handle redirect to login for unauthenticated users
+  // Handle redirect to login for unauthenticated users.
+  // Only redirect once we've definitively determined the user is signed out
+  // (status === UNAUTHENTICATED). `user` is null during INITIALIZING and
+  // LOADING too — redirecting in those states would race the auth context
+  // and kick users to /login mid-init even when they have a valid session.
   useEffect(() => {
-    if (status === AuthStatus.UNAUTHENTICATED || !user) {
+    if (status === AuthStatus.UNAUTHENTICATED) {
       console.log('[PROTECTED-ROUTE] User not authenticated, redirecting to login', {
         loginPath,
         currentPath: typeof window !== 'undefined' ? window.location.pathname : 'SSR'
@@ -65,7 +69,7 @@ export function ProtectedRoute({
         router.push(redirectUrl)
       }
     }
-  }, [status, user, loginPath, router])
+  }, [status, loginPath, router])
 
   // Handle redirect for users with wrong role
   useEffect(() => {
