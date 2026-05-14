@@ -277,11 +277,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authError = normalizeError(error)
       logError(authError)
 
+      // A stale session in storage (e.g. user deleted, refresh token invalid)
+      // would otherwise brick the login page with "An unexpected error
+      // occurred". Treat init failures as "no session" instead: clear any
+      // local auth state and let the user sign in fresh. Hard configuration
+      // failures still surface — they're not recoverable by signing out.
+      if (authError.code === 'CONFIG_MISSING') {
+        setAuthState({
+          status: AuthStatus.ERROR,
+          user: null,
+          session: null,
+          error: authError
+        })
+        return
+      }
+
+      try {
+        await supabase.auth.signOut()
+      } catch (signOutError) {
+        console.warn('[AUTH] signOut during init recovery failed:', signOutError)
+      }
+
       setAuthState({
-        status: AuthStatus.ERROR,
+        status: AuthStatus.UNAUTHENTICATED,
         user: null,
         session: null,
-        error: authError
+        error: null
       })
     }
   }, [fetchUserProfile, createProfileFromAuth])

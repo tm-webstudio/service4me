@@ -28,6 +28,23 @@ function ConfirmContent() {
         const token_hash = searchParams.get('token_hash')
         const type = searchParams.get('type')
 
+        // Implicit-grant email links carry the tokens in the URL hash
+        // (#access_token=...). Supabase's detectSessionInUrl picks them up
+        // automatically, so by the time this effect runs there's already a
+        // session. Check for it first — no `code`/`token_hash` will be present
+        // in those URLs.
+        const { data: { session: existingSession } } = await supabase.auth.getSession()
+        if (existingSession) {
+          setStatus('success')
+          setMessage('Email confirmed! Redirecting to your dashboard...')
+          const role = existingSession.user?.user_metadata?.role
+          const dashboardPath = role === 'stylist' ? '/dashboard/stylist' : '/dashboard/client'
+          setTimeout(() => {
+            router.replace(dashboardPath)
+          }, 1500)
+          return
+        }
+
         // New-style magic/confirmation links include `code`
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code)
