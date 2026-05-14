@@ -149,7 +149,7 @@ export function SignupForm() {
                   <MailIcon className="w-8 h-8 text-red-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  Confirm your email to finish signing up
+                  Confirm Your Email to Finish Signing Up
                 </h3>
                 <p className="text-gray-600 mb-4">
                   We've sent a confirmation link to{' '}
@@ -193,7 +193,7 @@ export function SignupForm() {
 
         <Card className="border shadow-sm">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-center text-lg">Client sign up</CardTitle>
+            <CardTitle className="text-center text-lg">Client Sign Up</CardTitle>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             {displayError && (

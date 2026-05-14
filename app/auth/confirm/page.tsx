@@ -181,7 +181,7 @@ function ConfirmContent() {
           <Card className="border shadow-sm">
             <CardHeader className="text-center pb-2">
               <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-              <h2 className="text-xl font-semibold text-gray-900">Almost there</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Almost There</h2>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-gray-600 text-sm">{message}</p>

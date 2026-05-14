@@ -76,7 +76,7 @@ export function LoginForm() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="text-xl sm:text-2xl font-medium text-gray-900">
-            Welcome back
+            Welcome Back
           </h2>
           <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">
             Sign in to your Service4Me account
@@ -85,7 +85,7 @@ export function LoginForm() {
 
         <Card className="border shadow-sm">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-center text-lg">Sign in</CardTitle>
+            <CardTitle className="text-center text-lg">Sign In</CardTitle>
           </CardHeader>
           <CardContent>
             {/* Error Display */}
